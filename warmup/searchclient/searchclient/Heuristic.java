@@ -22,8 +22,7 @@ public abstract class Heuristic implements Comparator< Node > {
    */
   private int manhattenDistance(Node n) {
     int minDistance, // min distance for each box
-        sum = 0,     // complete sum for all boxes to min goal
-        tmpSum;      // temp sum for individual box
+        sum = 0;     // complete sum for all boxes to min goal
 
     // find box first (they are uppercased)
     for ( int row = 1; row < n.MAX_ROW - 1; row++ ) {
@@ -31,7 +30,6 @@ public abstract class Heuristic implements Comparator< Node > {
         char b = n.boxes[row][col];
 				if ( 'A' <= b && b <= 'Z' ) {
           minDistance = Integer.MAX_VALUE;
-          tmpSum = 0;
           // lowercase box letter for comparison
           b = Character.toLowerCase( b );
 
@@ -47,7 +45,8 @@ public abstract class Heuristic implements Comparator< Node > {
               }
             }
           }
-          sum += tmpSum; // update complete sum
+          sum += minDistance; // update complete sum
+          System.err.println(b + " => " + minDistance + ". Total: " + sum);
         }
       }
     }
