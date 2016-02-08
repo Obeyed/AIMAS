@@ -1,0 +1,13 @@
+          TIME    MEM USED    SOL LEN   EXPLORED
+SAD1 BFS  0.06s   11.53MB     19        78
+SAD2 BFS  
+
+SAD1 DFS  0.05s     8.97MB    27        44
+SAD2 DFS  4.36s   600.73MB    5781      6799 
+
+### sharing static walls, goals
+SAD1 BFS  0.05s     4.03MB    19        78
+SAD2 BFS  
+
+SAD1 DFS  0.05s     2.79MB    27        44
+SAD2 DFS  4.53s   235.63MB    5781      6799
