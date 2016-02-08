@@ -14,8 +14,45 @@ public abstract class Heuristic implements Comparator< Node > {
 	}
 
 	public int h( Node n ) {
-		return 0;
+    return manhattenDistance(n);
 	}
+
+  /**
+   *  Returns the Manhattan distance for all box to their goal states.
+   */
+  private int manhattenDistance(Node n) {
+    int minDistance, // min distance for each box
+        sum = 0,     // complete sum for all boxes to min goal
+        tmpSum;      // temp sum for individual box
+
+    // find box first (they are uppercased)
+    for ( int row = 1; row < n.MAX_ROW - 1; row++ ) {
+      for ( int col = 1; col < n.MAX_COLUMN - 1; col++ ) {
+        char b = n.boxes[row][col];
+				if ( 'A' <= b && b <= 'Z' ) {
+          minDistance = Integer.MAX_VALUE;
+          tmpSum = 0;
+          // lowercase box letter for comparison
+          b = Character.toLowerCase( b );
+
+          // now find ALL corresponding goal states
+          for ( int i = 1; i < n.MAX_ROW - 1; i++) {
+            for ( int j = 1; j < n.MAX_COLUMN - 1; j++) {
+              char g = n.goals[i][j];
+              if ( 'a' <= g && g <= 'z' && b == g) {
+                int r = row - i;
+                int c = col - j;
+
+                minDistance = Math.min( (Math.abs(r) + Math.abs(c)), minDistance );
+              }
+            }
+          }
+          sum += tmpSum; // update complete sum
+        }
+      }
+    }
+    return sum;
+  }
 
 	public abstract int f( Node n );
 
