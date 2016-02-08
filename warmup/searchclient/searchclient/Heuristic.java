@@ -46,7 +46,6 @@ public abstract class Heuristic implements Comparator< Node > {
             }
           }
           sum += minDistance; // update complete sum
-          System.err.println(b + " => " + minDistance + ". Total: " + sum);
         }
       }
     }
