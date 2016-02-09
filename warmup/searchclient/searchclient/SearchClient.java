@@ -153,28 +153,17 @@ public class SearchClient {
 
     if(args[0].startsWith("--strategy")) {
       String[] arg = args[0].split("=");
-      System.err.println("0: " + arg[0] + ", 1: " + arg[1]);
 
-      if (arg[1].equals("BFS")) {
-        System.err.println("BFS");
+      if (arg[1].equals("BFS"))
         strategy = new StrategyBFS();
-      }
-      else if (arg[1].equals("DFS")) {
-        System.err.println("DFS");
+      else if (arg[1].equals("DFS"))
         strategy = new StrategyDFS();
-      }
-      else if (arg[1].equals("A*")) {
-        System.err.println("A*");
+      else if (arg[1].equals("A*"))
         strategy = new StrategyBestFirst( new AStar( client.initialState ) );
-      }
-      else if (arg[1].equals("WA*")) {
-        System.err.println("WEIGHTED A*");
+      else if (arg[1].equals("WA*"))
         strategy = new StrategyBestFirst( new WeightedAStar( client.initialState ) );
-      }
-      else if (arg[1].equals("Greedy")) {
-        System.err.println("GREEDY");
+      else if (arg[1].equals("Greedy"))
         strategy = new StrategyBestFirst( new Greedy( client.initialState ) );
-      }
     }
 
     if (strategy == null) {
