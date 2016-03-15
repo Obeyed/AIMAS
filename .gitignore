@@ -97,3 +97,6 @@
 
 # Spyder project settings
 **/.spyderproject
+
+# ignore anything new in resource folder
+project/resources/*
