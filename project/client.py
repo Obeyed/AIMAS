@@ -10,7 +10,7 @@ colors = {}
 directions = ['N','E','S','W']
 
 # For testing
-#fo = open('client.txt','w')
+#fo = open('client.txt','w+')
 
 # parse the level, supports multicolor
 def parselvl():
@@ -43,8 +43,9 @@ def parselvl():
         #fo.write(''.join(['boxes: ',str(len(boxes)),'\n']))
         #fo.write(''.join(['agents: ',str(len(agents)),'\n']))
         #fo.write(''.join(['colors: ',str(len(colors)),'\n']))
-        #fo.write(''.join([colors['0'],'\n']))
-        #fo.write(''.join([colors['A'],'\n']))
+        #if len(colors) > 0:
+            #fo.write(''.join([colors['0'],'\n']))
+            #fo.write(''.join([colors['A'],'\n']))
 
 
 # Main
