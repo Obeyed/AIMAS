@@ -24,7 +24,9 @@ class PartialOrderPlanner:
                 # check if we have node in plan that achieves precondition
                 achieving_node = plan.find_achiever(open_node, to_be_achieved)
                 if achieving_node is not None:
+                    # add parent and child
                     open_node.add_parent(achieving_node)
+                    achieving_node.add_child(open_node)
                     continue
                 # otherwise, find action that fulfils precondition
                 possible_actions = find_action_from_precondition(to_be_achieved)
@@ -44,24 +46,26 @@ class PartialOrderPlanner:
         
         TODO: Fix this
         """
-        return self.plans.pop(0)
+        return self.plans[0]
 
 
     def find_action_from_precondition(precondition):
         """ Find possible and achievable actions that fulfils precondition """
         possible_actions = []
-
-        # for each possible action
-        # go through each possible permutation
-        # check if it is achievable and add it to possible actions
+        literal = precondition['literal']
 
         # will only consider add lists (the first element of the tuples)
-        if precondition in [ atom['literal'] for atom in ActionSchema.move_effects()[0] ]:
+        # for each possible action
+        if literal in [ atom['literal'] for atom in ActionSchema.move_effects()[0] ]:
             possible_actions.append(MOVE)
-        if precondition in [ atom['literal'] for atom in ActionSchema.push_effects()[0] ]:
+        if literal in [ atom['literal'] for atom in ActionSchema.push_effects()[0] ]:
             possible_actions.append(PUSH)
-        if precondition in [ atom['literal'] for atom in ActionSchema.pull_effects()[0] ]:
+        if literal in [ atom['literal'] for atom in ActionSchema.pull_effects()[0] ]:
             possible_actions.append(PULL)
+
+        # go through each possible permutation
+        # check if it is achievable and add it to possible actions
+        possible_actions = ActionSchema.find_applicable_actions(possible_actions, precondition)
 
         return possible_actions
 

@@ -26,14 +26,18 @@ class CausalLink:
 
 
   def add_parent(self, incoming):
-    """ Add parent to instance, and add instance as child to parent """
+    """ Add parent to instance """
     #print("adding parent {0} to {1}".format(incoming, self))
     self.parents.append(incoming)
-    #print("adding child")
-    #incoming.children.append(self)
     # check if any of the open preconditions have been achieved
     self.open_preconditions = self.find_open_preconditions(self.open_preconditions)
     #print("parents {0}".format(self.parents))
+
+
+  def add_child(self, outgoing):
+    """ Add child to instance """
+    #print("adding child {0} to {1}".format(outgoing, self))
+    self.children.append(outgoing)
 
 
   def has_open_precondition(self):
