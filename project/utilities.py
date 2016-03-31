@@ -23,13 +23,13 @@ def calculate_next_position(pos, dir, reverse=False):
     mult = -1 if reverse else 1
 
     if dir is WEST:
-      next_step = (pos[0] - (mult * 1), pos[1])
-    elif dir is EAST:
-      next_step = (pos[0] + (mult * 1), pos[1])
-    elif dir is SOUTH:
-      next_step = (pos[0], pos[1] + (mult * 1))
-    elif dir is NORTH:
       next_step = (pos[0], pos[1] - (mult * 1))
+    elif dir is EAST:
+      next_step = (pos[0], pos[1] + (mult * 1))
+    elif dir is SOUTH:
+      next_step = (pos[0] + (mult * 1), pos[1])
+    elif dir is NORTH:
+      next_step = (pos[0] - (mult * 1), pos[1])
 
     return next_step
 
@@ -63,5 +63,13 @@ def create_action_dict(action, args):
     return {'action': action, 'arguments': args}
 
 if __name__ == '__main__':
-    print("(1.3) = {0}".format(calculate_next_position((1,2), SOUTH)))
-    print("(1,1) = {0}".format(calculate_prev_position((1,2), SOUTH)))
+    print("NEXT:")
+    print("(1,2) S - {0} (2,2)".format(calculate_next_position((1,2), SOUTH)))
+    print("(1,2) N - {0} (0,2)".format(calculate_next_position((1,2), NORTH)))
+    print("(1,2) W - {0} (1,1)".format(calculate_next_position((1,2), WEST)))
+    print("(1,2) E - {0} (1,3)".format(calculate_next_position((1,2), EAST)))
+    print("PREV: (1,2)")
+    print("(2,2) S - {0}".format(calculate_prev_position((2,2), SOUTH)))
+    print("(0,2) N - {0}".format(calculate_prev_position((0,2), NORTH)))
+    print("(1,1) W - {0}".format(calculate_prev_position((1,1), WEST)))
+    print("(1,3) E - {0}".format(calculate_prev_position((1,3), EAST)))
