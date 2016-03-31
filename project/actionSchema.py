@@ -204,40 +204,160 @@ class ActionSchema:
         """
         applicable_actions = []
         all_directions = [NORTH, SOUTH, EAST, WEST]
+        wanted_literal = wanted_effect['literal']
 
-        for action in wanted_actions:
-            if action == MOVE:
-                # where we want to move to
-                next_pos = wanted_effect['arguments'][0]
-                # all possible permutations that could lead to agent in next_pos
-                agent_positions = []
-                for dir in all_directions:
-                    pos = calculate_prev_position(next_pos, dir)
-                    if achievable(pos):
-                        agent_positions.append((pos, dir))
-                # construct corresponding action dictionary
-                for _, dir in agent_positions:
-                    applicable_actions.append(create_action_dict(action, [dir]))
-            elif action == PUSH:
-                # do we want AGENT_AT?
-                # or do we want BOX_AT?
-                ##
-                # box_position = calculate_next_position(agent.position, agent_dir)
-                # box_next_pos = calculate_next_position(box_position, box_dir)
-                # agent_position = agent.position
-                ##
-                True
-            elif action == PULL:
-                # do we want AGENT_AT?
-                # or do we want BOX_AT?
-                ## 
-                # agent_next_pos = calculate_next_position(agent.position, agent_dir)
-                # box_position   = calculate_next_position(agent.position, box_dir_wrt_agent)
-                # agent_position
-                ##
-                True
+        # first of all check if wanted effect's position is achievable
+        if achievable(wanted_effect['arguments'][0]):
+            # loop through all wanted actions
+            # and find those that achieve a possible wanted effect
+            for action in wanted_actions:
+                wanted_moves = [] # [(agent_position, [*directions]), ...]
+                if action == MOVE:
+                    if wanted_literal == AGENT_AT:
+                        next_pos = wanted_effect['arguments'][0] # where we want to move to
+                        # all possible permutations that could lead to agent in next_pos
+                        for dir in all_directions:
+                            pos = calculate_prev_position(next_pos, dir)
+                            if achievable(pos):
+                                wanted_moves.append((pos, dir))
+                    elif wanted_literal == FREE:
+                        to_become_free = wanted_effect['arguments'][0]
+                        for dir in all_directions:
+                            pos = calculate_next_position(to_become_free, dir)
+                            if achievable(pos):
+                                wanted_moves.append((pos, dir))
+
+                    # construct corresponding Move action dictionary
+                    for _, dir in wanted_moves:
+                        applicable_actions.append(create_action_dict(action, [dir]))
+                elif action == PUSH:
+                    #  ++++     ++++
+                    #  +A0+ --> +0 + 
+                    #  + +      +A+ 
+                    #  +++      +++ 
+                    if wanted_literal == AGENT_AT:
+                        next_pos = wanted_effect['arguments'][0]
+                        for rev_agent_dir in all_directions:
+                            # calculate agent's previous position
+                            agent_pos = calculate_prev_position(next_pos, rev_agent_dir)
+                            if achievable(agent_pos):
+                                agent_dir = toggle_dir(rev_agent_dir)
+                                for box_dir in all_directions:
+                                    # should not be possible to move opposite move
+                                    if opposite_directions(box_dir, agent_dir):
+                                        continue
+                                    # calculate where box would land
+                                    box_pos = calculate_next_position(next_pos, box_dir)
+                                    if achievable(box_pos):
+                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                    elif wanted_literal == BOX_AT:
+                        box_next_pos = wanted_effect['arguments'][0]
+                        # we will be walking backwards
+                        for rev_box_dir in all_directions:
+                            # calculate box's previous position
+                            box_pos = calculate_prev_position(box_next_pos, rev_box_dir)
+                            if achievable(box_pos):
+                                box_dir = toggle_dir(rev_box_dir)
+                                for rev_agent_dir in all_directions:
+                                    agent_dir = toggle_dir(rev_agent_dir)
+                                    if opposite_directions(agent_dir, box_dir):
+                                        continue
+                                    agent_pos = calculate_next_position(box_pos, rev_agent_dir)
+                                    if achievable(agent_pos):
+                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                    elif wanted_literal == FREE:
+                        to_become_free = wanted_effect['arguments'][0]
+                        for agent_dir in all_directions:
+                            # calculate agent's next position
+                            agent_pos = calculate_next_position(to_become_free, agent_dir)
+                            if achievable(agent_pos):
+                                for box_dir in all_directions:
+                                    # should not be possible to move opposite move
+                                    if opposite_directions(box_dir, agent_dir):
+                                        continue
+                                    # calculate where box would land
+                                    box_pos = calculate_next_position(agent_pos, box_dir)
+                                    if achievable(box_pos):
+                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+
+                    # construct corresponding Push action dictionary
+                    for _, dir_list in wanted_moves:
+                        applicable_actions.append(create_action_dict(action, dir_list))
+                elif action == PULL:
+                    #  ++++     ++++
+                    #  +0 + --> +A0+ 
+                    #  +A+      + + 
+                    #  +++      +++ 
+                    if wanted_literal == AGENT_AT:
+                        next_pos = wanted_effect['arguments'][0]
+                        for rev_agent_dir in all_directions:
+                            # calculate agent's previous position
+                            agent_pos = calculate_prev_position(next_pos, rev_agent_dir)
+                            if achievable(agent_pos):
+                                agent_dir = toggle_dir(rev_agent_dir)
+                                # where is the box wrt. agent
+                                for box_dir in all_directions:
+                                    # cannot pull box in same direction (i.e. push)
+                                    if box_dir == agent_dir:
+                                        continue
+                                    # calculate where box would have been
+                                    box_pos = calculate_prev_position(agent_pos, box_dir)
+                                    if achievable(box_pos):
+                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                    elif wanted_literal == BOX_AT:
+                        box_next_pos = wanted_effect['arguments'][0]
+                        # we will be walking backwards
+                        for box_dir in all_directions:
+                            # calculate where the box would have been
+                            box_prev_pos = calculate_next_position(box_next_pos, box_dir)
+                            if achievable(box_prev_pos):
+                                for agent_dir in all_directions:
+                                    if agent_dir == box_dir:
+                                        continue
+                                    agent_next_pos = calculate_next_position(box_next_pos, agent_dir)
+                                    if achievable(agent_next_pos):
+                                        wanted_moves.append((box_next_pos, [agent_dir, box_dir]))
+                    elif wanted_literal == FREE:
+                        to_become_free = wanted_effect['arguments'][0]
+                        for rev_box_dir in all_directions:
+                            # calculate agent's position
+                            agent_pos = calculate_next_position(to_become_free, rev_box_dir)
+                            if achievable(agent_pos):
+                                box_dir = toggle_dir(rev_box_dir)
+                                for agent_dir in all_directions:
+                                    # should not be possible to pull in push dir
+                                    if box_dir == agent_dir:
+                                        continue
+                                    # calculate where box would land
+                                    agent_next_pos = calculate_next_position(agent_pos, agent_dir)
+                                    if achievable(agent_next_pos):
+                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+
+                    # construct corresponding Pull action dictionary
+                    for _, dir_list in wanted_moves:
+                        applicable_actions.append(create_action_dict(action, dir_list))
 
         return applicable_actions
+
+
+def toggle_dir(d):
+    """ Toggle direction """
+    if d == NORTH:
+        toggled = SOUTH
+    elif d == SOUTH:
+        toggled = NORTH
+    elif d == EAST:
+        toggled = WEST
+    elif d == WEST:
+        toggled = EAST
+    return toggled
+
+
+def opposite_directions(a, b):
+    """ check if one direction is the opposite of the other """
+    return ( (a == NORTH and b == SOUTH) or (a == WEST and b == EAST) or
+             (a == SOUTH and b == NORTH) or (a == EAST and b == WEST) )
+        
 
 
 def compute_applicable_moves_from_future(future_pos):
