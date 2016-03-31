@@ -220,18 +220,14 @@ class ActionSchema:
                         for dir in all_directions:
                             pos = calculate_prev_position(next_pos, dir)
                             if achievable(pos):
-                                wanted_moves.append((pos, dir))
+                                wanted_moves.append((pos, [dir]))
                     elif wanted_literal == FREE:
                         #print("FREE")
                         to_become_free = wanted_effect['arguments'][0]
                         for dir in all_directions:
                             pos = calculate_next_position(to_become_free, dir)
                             if achievable(pos):
-                                wanted_moves.append((pos, dir))
-
-                    # construct corresponding Move action dictionary
-                    for _, dir in wanted_moves:
-                        applicable_actions.append(create_action_dict(action, [dir]))
+                                wanted_moves.append((pos, [dir]))
                 elif action == PUSH:
                     #  ++++     ++++
                     #  +A0+ --> +0 + 
@@ -280,10 +276,6 @@ class ActionSchema:
                                     box_pos = calculate_next_position(agent_pos, box_dir)
                                     if achievable(box_pos):
                                         wanted_moves.append((agent_pos, [agent_dir, box_dir]))
-
-                    # construct corresponding Push action dictionary
-                    for _, dir_list in wanted_moves:
-                        applicable_actions.append(create_action_dict(action, dir_list))
                 elif action == PULL:
                     #  ++++     ++++
                     #  +0 + --> +A0+ 
@@ -335,10 +327,9 @@ class ActionSchema:
                                     if achievable(agent_next_pos):
                                         wanted_moves.append((agent_pos, [agent_dir, box_dir]))
 
-                    # construct corresponding Pull action dictionary
-                    for _, dir_list in wanted_moves:
-                        applicable_actions.append(create_action_dict(action, dir_list))
-
+                # construct corresponding action dictionary
+                for _, dir_list in wanted_moves:
+                    applicable_actions.append(create_action_dict(action, dir_list))
         return applicable_actions
 
 
