@@ -214,6 +214,7 @@ class ActionSchema:
                 wanted_moves = [] # [(agent_position, [*directions]), ...]
                 if action == MOVE:
                     if wanted_literal == AGENT_AT:
+                        #print("AGENT_AT")
                         next_pos = wanted_effect['arguments'][0] # where we want to move to
                         # all possible permutations that could lead to agent in next_pos
                         for dir in all_directions:
@@ -221,6 +222,7 @@ class ActionSchema:
                             if achievable(pos):
                                 wanted_moves.append((pos, dir))
                     elif wanted_literal == FREE:
+                        #print("FREE")
                         to_become_free = wanted_effect['arguments'][0]
                         for dir in all_directions:
                             pos = calculate_next_position(to_become_free, dir)
@@ -236,12 +238,12 @@ class ActionSchema:
                     #  + +      +A+ 
                     #  +++      +++ 
                     if wanted_literal == AGENT_AT:
+                        # where should the agent end up
                         next_pos = wanted_effect['arguments'][0]
-                        for rev_agent_dir in all_directions:
+                        for agent_dir in all_directions:
                             # calculate agent's previous position
-                            agent_pos = calculate_prev_position(next_pos, rev_agent_dir)
+                            agent_pos = calculate_prev_position(next_pos, agent_dir)
                             if achievable(agent_pos):
-                                agent_dir = toggle_dir(rev_agent_dir)
                                 for box_dir in all_directions:
                                     # should not be possible to move opposite move
                                     if opposite_directions(box_dir, agent_dir):
@@ -251,18 +253,17 @@ class ActionSchema:
                                     if achievable(box_pos):
                                         wanted_moves.append((agent_pos, [agent_dir, box_dir]))
                     elif wanted_literal == BOX_AT:
+                        # where should the box end up
                         box_next_pos = wanted_effect['arguments'][0]
                         # we will be walking backwards
-                        for rev_box_dir in all_directions:
+                        for box_dir in all_directions:
                             # calculate box's previous position
-                            box_pos = calculate_prev_position(box_next_pos, rev_box_dir)
+                            box_pos = calculate_prev_position(box_next_pos, box_dir)
                             if achievable(box_pos):
-                                box_dir = toggle_dir(rev_box_dir)
-                                for rev_agent_dir in all_directions:
-                                    agent_dir = toggle_dir(rev_agent_dir)
+                                for agent_dir in all_directions:
                                     if opposite_directions(agent_dir, box_dir):
                                         continue
-                                    agent_pos = calculate_next_position(box_pos, rev_agent_dir)
+                                    agent_pos = calculate_prev_position(box_pos, agent_dir)
                                     if achievable(agent_pos):
                                         wanted_moves.append((agent_pos, [agent_dir, box_dir]))
                     elif wanted_literal == FREE:
@@ -290,18 +291,20 @@ class ActionSchema:
                     #  +++      +++ 
                     if wanted_literal == AGENT_AT:
                         next_pos = wanted_effect['arguments'][0]
-                        for rev_agent_dir in all_directions:
+                        #print(next_pos)
+                        for agent_dir in all_directions:
                             # calculate agent's previous position
-                            agent_pos = calculate_prev_position(next_pos, rev_agent_dir)
+                            agent_pos = calculate_prev_position(next_pos, agent_dir)
                             if achievable(agent_pos):
-                                agent_dir = toggle_dir(rev_agent_dir)
+                                #print("agent: ", agent_pos, agent_dir)
                                 # where is the box wrt. agent
                                 for box_dir in all_directions:
                                     # cannot pull box in same direction (i.e. push)
                                     if box_dir == agent_dir:
                                         continue
                                     # calculate where box would have been
-                                    box_pos = calculate_prev_position(agent_pos, box_dir)
+                                    box_pos = calculate_next_position(agent_pos, box_dir)
+                                    #print("box: ", box_pos, box_dir)
                                     if achievable(box_pos):
                                         wanted_moves.append((agent_pos, [agent_dir, box_dir]))
                     elif wanted_literal == BOX_AT:
@@ -319,11 +322,10 @@ class ActionSchema:
                                         wanted_moves.append((box_next_pos, [agent_dir, box_dir]))
                     elif wanted_literal == FREE:
                         to_become_free = wanted_effect['arguments'][0]
-                        for rev_box_dir in all_directions:
+                        for box_dir in all_directions:
                             # calculate agent's position
-                            agent_pos = calculate_next_position(to_become_free, rev_box_dir)
+                            agent_pos = calculate_prev_position(to_become_free, box_dir)
                             if achievable(agent_pos):
-                                box_dir = toggle_dir(rev_box_dir)
                                 for agent_dir in all_directions:
                                     # should not be possible to pull in push dir
                                     if box_dir == agent_dir:
@@ -340,28 +342,11 @@ class ActionSchema:
         return applicable_actions
 
 
-def toggle_dir(d):
-    """ Toggle direction """
-    if d == NORTH:
-        toggled = SOUTH
-    elif d == SOUTH:
-        toggled = NORTH
-    elif d == EAST:
-        toggled = WEST
-    elif d == WEST:
-        toggled = EAST
-    return toggled
-
-
 def opposite_directions(a, b):
     """ check if one direction is the opposite of the other """
     return ( (a == NORTH and b == SOUTH) or (a == WEST and b == EAST) or
              (a == SOUTH and b == NORTH) or (a == EAST and b == WEST) )
         
-
-
-def compute_applicable_moves_from_future(future_pos):
-    """ Compute applicable moves with position and direction """
 
 def boxAt(cell):
     """ Is there a box at the cell """
@@ -377,7 +362,6 @@ def free(cell):
 
 def achievable(cell):
     """ Is it possible to be at this position? """
-    #print("checking if {0} is achievable".format(cell))
     return ( not bool(walls.get(cell, False)) and 
              not(cell[0] < 0 or cell[1] < 0) )
 
@@ -397,14 +381,54 @@ def neighbour(c, n):
 
 if __name__ == '__main__':
     import builtins
-    builtins.walls = {(0,0): "+", (1,2): "+"}
+    #
+    #  ++++
+    #  +  +
+    #  + + 
+    #  +++ 
+    #
+    builtins.walls = { (0,0): "+", (0,1): "+", (0,2): "+", (0,3): "+", (1,0): "+",
+                       (1,3): "+", (2,0): "+", (2,2): "+", (3,0): "+", (3,1): "+", (3,2): "+" }
 
-    #print("neighbours? ({0}, {1}, {2}, {3}, {4})".format(neighbour((2,2), (1,2)), neighbour((2,2), (2,1)), neighbour((2,2), (3,2)), neighbour((2,2), (2,3)), neighbour((2,2), (3,3))))
-    #print("add list: {0}".format(ActionSchema.pull_effects()[0]))
-    #print("del list: {0}".format(ActionSchema.pull_effects()[1]))
-    #print("{0}".format([ atom['literal'] for atom in ActionSchema.pull_effects()[0] ]))
+    print("False={0}, False={1}, True={2}".format(achievable((0,2)), achievable((1,-1)), achievable((1,2))))
 
-    print("False, False, True = {0}, {1}, {2}".format(achievable((1,2)), achievable((1,-1)), achievable((1,3))))
+    #level = ""
+    #for x in range(4):
+    #    line = ""
+    #    for y in range(4):
+    #        line += walls.get((x,y), " ")
+    #    level += line + "\n"
+    #print(level)
 
-    print("applicable actions should be all: {0}".format(ActionSchema.find_applicable_actions(['Move'], create_literal_dict(AGENT_AT, [(1,2)]))))
-    print("applicable actions should be NORTH and WEST: {0}".format(ActionSchema.find_applicable_actions(['Move'], create_literal_dict(AGENT_AT, [(1,0)]))))
+    arg = 'arguments'
+    print("## MOVE:")
+    a = ActionSchema.find_applicable_actions([MOVE], create_literal_dict(AGENT_AT, [(1,3)]))
+    print("A should be empty: {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([MOVE], create_literal_dict(AGENT_AT, [(1,1)]))
+    print("A should have two actions (N, W): {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([MOVE], create_literal_dict(FREE, [(1,1)]))
+    print("F should have two actions (S, E): {0}".format([act[arg] for act in a]))
+
+    print("## PUSH:")
+    a = ActionSchema.find_applicable_actions([PUSH], create_literal_dict(AGENT_AT, [(1,2)]))
+    print("A should be empty: {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PUSH], create_literal_dict(AGENT_AT, [(1,1)]))
+    print("A should have two actions [(W, S), (N, E)]: {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PUSH], create_literal_dict(BOX_AT, [(2,1)]))
+    print("B should have one action (W, S): {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PUSH], create_literal_dict(FREE, [(1,2)]))
+    print("F should have one action (W, S): {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PUSH], create_literal_dict(FREE, [(1,1)]))
+    print("F should be empty: {0}".format([act[arg] for act in a]))
+
+    print("## PULL:")
+    a = ActionSchema.find_applicable_actions([PULL], create_literal_dict(AGENT_AT, [(1,2)]))
+    print("A should have one action (E, S): {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PULL], create_literal_dict(AGENT_AT, [(1,1)]))
+    print("A should be empty: {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PULL], create_literal_dict(BOX_AT, [(1,1)]))
+    print("B should have two actions [(E, S), (S, E)]: {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PULL], create_literal_dict(BOX_AT, [(2,1)]))
+    print("B should be empty: {0}".format([act[arg] for act in a]))
+    a = ActionSchema.find_applicable_actions([PULL], create_literal_dict(FREE, [(2,1)]))
+    print("F should have one action (E, S): {0}".format([act[arg] for act in a]))
