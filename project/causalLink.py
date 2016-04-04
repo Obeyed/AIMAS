@@ -17,12 +17,13 @@ class CausalLink:
     self.initial_state = initial_state
     # if preconditions is given use them
     # otherwise find them
-    self.open_preconditions = open_preconditions or self.find_open_preconditions()
+    if action == "Start":
+      self.open_preconditions = []
+    else:
+      self.open_preconditions = open_preconditions or self.find_open_preconditions()
 
     if bool(outgoing):
       [out.add_parent(self) for out in outgoing]
-
-    #print()
 
 
   def add_parent(self, incoming):
@@ -30,7 +31,8 @@ class CausalLink:
     #print("adding parent {0} to {1}".format(incoming, self))
     self.parents.append(incoming)
     # check if any of the open preconditions have been achieved
-    self.open_preconditions = self.find_open_preconditions(self.open_preconditions)
+    self.open_preconditions = self.find_open_preconditions()
+    #self.print(False)
     #print("parents {0}".format(self.parents))
 
 
@@ -41,51 +43,52 @@ class CausalLink:
 
 
   def has_open_precondition(self):
-    #print("has open precondition")
     return len(self.open_preconditions) > 0
 
 
-  def find_open_preconditions(self, preconditions=None):
-    """ Find which preconditions are open
-    
-    Keyword arguments:
-    preconditions -- if given will use it directly,
-                     otherwise will find action's preconditions
-    """
-    #print("find open preconditions")
-    if preconditions is None:
+  def find_open_preconditions(self):
+    """ Find which preconditions are open """
+    #print("FINDING OPEN PRECONDITIONS")
+    if self.action in ['Start', 'Finish']:
+      preconditions = self.open_preconditions
+    else:
       preconditions = self.list_action_preconditions()
 
     parent_effects = self.list_parents_effects()
 
+    #print(self.action)
     #print("pre: {0}".format(preconditions))
     #print("eff: {0}".format(parent_effects))
 
     unsatisfied = []
+    #print("CHECKING PRECONDITIONS: ", preconditions)
     for precondition in preconditions:
       satisfied = False
+      #print("comparing ", precondition)
       for effect in parent_effects:
-        #print("comparing {0} with {1}".format(precondition, effect))
+        #print("--> ", effect)
         # compare objects' values
         if precondition == effect:
           #print("equal!")
           satisfied = True
           break
       if not satisfied:
+        #print("adding ", precondition, " to unsatisfied")
         unsatisfied.append(precondition)
 
+    #print("UNSATISFIED: ", unsatisfied)
     return unsatisfied
 
   def list_parents_effects(self):
     """ Return parents' effects """
-    #print("list parents' effects")
+    #print("SEARCHING FOR PARENT EFFECTS")
     return [ literal for parent in self.parents
                      for literal in parent.list_action_effects() ] 
 
 
   def list_action_preconditions(self):
     """ Return action's preconditions """
-    #print("list action's preconditions")
+    #print("SEARCHING FOR ACTION'S PRECONDITIONS")
     preconditions = []
     if self.action == MOVE:
       preconditions = ActionSchema.move_preconditions(*self.arguments)
@@ -105,6 +108,8 @@ class CausalLink:
     del_only -- return only delete list
     """
     #print("list action effects")
+    #print("{0} has following effects".format(self.action))
+    effects = None
     if self.action == MOVE:
       effects = ActionSchema.move_effects(*self.arguments)
     elif self.action == PUSH:
@@ -112,20 +117,25 @@ class CausalLink:
     elif self.action == PULL:
       effects = ActionSchema.pull_effects(*self.arguments)
   
+    #print("first: ", effects)
     # if initial state is set then we want it
     if self.initial_state:
       effects = self.initial_state
-    elif add_only:
+    elif add_only and effects:
+      #print(effects)
       effects = effects[0]
-    elif del_only:
+    elif del_only and effects:
+      #print(effects)
       effects = effects[1]
+    #print("second: ", effects)
 
-    return effects
+    return effects or []
 
 
   def print(self, simple=True):
     print("{0}({1})".format(self.action, self.arguments))
     if not simple:
+      print("+--open conds: {0}".format(self.open_preconditions))
       print("+--parent: {0}".format([parent.action for parent in self.parents]))
       print("+--children: {0}".format([child.action for child in self.children]))
 
@@ -145,7 +155,7 @@ if __name__ == '__main__':
                                        create_literal_dict(BOX_AT, [(3,3)]) ])
 
     move = CausalLink("Move", 
-                      [agent, "N"], 
+                      [agent, "W"], 
                       [finish])
     print("SHOULD BE EMPTY: {0}".format(finish.open_preconditions))
     print("SHOULD HAVE TWO OPEN: {0}".format(move.open_preconditions))
@@ -153,8 +163,12 @@ if __name__ == '__main__':
     print("SHOULD BE EMPTY: {0}".format(start.open_preconditions))
     print("SHOULD NOT HAVE PARENT: {0}".format(start.parents))
 
-    print()
-    print(move)
+    a = CausalLink("Test", None)
+    b = CausalLink("Test1", None)
+    c = CausalLink("Test2", None)
+    print(a, b, c)
+
+
     finish.print(False)
     move.print(False)
     start.print(False)

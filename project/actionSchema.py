@@ -27,6 +27,9 @@ class ActionSchema:
     def move_possible(agent_pos, dir):
         """ Whether or not it is possible to perform move action 
 
+        TODO:
+        Must check if an agent is at the position
+
         Keyword arguments:
         agent_pos -- the agent's position
         dir   -- direction to move
@@ -35,36 +38,36 @@ class ActionSchema:
         return free(next_pos)
 
     @staticmethod
-    def move_preconditions(agent=None, dir=None):
+    def move_preconditions(agent_pos=None, dir=None):
         """ Return preconditions
 
         Keyword arguments:
-        agent -- the agent
-        dir   -- direction to move
+        agent_pos -- the agent's position
+        dir       -- direction to move
         """
-        if agent is None:
+        if agent_pos is None:
             next_pos = None
             agent_position = None
         else:
-            next_pos = calculate_next_position(agent.position, dir)
-            agent_position = agent.position
+            next_pos = calculate_next_position(agent_pos, dir)
+            agent_position = agent_pos
         return [ create_literal_dict(AGENT_AT, [agent_position]),
                  create_literal_dict(FREE, [next_pos]) ]
 
     @staticmethod
-    def move_effects(agent=None, dir=None):
+    def move_effects(agent_pos=None, dir=None):
         """ Return add and delete lists 
 
         Keyword arguments:
-        agent -- the agent
-        dir   -- direction to move
+        agent_pos -- the agent's position
+        dir       -- direction to move
         """
-        if agent is None:
+        if agent_pos is None:
             next_pos = None
             agent_position = None
         else:
-            next_pos = calculate_next_position(agent.position, dir)
-            agent_position = agent.position
+            next_pos = calculate_next_position(agent_pos, dir)
+            agent_position = agent_pos
 
         add = [ create_literal_dict(AGENT_AT,  [next_pos]),
                 create_literal_dict(FREE, [agent_position]) ]
@@ -75,9 +78,12 @@ class ActionSchema:
     @staticmethod
     def push_possible(agent_pos, agent_dir, box_dir):
         """ Whether or not it is possible to perform push action 
+
+        TODO:
+        Must check if an agent is at the position
         
         Keyword arguments:
-        agent_pos -- the agent
+        agent_pos -- the agent's position
         agent_dir -- direction in which agent will move
         box_dir   -- direction in which box will be pushed
         """
@@ -86,44 +92,45 @@ class ActionSchema:
         return boxAt(box_position) and free(box_next_pos)
 
     @staticmethod
-    def push_preconditions(agent=None, agent_dir=None, box_dir=None):
+    def push_preconditions(agent_pos=None, agent_dir=None, box_dir=None):
         """ Return preconditions
 
         Keyword arguments:
-        agent     -- the agent
+        agent_pos -- the agent's position
         agent_dir -- direction in which agent will move
         box_dir   -- direction in which box will be pushed
         """
-        if agent is None:
+        #print("CHECKING PUSH PRECONDITIONS (actionschema) ", agent_pos, agent_dir, box_dir)
+        if agent_pos is None:
             box_position = None
             box_next_pos = None
             agent_position = None
         else:
-            box_position = calculate_next_position(agent.position, agent_dir)
+            box_position = calculate_next_position(agent_pos, agent_dir)
             box_next_pos = calculate_next_position(box_position, box_dir)
-            agent_position = agent.position
+            agent_position = agent_pos
 
         return [ create_literal_dict(AGENT_AT, [agent_position]),
                  create_literal_dict(BOX_AT, [box_position]),
                  create_literal_dict(FREE, [box_next_pos]) ]
 
     @staticmethod
-    def push_effects(agent=None, agent_dir=None, box_dir=None):
+    def push_effects(agent_pos=None, agent_dir=None, box_dir=None):
         """ Return add and delete lists
         
         Keyword arguments:
-        agent     -- the agent
+        agent_pos -- the agent's position
         agent_dir -- direction in which agent will move
         box_dir   -- direction in which box will be pushed
         """
-        if agent is None:
+        if agent_pos is None:
             box_position = None
             box_next_pos = None
             agent_position = None
         else:
-            box_position = calculate_next_position(agent.position, agent_dir)
+            box_position = calculate_next_position(agent_pos, agent_dir)
             box_next_pos = calculate_next_position(box_position, box_dir)
-            agent_position = agent.position
+            agent_position = agent_pos
 
         add = [ create_literal_dict(AGENT_AT, [box_position]),
                 create_literal_dict(BOX_AT, [box_next_pos]),
@@ -134,8 +141,11 @@ class ActionSchema:
         return add, delete
 
     @staticmethod
-    def pull_possible(agent, agent_dir, box_dir_wrt_agent):
+    def pull_possible(agent_pos, agent_dir, box_dir_wrt_agent):
         """ Whether or not it is possible to perform pull action 
+
+        TODO: 
+        We must make sure that there is an agent at the correct position
         
         Keyword arguments:
         agent_pos         -- the agent's position
@@ -147,44 +157,44 @@ class ActionSchema:
         return free(agent_next_pos) and boxAt(box_position)
 
     @staticmethod
-    def pull_preconditions(agent=None, agent_dir=None, box_dir_wrt_agent=None):
+    def pull_preconditions(agent_pos=None, agent_dir=None, box_dir_wrt_agent=None):
         """ Return preconditions
 
         Keyword arguments:
-        agent             -- the agent
+        agent_pos         -- the agent's pos
         agent_dir         -- direction in which agent will move
         box_dir_wrt_agent -- where box is relative to agent
         """
-        if agent is None:
+        if agent_pos is None:
             agent_next_pos = None
             box_position   = None
             agent_position = None
         else:
-            agent_next_pos = calculate_next_position(agent.position, agent_dir)
-            box_position   = calculate_next_position(agent.position, box_dir_wrt_agent)
-            agent_position = agent.position
+            agent_next_pos = calculate_next_position(agent_pos, agent_dir)
+            box_position   = calculate_next_position(agent_pos, box_dir_wrt_agent)
+            agent_position = agent_pos
 
         return [ create_literal_dict(AGENT_AT, [agent_position]),
                  create_literal_dict(BOX_AT, [box_position]),
                  create_literal_dict(FREE, [agent_next_pos]) ]
 
     @staticmethod
-    def pull_effects(agent=None, agent_dir=None, box_dir_wrt_agent=None):
+    def pull_effects(agent_pos=None, agent_dir=None, box_dir_wrt_agent=None):
         """ Return add and delete lists 
         
         Keyword arguments:
-        agent             -- the agent
+        agent_pos         -- the agent's position
         agent_dir         -- direction in which agent will move
         box_dir_wrt_agent -- where box is relative to agent
         """
-        if agent is None:
+        if agent_pos is None:
             agent_next_pos = None
             box_position   = None
             agent_position = None
         else:
-            agent_next_pos = calculate_next_position(agent.position, agent_dir)
-            box_position   = calculate_next_position(agent.position, box_dir_wrt_agent)
-            agent_position = agent.position
+            agent_next_pos = calculate_next_position(agent_pos, agent_dir)
+            box_position   = calculate_next_position(agent_pos, box_dir_wrt_agent)
+            agent_position = agent_pos
 
         add = [ create_literal_dict(AGENT_AT, [agent_next_pos]),
                 create_literal_dict(BOX_AT, [agent_position]),
@@ -211,7 +221,7 @@ class ActionSchema:
             # loop through all wanted actions
             # and find those that achieve a possible wanted effect
             for action in wanted_actions:
-                wanted_moves = [] # [(agent_position, [*directions]), ...]
+                wanted_moves = [] # [[agent_position, *directions], ...]
                 if action == MOVE:
                     if wanted_literal == AGENT_AT:
                         #print("AGENT_AT")
@@ -220,14 +230,14 @@ class ActionSchema:
                         for dir in all_directions:
                             pos = calculate_prev_position(next_pos, dir)
                             if achievable(pos):
-                                wanted_moves.append((pos, [dir]))
+                                wanted_moves.append(([pos, dir]))
                     elif wanted_literal == FREE:
                         #print("FREE")
                         to_become_free = wanted_effect['arguments'][0]
                         for dir in all_directions:
                             pos = calculate_next_position(to_become_free, dir)
                             if achievable(pos):
-                                wanted_moves.append((pos, [dir]))
+                                wanted_moves.append(([pos, dir]))
                 elif action == PUSH:
                     #  ++++     ++++
                     #  +A0+ --> +0 + 
@@ -247,7 +257,7 @@ class ActionSchema:
                                     # calculate where box would land
                                     box_pos = calculate_next_position(next_pos, box_dir)
                                     if achievable(box_pos):
-                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                                        wanted_moves.append(([agent_pos, agent_dir, box_dir]))
                     elif wanted_literal == BOX_AT:
                         # where should the box end up
                         box_next_pos = wanted_effect['arguments'][0]
@@ -261,7 +271,7 @@ class ActionSchema:
                                         continue
                                     agent_pos = calculate_prev_position(box_pos, agent_dir)
                                     if achievable(agent_pos):
-                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                                        wanted_moves.append(([agent_pos, agent_dir, box_dir]))
                     elif wanted_literal == FREE:
                         to_become_free = wanted_effect['arguments'][0]
                         for agent_dir in all_directions:
@@ -275,7 +285,7 @@ class ActionSchema:
                                     # calculate where box would land
                                     box_pos = calculate_next_position(agent_pos, box_dir)
                                     if achievable(box_pos):
-                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                                        wanted_moves.append(([agent_pos, agent_dir, box_dir]))
                 elif action == PULL:
                     #  ++++     ++++
                     #  +0 + --> +A0+ 
@@ -298,7 +308,7 @@ class ActionSchema:
                                     box_pos = calculate_next_position(agent_pos, box_dir)
                                     #print("box: ", box_pos, box_dir)
                                     if achievable(box_pos):
-                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                                        wanted_moves.append(([agent_pos, agent_dir, box_dir]))
                     elif wanted_literal == BOX_AT:
                         box_next_pos = wanted_effect['arguments'][0]
                         # we will be walking backwards
@@ -311,7 +321,7 @@ class ActionSchema:
                                         continue
                                     agent_next_pos = calculate_next_position(box_next_pos, agent_dir)
                                     if achievable(agent_next_pos):
-                                        wanted_moves.append((box_next_pos, [agent_dir, box_dir]))
+                                        wanted_moves.append(([box_next_pos, agent_dir, box_dir]))
                     elif wanted_literal == FREE:
                         to_become_free = wanted_effect['arguments'][0]
                         for box_dir in all_directions:
@@ -325,11 +335,11 @@ class ActionSchema:
                                     # calculate where box would land
                                     agent_next_pos = calculate_next_position(agent_pos, agent_dir)
                                     if achievable(agent_next_pos):
-                                        wanted_moves.append((agent_pos, [agent_dir, box_dir]))
+                                        wanted_moves.append(([agent_pos, agent_dir, box_dir]))
 
                 # construct corresponding action dictionary
-                for _, dir_list in wanted_moves:
-                    applicable_actions.append(create_action_dict(action, dir_list))
+                for arg_list in wanted_moves:
+                    applicable_actions.append(create_action_dict(action, arg_list))
         return applicable_actions
 
 
