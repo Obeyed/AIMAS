@@ -133,11 +133,11 @@ class CausalLink:
 
 
   def print(self, simple=True):
-    print("{0}({1})".format(self.action, self.arguments))
+    print("{0}({1}) {2}".format(self.action, self.arguments, self))
     if not simple:
       print("+--open conds: {0}".format(self.open_preconditions))
-      print("+--parent: {0}".format([parent.action for parent in self.parents]))
-      print("+--children: {0}".format([child.action for child in self.children]))
+      print("+--parent: {0}".format([(parent.action, parent) for parent in self.parents]))
+      print("+--children: {0}".format([(child.action, child) for child in self.children]))
 
 
 if __name__ == '__main__':
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                                        create_literal_dict(BOX_AT, [(3,3)]) ])
 
     move = CausalLink("Move", 
-                      [agent, "W"], 
+                      [agent.position, "W"], 
                       [finish])
     print("SHOULD BE EMPTY: {0}".format(finish.open_preconditions))
     print("SHOULD HAVE TWO OPEN: {0}".format(move.open_preconditions))
@@ -172,3 +172,5 @@ if __name__ == '__main__':
     finish.print(False)
     move.print(False)
     start.print(False)
+
+    print(start.list_action_effects())
