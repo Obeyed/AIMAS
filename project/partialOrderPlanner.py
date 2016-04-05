@@ -87,15 +87,15 @@ class PartialOrderPlanner:
 
 
     def get_best_plan(self):
-        """ Return best plan first 
-        
+        """ Return best plan first
+
         TODO: Fix this
         """
         return self.plans.pop()
 
 
 class PartialPlan:
-    
+
     def __init__(self, initial_state, goal_state):
         # create initial nodes
         start  = CausalLink("Start", None, initial_state=initial_state)
@@ -103,7 +103,7 @@ class PartialPlan:
         # do not change order of these two
         self.plan = [ start, finish ]
 
-    
+
     def introduced_conflicts(self, node):
         """ check if new node has introduced any conflicts """
         delete_list = node.list_action_effects(add_only=False, del_only=True)
@@ -214,8 +214,8 @@ if __name__ == '__main__':
     #  ++++++
     #  +aA 0+
     #  ++++++
-    builtins.walls = { (0,0): "+", (0,1): "+", (0,2): "+", (0,3): "+", (0,4): "+", (0,5): "+", 
-                       (1,0): "+",                                                 (1,5): "+", 
+    builtins.walls = { (0,0): "+", (0,1): "+", (0,2): "+", (0,3): "+", (0,4): "+", (0,5): "+",
+                       (1,0): "+",                                                 (1,5): "+",
                        (2,0): "+", (2,1): "+", (2,2): "+", (2,3): "+", (2,4): "+", (2,5): "+" }
     builtins.goals = { (1,1): 'a' }
     builtins.boxes = { (1,2): 'A' }

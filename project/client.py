@@ -1,5 +1,7 @@
 import sys
 import re
+from node import *
+from strategy import *
 
 walls = {}
 goals = {}
@@ -9,15 +11,13 @@ colors = {}
 
 directions = ['N','E','S','W']
 
-# For testing
-#fo = open('client.txt','w+')
-
 # parse the level, supports multicolor
 def parselvl():
+    initialstate = Node(None)
     count = 0
     for line in sys.stdin:
         if line == '\n':
-            return
+            return initialstate
         if re.match('^[a-z]+:\s*[0-9A-Z](,\s*[0-9A-Z])*\s*$',line):
             line = line.replace('\n','')
             line = line.replace(' ','')
@@ -28,28 +28,49 @@ def parselvl():
 
         for idx in range(len(line)):
             if line[idx] == '+':
-                walls[idx,count] = '+'
+                initialstate.walls[idx,count] = '+'
             elif line[idx].isupper():
-                boxes[idx,count] = line[idx]
+                initialstate.boxes[idx,count] = line[idx]
             elif line[idx].islower():
-                goals[idx,count] = line[idx]
+                initialstate.goals[idx,count] = line[idx]
             elif line[idx].isdigit():
-                agents[idx,count] = line[idx]
+                initialstate.agentsrow = idx
+                initialstate.agentscol = count
         count += 1
 
-        # For testing
-        #fo.write(''.join(['walls: ',str(len(walls)),'\n']))
-        #fo.write(''.join(['goals: ',str(len(goals)),'\n']))
-        #fo.write(''.join(['boxes: ',str(len(boxes)),'\n']))
-        #fo.write(''.join(['agents: ',str(len(agents)),'\n']))
-        #fo.write(''.join(['colors: ',str(len(colors)),'\n']))
-        #if len(colors) > 0:
-            #fo.write(''.join([colors['0'],'\n']))
-            #fo.write(''.join([colors['A'],'\n']))
+def search(strategy,state):
+    strategy.addtofrontier(state)
+    idx = 1
+    while 1:
+        if (strategy.frontierisempty()):
+            sys.stderr.write(''.join(['list ',str(len(strategy.frontier)),'\n']))
+            sys.stderr.flush()
+            return None
+        leafnode = strategy.getandremoveleaf()
+        if (leafnode.isgoalstate()):
+            return leafnode
+
+
+        strategy.addToExplored(leafnode)
+        for n in leafnode.getexpandednodes():
+            if not(strategy.isexplored(n) or strategy.infrontier(n)):
+                strategy.addtofrontier(n)
+        sys.stderr.write(''.join(['frontier ',str(len(strategy.frontier)),'\n']))
+        sys.stderr.flush()
+        idx = idx + 1
+
+
 
 
 # Main
-parselvl()
+initialstate = parselvl()
+#childnode = initialstate.childnode()
+#sys.stderr.write(childnode.tostring())
+#sys.stderr.flush()
+strat = Strategy()
+n = search(strat,initialstate)
+#sys.stderr.write(''.join([str(n.g),'\n']))
+#sys.stderr.flush()
 i = 2
 while 1:
     sys.stdout.write(''.join(['[Move(',directions[i % 4],')]\n']))
