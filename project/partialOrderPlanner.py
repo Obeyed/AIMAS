@@ -184,6 +184,45 @@ class PartialPlan:
         for node in self.plan:
             node.print(False)
 
+class Tree:
+
+    def __init__(self, root):
+        self.root     = Node(root)
+        self.frontier = [self.root]
+        self.explored = []
+
+
+    def frontier_empty(self):
+        return len(self.frontier) == 0
+
+
+    def get(self):
+        node = self.frontier.pop(0)
+        self.explored.append(node)
+        return node
+
+
+    def add(self, node, child):
+        child_node = Node(child, node)
+        node.add_child(child_node)
+        self.frontier.append(child_node)
+
+
+class Node:
+
+    def __init__(self, action_dict, parent=None):
+        self.action    = action_dict['action']
+        self.arguments = action_dict['arguments']
+
+        self.children  = []
+        self.parent    = parent 
+
+
+    def add_child(self, child):
+        self.children.append(child)
+
+
+
 
 def find_action_from_precondition(precondition):
     """ Find possible and achievable actions that fulfils precondition """
