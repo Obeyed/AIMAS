@@ -11,6 +11,11 @@ MOVE, PUSH, PULL = "Move", "Push", "Pull"
 NO_MOVE_ARGS, NO_PUSH_ARGS, NO_PULL_ARGS = 2, 3, 3
 # Action list names
 ADD, DEL = "add", "delete"
+# keywords
+POSSIBLE = 'possible'
+EFFECTS  = 'effects'
+PRECONDITIONS = 'preconditions'
+
 
 def calculate_next_position(pos, dir, reverse=False):
     """ Calculate next coordinate
