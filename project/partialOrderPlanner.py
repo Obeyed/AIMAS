@@ -1,227 +1,242 @@
-from actionSchema import ActionSchema
-from causalLink import CausalLink
+from actionSchema import action_helpers, find_applicable_actions
 from utilities import MOVE, PUSH, PULL
-from utilities import AGENT_AT, BOX_AT, FREE
-from utilities import ADD, DEL
-from utilities import calculate_next_position, create_literal_dict, create_action_dict
+from utilities import PRECONDITIONS, EFFECTS, START, FINISH
+from utilities import AGENT_AT, BOX_AT, FREE, ADD, DEL
+from utilities import calculate_next_position, create_literal_dict
+from utilities import create_action_dict
 
-import copy
+class Action:
+
+    def __init__(self, action, arguments, preconditions, effects):
+        """ Action container for hashing purposes
+
+        action_dict has the following structure
+        { 'action': 'Move',
+          'arguments': [(1,3), 'W', 'W'],
+          'effects': [],
+          'preconditions': [] }
+
+        Keyword arguments:
+        action -- action's name
+        arguments -- list of action's arguments
+        preconditions -- list of dict
+        effects -- tuple of positive and negative effects
+        """
+        self.action = action
+        self.arguments = arguments or []
+        self.preconditions = ( [Precondition(p) for p in preconditions]
+            if preconditions is not None else [] )
+        self.effects = effects or ([],[])
+
+    def get_formatted_preconditions(self):
+        """ List of formatted literal dicts """
+        return [p.get_literal_dict() for p in self.preconditions]
+
+    def to_str(self):
+        return (str(self.action) + "(" + ",".join([str(x) 
+            for x in self.arguments]) + ")")
+
+class Precondition:
+
+    def __init__(self, literal_dict):
+        """ Precondition container for hashing purposes 
+        
+        literal_dict has the following structure
+        { 'literal': 'agentAt',
+          'arguments': [(1,3)] }
+        """
+        self.literal = literal_dict['literal']
+        self.arguments = literal_dict['arguments']
+
+
+    def get_literal_dict(self):
+        """ Format precondition as plain dict """
+        return create_literal_dict(self.literal, self.arguments)
+
 
 class PartialOrderPlanner:
 
     def __init__(self, initial_state, goal_state):
-        initial_plan = PartialPlan(initial_state, goal_state)
-        self.plans = [ initial_plan ]
+        """ construct planner """
+        self.start_action  = Action(START, None, None, (initial_state, []))
+        self.finish_action = Action(FINISH, None, goal_state, None)
+        # keep track of which actions have been created
+        # NOTE should we allow same actions? maybe they do occur..
+        self.created_actions = { 
+                self.start_action.to_str(): self.start_action, 
+                self.finish_action.to_str(): self.finish_action }
+        # initial plan contains start and finish
+        self.actions = { self.start_action, self.finish_action }
+        # initially we only have start before finish
+        self.ordering_constraints = { (self.start_action, self.finish_action) }
+        # initially we have no causal links
+        self.causal_links = set()
+        # dict of achieving actions for given precondition
+        # where precondition is key and list of achievers is value
+        # will have incomplete action (only action and arguments)
+        # will be plain action_dict
+        self.precondition_achiever = dict()
+        # add goal state to open preconditions
+        self.open_preconditions = set()
+        for p in self.finish_action.get_formatted_preconditions():
+            precond = Precondition(p)
+            # add open preconditions as tuple (precondition, action)
+            self.open_preconditions.add((precond, self.finish_action))
+            # use plain precondition dict to find achieving actions
+            self.precondition_achiever[precond] = find_action_from_precondition(p)
 
 
     def create(self):
-        """ Construct partial plan """
-        plan = self.get_best_plan()
-        while plan and plan.has_open_preconditions() or plan.start_has_no_children():
-            # TODO is this exhaustive?
-            # if plan has no open preconditions and it is not connected tot start then it is invalid
-            if plan.start_has_no_children() and not plan.has_open_preconditions():
-                print("-- plan was incomplete")
-                plan = self.get_best_plan()
-                continue
+        print("create")
+        while len(self.open_preconditions) > 0:
+            print("successor")
+            self.successor()
 
-            new_plans = self.step(plan)
+        # TODO topologically sort plan and return
 
-            # TODO: validate if any conflicts arise
-            self.plans += new_plans
-
-            # TODO topologically sort plan
-
-            print("PLANS ", len(self.plans))
-            # next plan
-            plan = self.get_best_plan()
-        # TODO return best plan
-        return plan
-
-    def step(self, plan):
-        #while True:
-        # first open precondition
-        node_idx, open_node, to_be_achieved = plan.get_open_precondition()
-        print("++", to_be_achieved, "for", open_node.action)
-
-        # check if we have node in plan that achieves precondition
-        achiever_idx, achieving_node = plan.find_achiever(open_node, to_be_achieved)
-
-        plans = []
-        if achieving_node is not None:
-            #print("FOUND ACHIEVING NODE: {0}".format(achieving_node.action))
-            # add parent and child
-            new_plan = copy.deepcopy(plan)
-            achiever = copy.deepcopy(achieving_node)
-            dependent = copy.deepcopy(open_node)
-            new_plan.connect_achiever(achiever, dependent, achiever_idx, node_idx)
-            # must not have loops
-            loop = False
-            for p in achiever.parents:
-                for c in achiever.parents:
-                    if p.action == c.action and p.arguments == c.arguments:
-                        loop = True
-            if not loop:
-                plans.append(new_plan)
-        else:
-            #print("SEARCHING FOR APPLICABLE ACTIONS TO FULFIL PRECONDITION")
-            # otherwise, find action that fulfils precondition
-            possible_actions = find_action_from_precondition(to_be_achieved)
-            # if list is empty we simply continue to next plan and discard current
-            #print("POSSIBLE ACTIONS: {0}".format(possible_actions))
-            #print("{0} POSSIBLE ACTIONS FOR {1}({2}) {3}".format(len(possible_actions), to_be_achieved['literal'], to_be_achieved['arguments'], possible_actions))
-            for action in possible_actions:
-                dependent = copy.deepcopy(open_node)
-                # TODO: this could probably be done more efficiently instead of copying
-                # create new copy of plan
-                #print("COPYING CURRENT PLAN")
-                new_plan = copy.deepcopy(plan)
-                #print("ADDING {0} to {1}".format(action, open_node.action))
-                new_plan.add(action, dependent, node_idx)
-                plans.append(new_plan)
-        return plans
-
-
-    def have_plans(self):
-        return len(self.plans) > 0
-
-
-    def get_best_plan(self):
-        """ Return best plan first 
-        
-        TODO: Fix this
+    def successor(self):
+        """ arbitrarily picks an open precondition p on an action B and
+        generates successor plan for every possible consistent way of 
+        choosing an action A that achieves p
         """
-        return self.plans.pop()
+        print([a.to_str() for a in self.actions])
+        open_precond, dependent_action = self.open_preconditions.pop()
+        achieving_action = self.create_action_from_incomplete(
+                self.precondition_achiever[open_precond].pop())
+        new_constraint = (achieving_action, dependent_action)
+
+        if (self.creates_cycle(new_constraint) 
+        or self.illegal_constraint(new_constraint)):
+            # cannot add cycles to set of constraints
+            # re-add open precondition and return
+            self.open_preconditions.add((open_precond, dependent_action))
+            return 
+        else:
+            # otherwise we can add constraint
+            self.ordering_constraints.add(new_constraint)
+            self.causal_links.add((achieving_action, open_precond, 
+                dependent_action))
+            for p in achieving_action.preconditions:
+                self.open_preconditions.add((p, achieving_action))
+                self.precondition_achiever[p] = find_action_from_precondition(
+                        p.get_literal_dict())
+
+            if achieving_action not in self.actions:
+                self.actions.add(achieving_action)
+                self.ordering_constraints.add((self.start_action,
+                    achieving_action))
+                self.ordering_constraints.add((achieving_action,
+                    self.finish_action))
+
+            potential_conflicts = self.check_potential_conflicts(
+                    achieving_action)
+            if len(potential_conflicts) > 0:
+                conflicts = self.validate_conflicts(achieving_action,
+                        potential_conflicts)
+                if len(conflicts) > 0:
+                    resolved = self.resolve_conflicts(achieving_action,
+                            conflicts)
+                    if not resolved:
+                        self.backtrack(achieving_action, dependent_action)
 
 
-class PartialPlan:
-    
-    def __init__(self, initial_state, goal_state):
-        # create initial nodes
-        start  = CausalLink("Start", None, initial_state=initial_state)
-        finish = CausalLink("Finish", None, open_preconditions=goal_state)
-        # do not change order of these two
-        self.plan = [ start, finish ]
+    def backtrack(self, achiever, dependent):
+        """ Remove all constraints and causal links that include 
+        the action as an achiever and open the preconditions again
 
-    
-    def introduced_conflicts(self, node):
-        """ check if new node has introduced any conflicts """
-        delete_list = node.list_action_effects(add_only=False, del_only=True)
+        TODO:
+        do we miss any constraints that were added to resolve conflicts?
+        """
+        causal_links_to_discard = {(A, p, B) for A,p,B in self.causal_links
+                if A is achiever or A is dependent or B is dependent}
 
-        for child in node.children:
-            while child.children and len(child.children) > 0:
-
-
-    def start_has_no_children(self):
-        return len(self.plan[0].children) == 0
-
-
-    def connect_achiever(self, achiever, dependent, a_idx, d_idx):
-        """ Connect achieving node to a dependent node and update plan with updated nodes """
-        dependent.add_parent(achiever)
-        achiever.add_child(dependent)
-
-        self.plan[d_idx] = dependent
-        self.plan[a_idx] = achiever
-        #print("ADDED ACHIEVER {0} to {1}".format(achiever.action, dependent.action))
-        #print("OPEN PRECOND: ", dependent.open_preconditions)
+        for (A,p,B) in causal_links_to_discard:
+            self.causal_links.discard((A,p,B))
+            self.ordering_constraints.discard((A,B))
+            if A is dependent:
+                # re-add precondition
+                self.open_preconditions.add(p)
+            elif B is self.finish_action:
+                self.open_preconditions.add(p)
+            else:
+                # we cannot remove finish action
+                self.actions.discard(B)
+                del self.created_actions[B.to_str()]
+            self.actions.discard(A)
+            del self.created_actions[A.to_str()]
 
 
-    def add(self, action, dependent, d_idx):
-        """ Create a causal link and connect it to dependent node and add to plan """
-        #print("CONSTRUCTING NEW NODE")
-        achieving_node = CausalLink(action['action'], action['arguments'])
-        #print("ADDING PARENT")
-        dependent.add_parent(achieving_node)
-        #print("ADDING CHILD")
-        achieving_node.add_child(dependent)
-
-        #print("ADDING NODE TO PLAN")
-        self.plan.append(achieving_node)
-
-        self.plan[d_idx] = dependent
-
-
-    def has_open_preconditions(self):
-        """ Does the current plan have open preconditions? """
-        #print("SEARCHING FOR OPEN PRECONDITIONS")
-        for node in self.plan:
-            #node.print(False)
-            if node.has_open_precondition():
-                return True
-        return False
-
-    def get_open_precondition(self):
-        node_idx, node = self.find_node_with_open_precondition()
-        #print("## NODE WITH OPEN PRECONDITION: {0}".format(node.action))
-        open_precond = node.find_open_preconditions()[0]
-        #print("## TO BE ACHIEVED: {0}".format(open_precond))
-        return node_idx, node, open_precond
+    def resolve_conflicts(self, C, conflicts):
+        """ Attempt to resolve conflicts. If not possible, return false.
+        Otherwise return true.
+        """
+        for A, B in conflicts:
+            if (not self.creates_cycle((C,A)) 
+            and not self.illegal_constraint((C,A))):
+                self.ordering_constraints.add((C,A))
+            elif (not self.creates_cycle((B,C))
+            and not self.illegal_constraint((B,C))):
+                self.ordering_constraints.add((B,C))
+            else:
+                # if not possible to resolve conflict
+                return False
+        return True
 
 
-    def find_node_with_open_precondition(self):
-        """ Find node with open precondition """
-        for idx, node in enumerate(self.plan):
-            if node.has_open_precondition():
-                return idx, node
+    def validate_conflicts(self, C, potentials):
+        """ Validate the list of potential conflicts and return it """
+        return [(A,B) for A, B in potentials if 
+                (A,C) in self.ordering_constraints and 
+                (C,B) in self.ordering_constraints]
 
 
-    def find_achiever(self, dependent, precondition):
-        """ Attempt to find node already in plan that achieves precondition """
-        for idx, node in enumerate(self.plan):
-            # cannot achieve precondition by myself
-            if node is dependent:
-                continue
-
-            x = node.list_action_effects()
-            for p in x:
-                if precondition == p:
-                    return idx, node
-        return None, None
+    def check_potential_conflicts(self, action):
+        """ Find potential conflicts and return them """
+        neg_effects = action.effects[1]
+        potential_conflicts = []
+        for effect in neg_effects:
+            for A, p, B in self.causal_links:
+                if p.get_literal_dict() == effect:
+                    potential_conflicts.append((A,B))
+        return potential_conflicts            
 
 
-    def print(self):
-        for node in self.plan:
-            node.print(False)
-
-class Tree:
-
-    def __init__(self, root):
-        self.root     = Node(root)
-        self.frontier = [self.root]
-        self.explored = []
+    def illegal_constraint(self, ordering_constraint):
+        """ Validate that constraint is not illegal """
+        illegal = False
+        if self.start_action is ordering_constraint[1]:
+            illegal = True
+        elif self.finish_action is ordering_constraint[0]:
+            illegal = True
+        return illegal
 
 
-    def frontier_empty(self):
-        return len(self.frontier) == 0
+    def creates_cycle(self, ordering_constraint):
+        """ Validate that ordering constraint will not create a cycle """
+        return ((ordering_constraint[1], ordering_constraint[0]) 
+                in self.ordering_constraints)
 
 
-    def get(self):
-        node = self.frontier.pop(0)
-        self.explored.append(node)
-        return node
+    def create_action_from_incomplete(self, action_dict):
+        """ Complete action's fields and return an action instance.
+        If action exists in set of created actions, it will be reused.
 
-
-    def add(self, node, child):
-        child_node = Node(child, node)
-        node.add_child(child_node)
-        self.frontier.append(child_node)
-
-
-class Node:
-
-    def __init__(self, action_dict, parent=None):
-        self.action    = action_dict['action']
-        self.arguments = action_dict['arguments']
-
-        self.children  = []
-        self.parent    = parent 
-
-
-    def add_child(self, child):
-        self.children.append(child)
-
-
+        Returns complete action instance
+        """
+        act = action_dict['action']
+        args = action_dict['arguments']
+        action_descriptor = Action(act, args, None, None).to_str()
+        # if action's already been created use it
+        # otherwise create new and add to list of created
+        if action_descriptor in self.created_actions:
+            action = self.created_actions[action_descriptor]
+        else:
+            preconditions = action_helpers[act][PRECONDITIONS](*args)
+            effects = action_helpers[act][EFFECTS](*args)
+            action = Action(act, args, preconditions, effects) 
+            # update list
+            self.created_actions[action_descriptor] = action
+        return action
 
 
 def find_action_from_precondition(precondition):
@@ -231,16 +246,19 @@ def find_action_from_precondition(precondition):
 
     # will only consider add lists (the first element of the tuples)
     # for each possible action
-    if literal in [ atom['literal'] for atom in ActionSchema.move_effects()[0] ]:
+    if (literal in [ atom['literal'] for atom in
+    action_helpers[MOVE][EFFECTS]()[0] ]):
         wanted_actions.append(MOVE)
-    if literal in [ atom['literal'] for atom in ActionSchema.push_effects()[0] ]:
+    if (literal in [ atom['literal'] for atom in
+    action_helpers[PUSH][EFFECTS]()[0] ]):
         wanted_actions.append(PUSH)
-    if literal in [ atom['literal'] for atom in ActionSchema.pull_effects()[0] ]:
+    if (literal in [ atom['literal'] for atom in
+    action_helpers[PULL][EFFECTS]()[0] ]):
         wanted_actions.append(PULL)
 
     # go through each possible permutation
     # check if it is achievable and add it to possible actions
-    possible_actions = ActionSchema.find_applicable_actions(wanted_actions, precondition)
+    possible_actions = find_applicable_actions(wanted_actions, precondition)
 
     return possible_actions
 
@@ -271,33 +289,7 @@ if __name__ == '__main__':
     goal_state = [ create_literal_dict(BOX_AT, [(1,1)]) ]
 
     planner = PartialOrderPlanner(initial_state, goal_state)
-    plan = PartialPlan(initial_state, goal_state)
 
-    #p1 = planner.step(plan)
-    #print("# FIRST ROUND")
-    #p1[0].print()
-    #print()
-
-    #p2 = planner.step(p1[0])
-    #print("# SECOND ROUND")
-    #for p in p2:
-    #    p.print()
-    #    print()
-
-    #p3 = planner.step(p2[0])
-    #print("# THIRD ROUND")
-    #for p in p3:
-    #    p.print()
-    #    print()
-
-    #p4 = planner.step(p3[0])
-    #print("# FOURTH ROUND")
-    #for p in p4:
-    #    p.print()
-    #    print()
-
-    p = planner.create()
-    print("## PRINTING PLAN ##")
-    # TODO nodes do not have correct parents and children
-    p.print()
+    planner.create()
+    print([act.to_str() for act in planner.actions])
 
