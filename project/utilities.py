@@ -7,6 +7,7 @@ AGENT_AT, BOX_AT = "agentAt", "boxAt"
 WEST, EAST, SOUTH, NORTH = 'W', 'E', 'S', 'N'
 # Actions
 MOVE, PUSH, PULL = "Move", "Push", "Pull"
+START, FINISH = "Start", "Finish"
 # ACtion's number of arguments
 NO_MOVE_ARGS, NO_PUSH_ARGS, NO_PULL_ARGS = 2, 3, 3
 # Action list names
@@ -58,14 +59,18 @@ def create_literal_dict(literal, args):
     return {'literal': literal, 'arguments': args}
 
 
-def create_action_dict(action, args):
+def create_action_dict(action, args, preconditions=None, effects=None):
     """ Create dictionary with action and its arguments
 
     Keyword arguments:
     action -- string representing the action, e.g. 'Move'
     args   -- list of arguments for action
     """
-    return {'action': action, 'arguments': args}
+    return {'action': action, 
+            'arguments': args,
+            'preconditions': preconditions,
+            'effects': effects }
+
 
 if __name__ == '__main__':
     print("NEXT:")
