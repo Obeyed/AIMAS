@@ -335,7 +335,7 @@ def achievable(cell):
     return ( not bool(walls.get(cell, False)) and 
              not(cell[0] < 0 or cell[1] < 0) )
 
-action = {
+action_helpers = {
     MOVE: {
       POSSIBLE: move_possible,
       PRECONDITIONS: move_preconditions,
