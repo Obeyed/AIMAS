@@ -3,17 +3,17 @@ import re
 from node import *
 from strategy import *
 
-walls = {}
-goals = {}
-agents = {}
-boxes = {}
-colors = {}
+#walls = {}
+#goals = {}
+#agents = {}
+#boxes = {}
+#colors = {}
 
 directions = ['N','E','S','W']
 
 # parse the level, supports multicolor
 def parselvl():
-    initialstate = Node(None)
+    initialstate = Node(None,None)
     count = 0
     for line in sys.stdin:
         if line == '\n':
@@ -23,62 +23,95 @@ def parselvl():
             line = line.replace(' ','')
             color,line = line.split(':')
             for ele in line.split(','):
-                colors[ele] = color
+                initialstate.colors[ele] = color
             continue
 
         for idx in range(len(line)):
             if line[idx] == '+':
-                initialstate.walls[idx,count] = '+'
+                initialstate.walls[count,idx] = '+'
             elif line[idx].isupper():
-                initialstate.boxes[idx,count] = line[idx]
+                initialstate.boxes[count,idx] = line[idx]
             elif line[idx].islower():
-                initialstate.goals[idx,count] = line[idx]
+                initialstate.goals[count,idx] = line[idx]
             elif line[idx].isdigit():
-                initialstate.agentsrow = idx
-                initialstate.agentscol = count
+                initialstate.agentrow = count
+                initialstate.agentcol = idx
         count += 1
 
 def search(strategy,state):
-    strategy.addtofrontier(state)
-    idx = 1
+    strategy.addtofrontier([state])
+    idx = 0
     while 1:
-        if (strategy.frontierisempty()):
-            sys.stderr.write(''.join(['list ',str(len(strategy.frontier)),'\n']))
+        #sys.stderr.write(''.join([str(len(strategy.explored)),' ',str(len(strategy.frontier)),'\n']))
+        #sys.stderr.flush()
+        #if idx > 5:
+        #    return None
+
+        if strategy.timespent() > 300:
+            sys.stderr.write('Time limit reached, terminating search!\n')
+            sys.stderr.write(strategy.searchstatus())
             sys.stderr.flush()
             return None
+
+        if idx % 400 == 0:
+            sys.stderr.write(strategy.searchstatus())
+            sys.stderr.flush()
+
+        if strategy.frontierisempty():
+            sys.stderr.write('Frontier is empty!\n')
+            sys.stderr.write(strategy.searchstatus())
+            return None
+
         leafnode = strategy.getandremoveleaf()
+
         if (leafnode.isgoalstate()):
+            sys.stderr.write(strategy.searchstatus())
+            sys.stderr.flush()
             return leafnode
 
-
-        strategy.addToExplored(leafnode)
-        for n in leafnode.getexpandednodes():
-            if not(strategy.isexplored(n) or strategy.infrontier(n)):
+        n = leafnode.getexpandednodes()
+        strategy.isexplored(n)
+        if len(n) > 0:
+            strategy.infrontier(n)
+            if len(n) > 0:
                 strategy.addtofrontier(n)
-        sys.stderr.write(''.join(['frontier ',str(len(strategy.frontier)),'\n']))
-        sys.stderr.flush()
-        idx = idx + 1
+        strategy.addtoexplored(leafnode)
+        idx += 1
 
-
+def getplan(state):
+    plan = []
+    while 1:
+        if state.parent == None:
+            return plan
+        plan.append(state.action)
+        state = state.parent
 
 
 # Main
 initialstate = parselvl()
-#childnode = initialstate.childnode()
-#sys.stderr.write(childnode.tostring())
-#sys.stderr.flush()
-strat = Strategy()
-n = search(strat,initialstate)
-#sys.stderr.write(''.join([str(n.g),'\n']))
-#sys.stderr.flush()
-i = 2
+n = search(Strategy(),initialstate)
+if n == None:
+    sys.stderr.write('Unable to solve lvl\n')
+    sys.stderr.flush()
+    sys.exit()
+
+plan = getplan(n)
+sys.stderr.write(''.join(['Found solution of length ',str(len(plan)),'\n']))
+sys.stderr.flush()
 while 1:
-    sys.stdout.write(''.join(['[Move(',directions[i % 4],')]\n']))
+    if len(plan) == 0:
+        sys.stderr.write('End of plan\n')
+        sys.stderr.flush()
+        sys.exit()
+
+    action = plan.pop()
+
+    sys.stdout.write(action.tostring())
     sys.stdout.flush()
 
     for line in sys.stdin:
         if line == '[true]\n':
+            n = n.parent
             break
-        if line == '[false]\n':
-            i += 1
+        elif line == '[false]\n':
             break
