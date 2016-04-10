@@ -1,3 +1,8 @@
+from toposort import toposort_flatten, toposort
+
+from action import Action
+from precondition import Precondition
+
 from actionSchema import action_helpers, find_applicable_actions
 from utilities import MOVE, PUSH, PULL
 from utilities import PRECONDITIONS, EFFECTS, START, FINISH
@@ -5,54 +10,7 @@ from utilities import AGENT_AT, BOX_AT, FREE, ADD, DEL
 from utilities import calculate_next_position, create_literal_dict
 from utilities import create_action_dict
 
-class Action:
-
-    def __init__(self, action, arguments, preconditions, effects):
-        """ Action container for hashing purposes
-
-        action_dict has the following structure
-        { 'action': 'Move',
-          'arguments': [(1,3), 'W', 'W'],
-          'effects': [],
-          'preconditions': [] }
-
-        Keyword arguments:
-        action -- action's name
-        arguments -- list of action's arguments
-        preconditions -- list of dict
-        effects -- tuple of positive and negative effects
-        """
-        self.action = action
-        self.arguments = arguments or []
-        self.preconditions = ( [Precondition(p) for p in preconditions]
-            if preconditions is not None else [] )
-        self.effects = effects or ([],[])
-
-    def get_formatted_preconditions(self):
-        """ List of formatted literal dicts """
-        return [p.get_literal_dict() for p in self.preconditions]
-
-    def to_str(self):
-        return (str(self.action) + "(" + ",".join([str(x) 
-            for x in self.arguments]) + ")")
-
-class Precondition:
-
-    def __init__(self, literal_dict):
-        """ Precondition container for hashing purposes 
-        
-        literal_dict has the following structure
-        { 'literal': 'agentAt',
-          'arguments': [(1,3)] }
-        """
-        self.literal = literal_dict['literal']
-        self.arguments = literal_dict['arguments']
-
-
-    def get_literal_dict(self):
-        """ Format precondition as plain dict """
-        return create_literal_dict(self.literal, self.arguments)
-
+DEBUG = False
 
 class PartialOrderPlanner:
 
@@ -83,44 +41,60 @@ class PartialOrderPlanner:
             # add open preconditions as tuple (precondition, action)
             self.open_preconditions.add((precond, self.finish_action))
             # use plain precondition dict to find achieving actions
-            self.precondition_achiever[precond] = find_action_from_precondition(p)
+            self.precondition_achiever[precond] = self.find_action_from_precondition(p)
 
 
     def create(self):
-        print("create")
+        """ Will return one object that contains possible total order plans """
         while len(self.open_preconditions) > 0:
-            print("successor")
             self.successor()
+        return toposort(self.create_dependency_dict())
 
-        # TODO topologically sort plan and return
 
     def successor(self):
-        """ arbitrarily picks an open precondition p on an action B and
+        """ Arbitrarily picks an open precondition p on an action B and
         generates successor plan for every possible consistent way of 
         choosing an action A that achieves p
         """
-        print([a.to_str() for a in self.actions])
         open_precond, dependent_action = self.open_preconditions.pop()
+        self.eliminate_retarded_actions(open_precond, dependent_action)
+
+        # TODO what if achieving action is undefined?
         achieving_action = self.create_action_from_incomplete(
-                self.precondition_achiever[open_precond].pop())
+            self.precondition_achiever[open_precond].pop(0))
         new_constraint = (achieving_action, dependent_action)
 
-        if (self.creates_cycle(new_constraint) 
-        or self.illegal_constraint(new_constraint)):
-            # cannot add cycles to set of constraints
-            # re-add open precondition and return
+        if DEBUG:
+            topo = list(toposort(self.create_dependency_dict()))
+            print()
+            order = print_from_partial_order(topo)
+            print("current plan:", order)
+            print("open preconditions:", len(self.open_preconditions))
+            print("attempting to close", open_precond.to_str(), "for", dependent_action.to_str())
+            print("achieving action:", achieving_action.to_str())
+            print("remaining possible achievers:")
+            print([ Action(action_dict['action'],
+                action_dict['arguments'],None,None).to_str() for action_dict in
+                self.precondition_achiever[open_precond] ])
+
+        if (self.creates_cycle(new_constraint) or
+                self.illegal_constraint(new_constraint)):
+            # can't add cycles to constraints - re-add open precondition
             self.open_preconditions.add((open_precond, dependent_action))
             return 
         else:
-            # otherwise we can add constraint
             self.ordering_constraints.add(new_constraint)
             self.causal_links.add((achieving_action, open_precond, 
                 dependent_action))
-            for p in achieving_action.preconditions:
-                self.open_preconditions.add((p, achieving_action))
-                self.precondition_achiever[p] = find_action_from_precondition(
-                        p.get_literal_dict())
 
+            for p in achieving_action.preconditions:
+                # open action's preconditions
+                self.open_preconditions.add((p, achieving_action))
+                # find and save actions that can close precondition
+                self.precondition_achiever[p] = (
+                    self.find_action_from_precondition(p.get_literal_dict()))
+
+            # if action is not already in set of actions, update stuff
             if achieving_action not in self.actions:
                 self.actions.add(achieving_action)
                 self.ordering_constraints.add((self.start_action,
@@ -146,6 +120,8 @@ class PartialOrderPlanner:
 
         TODO:
         do we miss any constraints that were added to resolve conflicts?
+        what if no more actions to delete -- delete more branches
+        how far back to we backtrack? not tested thoroughly. 
         """
         causal_links_to_discard = {(A, p, B) for A,p,B in self.causal_links
                 if A is achiever or A is dependent or B is dependent}
@@ -164,6 +140,29 @@ class PartialOrderPlanner:
                 del self.created_actions[B.to_str()]
             self.actions.discard(A)
             del self.created_actions[A.to_str()]
+
+
+    def eliminate_retarded_actions(self, precondition, dependent):
+        """ Eliminate actions that make zero sense.
+        TODO rename function...
+        """
+        for idx, action in enumerate(self.precondition_achiever[precondition]):
+            action = self.create_action_from_incomplete(action)
+            for p in action.preconditions:
+                if p.get_literal_dict() in dependent.effects[0]:
+                    del self.precondition_achiever[precondition][idx]
+                    break
+
+
+    def create_dependency_dict(self):
+        """ Construct dependency chain """
+        dependencies = dict()
+        for (achiever, dependent) in self.ordering_constraints:
+            try:
+                dependencies[dependent].add(achiever)
+            except KeyError:
+                dependencies[dependent] = {achiever}
+        return dependencies
 
 
     def resolve_conflicts(self, C, conflicts):
@@ -239,28 +238,48 @@ class PartialOrderPlanner:
         return action
 
 
-def find_action_from_precondition(precondition):
-    """ Find possible and achievable actions that fulfils precondition """
-    wanted_actions = []
-    literal = precondition['literal']
+    def find_action_from_precondition(self, precondition):
+        """ Find possible and achievable actions that fulfils precondition.
+        Will search for existing actions that can close precondition and prepend to
+        list.
+        """
+        wanted_actions = []
+        literal = precondition['literal']
 
-    # will only consider add lists (the first element of the tuples)
-    # for each possible action
-    if (literal in [ atom['literal'] for atom in
-    action_helpers[MOVE][EFFECTS]()[0] ]):
-        wanted_actions.append(MOVE)
-    if (literal in [ atom['literal'] for atom in
-    action_helpers[PUSH][EFFECTS]()[0] ]):
-        wanted_actions.append(PUSH)
-    if (literal in [ atom['literal'] for atom in
-    action_helpers[PULL][EFFECTS]()[0] ]):
-        wanted_actions.append(PULL)
+        # will only consider add lists (the first element of the tuples)
+        # for each possible action
+        if (literal in [ atom['literal'] for atom in
+        action_helpers[MOVE][EFFECTS]()[0] ]):
+            wanted_actions.append(MOVE)
+        if (literal in [ atom['literal'] for atom in
+        action_helpers[PUSH][EFFECTS]()[0] ]):
+            wanted_actions.append(PUSH)
+        if (literal in [ atom['literal'] for atom in
+        action_helpers[PULL][EFFECTS]()[0] ]):
+            wanted_actions.append(PULL)
 
-    # go through each possible permutation
-    # check if it is achievable and add it to possible actions
-    possible_actions = find_applicable_actions(wanted_actions, precondition)
+        # go through each possible permutation
+        # check if it is achievable and add it to possible actions
+        possible_actions = find_applicable_actions(wanted_actions, precondition)
 
-    return possible_actions
+        # check if any action already has desired effects
+        existing_achievers = list()
+        for action in self.actions:
+            if precondition in action.effects[0]:
+                existing_achievers.append(action.get_action_dict())
+
+        return existing_achievers + possible_actions
+
+
+def print_from_partial_order(pop):
+    """ Return list with total order plans """
+    top = list()
+    for s in pop:
+        new_s = set()
+        for act in s:
+            new_s.add(act.to_str())
+        top.append(new_s)
+    return top
 
 
 if __name__ == '__main__':
@@ -277,19 +296,16 @@ if __name__ == '__main__':
     builtins.goals = { (1,1): 'a' }
     builtins.boxes = { (1,2): 'A' }
     agent = Agent('mr. robot', (1,4))
-
-    print(agent.position, agent)
-    print(walls)
-    print(boxes)
-    print(goals)
-
+    level = "++++++\n+aA 0+\n++++++"
+    print("level:")
+    print(level)
     initial_state = [ create_literal_dict(AGENT_AT, [(1,4)]),
                       create_literal_dict(BOX_AT, [(1,2)]),
-                      create_literal_dict(FREE, [(1,3)]) ]
+                      create_literal_dict(FREE, [(1,3)]),
+                      create_literal_dict(FREE, [(1,1)]) ]
     goal_state = [ create_literal_dict(BOX_AT, [(1,1)]) ]
-
     planner = PartialOrderPlanner(initial_state, goal_state)
-
-    planner.create()
-    print([act.to_str() for act in planner.actions])
+    DEBUG = True
+    plan = planner.create()
+    print("## final total order plan:\n", print_from_partial_order(plan))
 
