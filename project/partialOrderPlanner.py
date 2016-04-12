@@ -171,10 +171,10 @@ class PartialOrderPlanner:
         """
         for A, B in conflicts:
             if (not self.creates_cycle((C,A)) 
-            and not self.illegal_constraint((C,A))):
+                    and not self.illegal_constraint((C,A))):
                 self.ordering_constraints.add((C,A))
             elif (not self.creates_cycle((B,C))
-            and not self.illegal_constraint((B,C))):
+                    and not self.illegal_constraint((B,C))):
                 self.ordering_constraints.add((B,C))
             else:
                 # if not possible to resolve conflict
