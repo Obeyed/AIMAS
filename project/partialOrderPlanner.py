@@ -169,15 +169,21 @@ class PartialOrderPlanner:
         """ Attempt to resolve conflicts. If not possible, return false.
         Otherwise return true.
         """
+        added_constraints = set()
         for A, B in conflicts:
             if (not self.creates_cycle((C,A)) 
                     and not self.illegal_constraint((C,A))):
                 self.ordering_constraints.add((C,A))
+                added_constraints.add((C,A))
             elif (not self.creates_cycle((B,C))
                     and not self.illegal_constraint((B,C))):
                 self.ordering_constraints.add((B,C))
+                added_constraints.add((B,C))
             else:
                 # if not possible to resolve conflict
+                # undo added constraints and return false
+                [self.ordering_constraints.discard((x,y)) for x,y in
+                        added_constraints]
                 return False
         return True
 
