@@ -4,11 +4,12 @@ import re
 # parse the level, supports multicolor
 def parselvl():
   """ Parses a level from server """
-  walls, goals, agents, boxes, colors = {}, {}, {}, {}, {}
+  walls, goals, agents, boxes, colors, free = {}, {}, {}, {}, {}, {}
   count = 0
   for line in sys.stdin:
     if line == '\n':
-      return
+      break
+
     # parse colors of agents and boxes
     if re.match('^[a-z]+:\s*[0-9A-Z](,\s*[0-9A-Z])*\s*$',line):
       line = line.replace('\n','').replace(' ','')
@@ -21,16 +22,24 @@ def parselvl():
     # where we have x = idx, y = count
     for idx in range(len(line)):
       if line[idx] == '+':
-        walls[idx,count] = '+'
+        walls[count,idx] = '+'
       elif line[idx].isupper():
-        boxes[idx,count] = line[idx]
+        boxes[count,idx] = line[idx]
       elif line[idx].islower():
-        goals[idx,count] = line[idx]
+        goals[count,idx] = line[idx]
       elif line[idx].isdigit():
-        agents[idx,count] = line[idx]
+        agents[count,idx] = line[idx]
+      elif line[idx] == " ":
+        free[count,idx] = ' '
     count += 1
 
-  sys.stderr(walls, goals, agents, boxes, colors)
-  sys.flush()
+  return walls, goals, agents, boxes, colors, free
 
-  return walls, goals, agents, boxes, colors
+if __name__ == "__main__":
+  w, g, a, b, c, f = parselvl()
+  print(w)
+  print(g)
+  print(a)
+  print(b)
+  print(c)
+  print(f)
