@@ -41,7 +41,8 @@ class PartialOrderPlanner:
             # add open preconditions as tuple (precondition, action)
             self.open_preconditions.add((precond, self.finish_action))
             # use plain precondition dict to find achieving actions
-            self.precondition_achiever[precond] = self.find_action_from_precondition(p)
+            self.precondition_achiever[(precond, self.finish_action)] = (
+                    self.find_action_from_precondition(p))
 
 
     def create(self):
@@ -59,23 +60,34 @@ class PartialOrderPlanner:
         open_precond, dependent_action = self.open_preconditions.pop()
         self.eliminate_retarded_actions(open_precond, dependent_action)
 
-        # TODO what if achieving action is undefined?
+        achieving_action = self.next_achiever(open_precond, dependent_action)
+        #print(open_precond.to_str(), dependent_action.to_str())
+
+        if achieving_action is None:
+            self.backtrack(dependent_action)
+            input("tryk på et eller andet for at fortsætte")
+            return
+
         achieving_action = self.create_action_from_incomplete(
-            self.precondition_achiever[open_precond].pop(0))
+                achieving_action)
         new_constraint = (achieving_action, dependent_action)
+         
+        #print("  ", achieving_action.to_str())
 
         if DEBUG:
             topo = list(toposort(self.create_dependency_dict()))
-            print()
             order = print_from_partial_order(topo)
             print("current plan:", order)
+            print("orderings:", [A.to_str()+"-"+B.to_str() for A,B in
+                self.ordering_constraints])
             print("open preconditions:", len(self.open_preconditions))
             print("attempting to close", open_precond.to_str(), "for", dependent_action.to_str())
             print("achieving action:", achieving_action.to_str())
             print("remaining possible achievers:")
             print([ Action(action_dict['action'],
                 action_dict['arguments'],None,None).to_str() for action_dict in
-                self.precondition_achiever[open_precond] ])
+                self.precondition_achiever[(open_precond,dependent_action)] ])
+            print()
 
         if (self.creates_cycle(new_constraint) or
                 self.illegal_constraint(new_constraint)):
@@ -83,6 +95,23 @@ class PartialOrderPlanner:
             self.open_preconditions.add((open_precond, dependent_action))
             return 
         else:
+            # check for conflicts before adding stuff
+            potential_conflicts = self.check_potential_conflicts(
+                    achieving_action)
+            if len(potential_conflicts) > 0:
+                #print("++ potential conflicts", [(a.to_str(),b.to_str()) for a,b in potential_conflicts])
+                conflicts = self.validate_conflicts(achieving_action,
+                        potential_conflicts)
+                if len(conflicts) > 0:
+                    #print("+++ conflicts", [(a.to_str(),b.to_str()) for a,b in conflicts])
+                    resolved = self.resolve_conflicts(achieving_action,
+                            conflicts)
+                    if not resolved:
+                        #print(" ++++ re-adding", open_precond.to_str())
+                        self.open_preconditions.add((open_precond, 
+                            dependent_action))
+                        return 
+
             self.ordering_constraints.add(new_constraint)
             self.causal_links.add((achieving_action, open_precond, 
                 dependent_action))
@@ -91,7 +120,7 @@ class PartialOrderPlanner:
                 # open action's preconditions
                 self.open_preconditions.add((p, achieving_action))
                 # find and save actions that can close precondition
-                self.precondition_achiever[p] = (
+                self.precondition_achiever[(p,achieving_action)] = (
                     self.find_action_from_precondition(p.get_literal_dict()))
 
             # if action is not already in set of actions, update stuff
@@ -102,55 +131,193 @@ class PartialOrderPlanner:
                 self.ordering_constraints.add((achieving_action,
                     self.finish_action))
 
-            potential_conflicts = self.check_potential_conflicts(
-                    achieving_action)
-            if len(potential_conflicts) > 0:
-                conflicts = self.validate_conflicts(achieving_action,
-                        potential_conflicts)
-                if len(conflicts) > 0:
-                    resolved = self.resolve_conflicts(achieving_action,
-                            conflicts)
-                    if not resolved:
-                        self.backtrack(achieving_action, dependent_action)
+
+    def next_achiever(self, open_precond, dependent_action):
+        if len(self.precondition_achiever[(open_precond,dependent_action)]) > 0:
+            achiever = self.precondition_achiever[(open_precond,dependent_action)].pop(0)
+        else:
+            achiever = None
+        return achiever
 
 
-    def backtrack(self, achiever, dependent):
+    def causal_links_to_discard(self, dependent):
+        dependent_link = set()
+        achiever_link = set()
+        for A,p,B in self.causal_links:
+            if B is dependent:
+                dependent_link.add((A,p,B))
+            if A is dependent:
+                achiever_link.add((A,p,B))
+        return dependent_link, achiever_link
+
+
+    def ordering_constraints_to_discard(self, links_to_discard,
+            action_to_find=None):
+        constraints_to_discard = set()
+        # find ordering constraints from causal links
+        for A,_,B in links_to_discard:
+            constraints_to_discard.add((A,B))
+
+        # find all constraints that have been added to resolve conflicts
+        additional_constraints = set()
+        for A,_,B in links_to_discard:
+            for x,y in self.ordering_constraints:
+                # are we only searching for specific action?
+                if action_to_find is not None:
+                    if A is action_to_find and (A is x or A is y):
+                        additional_constraints.add((x,y))
+                # or do we want everything?
+                else:
+                    if A is x or A is y:
+                        additional_constraints.add((x,y))
+                if action_to_find is not None:
+                    if B is action_to_find and (B is x or B is y):
+                        additional_constraints.add((x,y))
+                else:
+                    if B is x or B is y:
+                        additional_constraints.add((x,y))
+
+        return constraints_to_discard, additional_constraints
+
+
+    def find_connectors(self, links_to_discard):
+        connectors = set()
+        to_be_inspected = list(links_to_discard)
+
+        while len(to_be_inspected) > 0:
+            # next causal link to inspect
+            A,_,B = to_be_inspected.pop()
+            # we do not check if A is Start
+            if A is not self.start_action:
+                for C,_p,D in self.causal_links:
+                    # otherwise check if D is A (and thus connected to an
+                    # action we want to remove) and it is not already in the
+                    # set of connectors that we have found
+                    if D is A and (C,_p,D) not in connectors:
+                        #print("adding", C.to_str(), " ", _p.to_str(), " ",
+                        #        D.to_str())
+                        connectors.add((C,_p,D))
+                        # update list to be inspected
+                        # it might be connected further
+                        to_be_inspected.append((C,_p,D))
+        return connectors
+
+
+    def update_set_of_actions(self, links_to_discard, link_to_readd):
+        for A,_,B in links_to_discard:
+            if A is not self.start_action:
+                self.actions.discard(A)
+            if B is not link_to_readd[1] and B is not self.finish_action:
+                self.actions.discard(B)
+
+
+    def backtrack(self, dependent):
         """ Remove all constraints and causal links that include 
         the action as an achiever and open the preconditions again
-
-        TODO:
-        do we miss any constraints that were added to resolve conflicts?
-        what if no more actions to delete -- delete more branches
-        how far back to we backtrack? not tested thoroughly. 
         """
-        causal_links_to_discard = {(A, p, B) for A,p,B in self.causal_links
-                if A is achiever or A is dependent or B is dependent}
+        print("-- backtrack (", dependent.to_str(), ")")
 
-        for (A,p,B) in causal_links_to_discard:
-            self.causal_links.discard((A,p,B))
-            self.ordering_constraints.discard((A,B))
-            if A is dependent:
-                # re-add precondition
-                self.open_preconditions.add(p)
-            elif B is self.finish_action:
-                self.open_preconditions.add(p)
-            else:
-                # we cannot remove finish action
-                self.actions.discard(B)
-                del self.created_actions[B.to_str()]
-            self.actions.discard(A)
-            del self.created_actions[A.to_str()]
+        # 1a. find all causal links where `dependent` is B in (A,p,B)
+        l_dependent, l_achiever = self.causal_links_to_discard(dependent)
+        links_to_discard = l_dependent.union(l_achiever)
+        # 1b. find ordering constraints where A or B are in constraint
+        c_discard, c_additional = self.ordering_constraints_to_discard(
+                links_to_discard, dependent)
+        constraints_to_discard = c_discard.union(c_additional)
+        # 2a. from above causal links find all other causal links where (C,p,D) where D is A
+        connecting_links_to_clean = self.find_connectors(l_dependent)
+        # 2b. find all ordering constraints where C or D are in constraint
+        c_c_to_discard, c_c_additional = self.ordering_constraints_to_discard(
+            connecting_links_to_clean)
+        connecting_constraints_to_discard = c_c_to_discard.union(
+                c_c_additional)
+
+        # 3a. find causal links where `dependent` is A in (A,p,B)
+        # 3b. add precondition p and action B to `open preconditions`
+        links_to_add = l_achiever
+        for (_,p,B) in links_to_add:
+            self.open_preconditions.add((p,B))
+
+        # 4a. find and discard open preconditions for dependent action
+        # we will be discarded action and do no longer need the preconditions
+        preconditions_to_discard = set()
+        for p,B in self.open_preconditions:
+            if B is dependent:
+                preconditions_to_discard.add((p,B))
+
+        # discard causal links, ordering constraints and actions from 1a, 1b, 2a, 2b
+        # except if action is Start or Finish
+        causal_links = links_to_discard.union(connecting_links_to_clean)
+        ordering_constraints = constraints_to_discard.union(
+                connecting_constraints_to_discard)
+
+        actions = set()
+        for A,B in ordering_constraints:
+            if A is not dependent:
+                if A is not self.start_action:
+                    actions.add(A)
+                if B is not self.finish_action:
+                    actions.add(B)
+
+        self.causal_links = self.causal_links.difference(causal_links)
+        self.ordering_constraints = self.ordering_constraints.difference(
+                ordering_constraints)
+        self.actions = self.actions.difference(actions)
+
+        print("   discarded causal links:")
+        print([A.to_str()+" "+p.to_str()+" "+B.to_str() for A,p,B in
+            links_to_discard])
+        #[A.to_str()+" "+p.to_str()+" "+B.to_str() for A,p,B in links_to_discard]
+        print("   discarded ordering constraints:")
+        print([A.to_str() + ", " + B.to_str() for A,B in constraints_to_discard])
+        #[A.to_str() + ", " + B.to_str() for A,B in constraints_to_discard]
+
+        print("   discarded connecting causal links:")
+        print([A.to_str()+" "+p.to_str()+" "+B.to_str() for A,p,B in
+            connecting_links_to_clean])
+        #[A.to_str()+" "+p.to_str()+" "+B.to_str() for A,p,B in 
+        #        connecting_links_to_clean]
+
+        print("   discarded connecting ordering constraints:")
+        print([A.to_str() + ", " + B.to_str() for A,B in
+            connecting_constraints_to_discard])
+        #[A.to_str() + ", " + B.to_str() for A,B in
+        #        connecting_constraints_to_discard]
+
+        print("   discarded actions:")
+        print([A.to_str() for A in actions])
+        #[A.to_str() for A in actions]
+
+        print("   will re-open preconditions:")
+        print([p.to_str()+" for "+B.to_str() for _,p,B in links_to_add])
+        #[p.to_str()+" for "+B.to_str() for _,p,B in links_to_add]
+
+        print("   will discard preconditions:")
+        print([p.to_str()+" for "+B.to_str() for p,B in
+            preconditions_to_discard])
+        #[p.to_str()+" for "+B.to_str() for p,B in preconditions_to_discard]
+
+        print("actions:", len(self.actions))
+        print("links:", len(self.causal_links))
+        print("constraints:", len(self.ordering_constraints))
+        print("preconditions:",len(self.open_preconditions))
+
+        print()
 
 
     def eliminate_retarded_actions(self, precondition, dependent):
         """ Eliminate actions that make zero sense.
         TODO rename function...
         """
-        for idx, action in enumerate(self.precondition_achiever[precondition]):
+        for idx, action in enumerate(
+                self.precondition_achiever[(precondition,dependent)]):
             action = self.create_action_from_incomplete(action)
             for p in action.preconditions:
-                if p.get_literal_dict() in dependent.effects[0]:
-                    del self.precondition_achiever[precondition][idx]
+                if p.get_literal_dict() in (dependent.effects[0] +
+                        dependent.effects[1]):
+                    #print("-- removing", action.to_str(), "with",
+                    #        p.to_str(), "for", dependent.to_str())
+                    del self.precondition_achiever[(precondition,dependent)][idx]
                     break
 
 
@@ -191,7 +358,7 @@ class PartialOrderPlanner:
     def validate_conflicts(self, C, potentials):
         """ Validate the list of potential conflicts and return it """
         return [(A,B) for A, B in potentials if 
-                (A,C) in self.ordering_constraints and 
+                (A,C) in self.ordering_constraints or 
                 (C,B) in self.ordering_constraints]
 
 
@@ -212,6 +379,8 @@ class PartialOrderPlanner:
         if self.start_action is ordering_constraint[1]:
             illegal = True
         elif self.finish_action is ordering_constraint[0]:
+            illegal = True
+        elif ordering_constraint[1] is ordering_constraint[0]:
             illegal = True
         return illegal
 
@@ -268,13 +437,12 @@ class PartialOrderPlanner:
         # check if it is achievable and add it to possible actions
         possible_actions = find_applicable_actions(wanted_actions, precondition)
 
-        # check if any action already has desired effects
-        existing_achievers = list()
-        for action in self.actions:
-            if precondition in action.effects[0]:
-                existing_achievers.append(action.get_action_dict())
+        # check if start action already has desired effects
+        existing_achiever = list()
+        if precondition in self.start_action.effects[0]:
+            existing_achiever.append(self.start_action.get_action_dict())
 
-        return existing_achievers + possible_actions
+        return existing_achiever + possible_actions
 
 
 def print_from_partial_order(pop):
@@ -296,22 +464,25 @@ if __name__ == '__main__':
     #  ++++++
     #  +aA 0+
     #  ++++++
-    builtins.walls = { (0,0): "+", (0,1): "+", (0,2): "+", (0,3): "+", (0,4): "+", (0,5): "+", 
-                       (1,0): "+",                                                 (1,5): "+", 
-                       (2,0): "+", (2,1): "+", (2,2): "+", (2,3): "+", (2,4): "+", (2,5): "+" }
+    builtins.walls = { (0,0): "+", (0,1): "+", (0,2): "+", (0,3): "+", (0,4): "+", (0,5): "+", (0,6): "+", (0,7): "+", (0,8): "+",
+                       (1,0): "+",                                                                                     (1,8): "+",
+                       (2,0): "+", (2,1): "+", (2,2): "+", (2,3): "+", (2,4): "+", (2,5): "+", (2,6): "+", (2,7): "+", (2,8): "+"}
     builtins.goals = { (1,1): 'a' }
-    builtins.boxes = { (1,2): 'A' }
-    agent = Agent('mr. robot', (1,4))
+    builtins.boxes = { (1,3): 'A' }
+    agent = Agent('mr. robot', (1,7))
     level = "++++++\n+aA 0+\n++++++"
     print("level:")
     print(level)
-    initial_state = [ create_literal_dict(AGENT_AT, [(1,4)]),
-                      create_literal_dict(BOX_AT, [(1,2)]),
-                      create_literal_dict(FREE, [(1,3)]),
-                      create_literal_dict(FREE, [(1,1)]) ]
+    initial_state = [ create_literal_dict(AGENT_AT, [(1,7)]),
+                      create_literal_dict(BOX_AT, [(1,3)]),
+                      create_literal_dict(FREE, [(1,1)]),
+                      create_literal_dict(FREE, [(1,4)]),
+                      create_literal_dict(FREE, [(1,5)]),
+                      create_literal_dict(FREE, [(1,6)]),
+                      create_literal_dict(FREE, [(1,2)])]
     goal_state = [ create_literal_dict(BOX_AT, [(1,1)]) ]
     planner = PartialOrderPlanner(initial_state, goal_state)
-    DEBUG = True
+    DEBUG = False
     plan = planner.create()
     print("## final total order plan:\n", print_from_partial_order(plan))
 
