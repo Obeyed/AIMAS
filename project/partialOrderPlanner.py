@@ -325,9 +325,9 @@ class PartialOrderPlanner:
         """ Construct dependency chain """
         dependencies = dict()
         for (achiever, dependent) in self.ordering_constraints:
-            try:
+            if dependent in dependencies:
                 dependencies[dependent].add(achiever)
-            except KeyError:
+            else:
                 dependencies[dependent] = {achiever}
         return dependencies
 
