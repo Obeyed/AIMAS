@@ -357,19 +357,19 @@ class PartialOrderPlanner:
 
     def validate_conflicts(self, C, potentials):
         """ Validate the list of potential conflicts and return it """
-        return [(A,B) for A, B in potentials if 
+        return {(A,B) for A, B in potentials if 
                 (A,C) in self.ordering_constraints or 
-                (C,B) in self.ordering_constraints]
+                (C,B) in self.ordering_constraints}
 
 
     def check_potential_conflicts(self, action):
         """ Find potential conflicts and return them """
         neg_effects = action.effects[1]
-        potential_conflicts = []
+        potential_conflicts = set()
         for effect in neg_effects:
             for A, p, B in self.causal_links:
                 if p.get_literal_dict() == effect:
-                    potential_conflicts.append((A,B))
+                    potential_conflicts.add((A,B))
         return potential_conflicts            
 
 
