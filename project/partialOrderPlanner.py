@@ -43,6 +43,8 @@ class PartialOrderPlanner:
             # use plain precondition dict to find achieving actions
             self.precondition_achiever[(precond, self.finish_action)] = (
                     self.find_action_from_precondition(p))
+        # dict to keep track of constraints that resolve conflicts
+        self.conflict_resolving_constraints = dict()
 
 
     def create(self):
