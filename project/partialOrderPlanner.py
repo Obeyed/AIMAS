@@ -60,6 +60,11 @@ class PartialOrderPlanner:
         choosing an action A that achieves p
         """
         open_precond, dependent_action = self.open_preconditions.pop()
+        # validate that action is still in set of actions
+        if dependent_action not in self.actions:
+            print("##", dependent_action.to_str(), "is no longer valid")
+            return
+
         self.eliminate_retarded_actions(open_precond, dependent_action)
 
         achieving_action = self.next_achiever(open_precond, dependent_action)
