@@ -148,47 +148,21 @@ class PartialOrderPlanner:
 
 
     def causal_links_to_discard(self, dependent):
-        dependent_link = set()
-        achiever_link = set()
-        for A,p,B in self.causal_links:
-            if B is dependent:
-                dependent_link.add((A,p,B))
-            if A is dependent:
-                achiever_link.add((A,p,B))
-        return dependent_link, achiever_link
+        return {(A,p,B) for A,p,B in self.causal_links if B is dependent}
 
 
-    def ordering_constraints_to_discard(self, links_to_discard,
-            action_to_find=None):
-        constraints_to_discard = set()
-        # find ordering constraints from causal links
-        for A,_,B in links_to_discard:
-            constraints_to_discard.add((A,B))
+    def ordering_constraints_to_discard(self, causal_links, dependent):
+        # create from causal links
+        constraints_to_discard = {(A,B) for A,_,B in causal_links}
+        # add start and finish constraints
+        constraints_to_discard.add((self.start_action, dependent)) 
+        constraints_to_discard.add((dependent, self.finish_action)) 
 
-        # find all constraints that have been added to resolve conflicts
-        additional_constraints = set()
-        for A,_,B in links_to_discard:
-            for x,y in self.ordering_constraints:
-                # are we only searching for specific action?
-                if action_to_find is not None:
-                    if A is action_to_find and (A is x or A is y):
-                        additional_constraints.add((x,y))
-                # or do we want everything?
-                else:
-                    if A is x or A is y:
-                        additional_constraints.add((x,y))
-                if action_to_find is not None:
-                    if B is action_to_find and (B is x or B is y):
-                        additional_constraints.add((x,y))
-                else:
-                    if B is x or B is y:
-                        additional_constraints.add((x,y))
-
-        return constraints_to_discard, additional_constraints
+        return constraints_to_discard
 
 
-    def find_connectors(self, links_to_discard):
-        connectors = set()
+    def find_connectors_as_dict(self, links_to_discard):
+        connectors = dict()
         to_be_inspected = list(links_to_discard)
 
         while len(to_be_inspected) > 0:
@@ -196,84 +170,105 @@ class PartialOrderPlanner:
             A,_,B = to_be_inspected.pop()
             # we do not check if A is Start
             if A is not self.start_action:
+                if A not in connectors:
+                    connectors[A] = set()
                 for C,_p,D in self.causal_links:
                     # otherwise check if D is A (and thus connected to an
                     # action we want to remove) and it is not already in the
                     # set of connectors that we have found
-                    if D is A and (C,_p,D) not in connectors:
+                    if D is A and (C,_p,D) not in connectors[A]:
                         #print("adding", C.to_str(), " ", _p.to_str(), " ",
                         #        D.to_str())
-                        connectors.add((C,_p,D))
+                        connectors[A].add((C,_p,D))
                         # update list to be inspected
                         # it might be connected further
                         to_be_inspected.append((C,_p,D))
+        #print("found", len(connectors), "connectors")
         return connectors
 
 
-    def update_set_of_actions(self, links_to_discard, link_to_readd):
-        for A,_,B in links_to_discard:
-            if A is not self.start_action:
-                self.actions.discard(A)
-            if B is not link_to_readd[1] and B is not self.finish_action:
-                self.actions.discard(B)
+    def causal_links_to_reopen(self, dependent):
+        return {(A,p,B) for A,p,B in self.causal_links if A is dependent}
 
 
     def backtrack(self, dependent):
         """ Remove all constraints and causal links that include 
         the action as an achiever and open the preconditions again
         """
-        print("-- backtrack (", dependent.to_str(), ")")
+        #print("-- backtrack (", dependent.to_str(), ")")
 
-        # 1a. find all causal links where `dependent` is B in (A,p,B)
-        l_dependent, l_achiever = self.causal_links_to_discard(dependent)
-        links_to_discard = l_dependent.union(l_achiever)
-        # 1b. find ordering constraints where A or B are in constraint
-        c_discard, c_additional = self.ordering_constraints_to_discard(
-                links_to_discard, dependent)
-        constraints_to_discard = c_discard.union(c_additional)
-        # 2a. from above causal links find all other causal links where (C,p,D) where D is A
-        connecting_links_to_clean = self.find_connectors(l_dependent)
-        # 2b. find all ordering constraints where C or D are in constraint
-        c_c_to_discard, c_c_additional = self.ordering_constraints_to_discard(
-            connecting_links_to_clean)
-        connecting_constraints_to_discard = c_c_to_discard.union(
-                c_c_additional)
+        # find all causal links where `dependent` is B in (A,p,B)
+        # find ordering constraints where A or B are in constraint
+        removable_causal_links = self.causal_links_to_discard(dependent)
+        removable_constraints = self.ordering_constraints_to_discard(
+                removable_causal_links, dependent)
+        # add constraints that were added because of conflicts
+        if dependent in self.conflict_resolving_constraints:
+            removable_constraints.union(
+                    self.conflict_resolving_constraints[dependent])
+            # no longer needed
+            del self.conflict_resolving_constraints[dependent]
 
-        # 3a. find causal links where `dependent` is A in (A,p,B)
-        # 3b. add precondition p and action B to `open preconditions`
-        links_to_add = l_achiever
-        for (_,p,B) in links_to_add:
+        # we will reopen preconditions from this set
+        restorable_causal_links = self.causal_links_to_reopen(dependent)
+        # update removable constraints
+        removable_constraints.union(self.ordering_constraints_to_discard(
+            restorable_causal_links, dependent))
+
+        # from above causal links find all connected links
+        connected_causal_links = self.find_connectors_as_dict(
+                removable_causal_links)
+        # find all ordering constraints for connectors
+        for action_key in connected_causal_links:
+            removable_constraints.union(self.ordering_constraints_to_discard(
+                connected_causal_links[action_key], action_key))
+            # also add conflict resolving constraints 
+            if action_key in self.conflict_resolving_constraints:
+                removable_constraints.union(
+                        self.conflict_resolving_constraints[action_key])
+                # no longer needed
+                del self.conflict_resolving_constraints[action_key]
+
+        # we want to remove all actions that were connected to removable causal
+        # links because they are no longer valid - plus the dependent action
+        removable_actions = {A for A in connected_causal_links}
+        removable_actions.add(dependent)
+
+        # update removable causal links
+        removable_causal_links.union(restorable_causal_links)
+        for action_key in connected_causal_links:
+            removable_causal_links.union(connected_causal_links[action_key])
+
+        # preconditions to discard
+        removable_preconditions = {(p,B) for p,B in self.open_preconditions if
+                B is dependent}
+
+        print("BEFORE")
+        print("CL:", len(self.causal_links), "\tOC:",
+                len(self.ordering_constraints), "\tA:", len(self.actions),
+                "\tOP:", len(self.open_preconditions))
+        ## PERFORM GLOBAL UPDATES
+        # update open preconditions for dependent action
+        self.open_preconditions = self.open_preconditions.difference(
+                removable_preconditions)
+
+        # reopen precondition p for action B
+        for _,p,B in restorable_causal_links:
             self.open_preconditions.add((p,B))
 
-        # 4a. find and discard open preconditions for dependent action
-        # we will be discarded action and do no longer need the preconditions
-        preconditions_to_discard = set()
-        for p,B in self.open_preconditions:
-            if B is dependent:
-                preconditions_to_discard.add((p,B))
-
-        # discard causal links, ordering constraints and actions from 1a, 1b, 2a, 2b
-        # except if action is Start or Finish
-        causal_links = links_to_discard.union(connecting_links_to_clean)
-        ordering_constraints = constraints_to_discard.union(
-                connecting_constraints_to_discard)
-
-        actions = set()
-        for A,B in ordering_constraints:
-            if A is not dependent:
-                if A is not self.start_action:
-                    actions.add(A)
-                if B is not self.finish_action:
-                    actions.add(B)
-
-        self.causal_links = self.causal_links.difference(causal_links)
+        self.causal_links = self.causal_links.difference(
+                removable_causal_links)
         self.ordering_constraints = self.ordering_constraints.difference(
-                ordering_constraints)
-        self.actions = self.actions.difference(actions)
+                removable_constraints)
+        self.actions = self.actions.difference(removable_actions)
+        print("AFTER")
+        print("CL:", len(self.causal_links), "\tOC:",
+                len(self.ordering_constraints), "\tA:", len(self.actions),
+                "\tOP:", len(self.open_preconditions))
 
-        print("   discarded causal links:")
-        print([A.to_str()+" "+p.to_str()+" "+B.to_str() for A,p,B in
-            links_to_discard])
+        #print("   discarded causal links:")
+        #print([A.to_str()+" "+p.to_str()+" "+B.to_str() for A,p,B in
+        #    links_to_discard])
         #[A.to_str()+" "+p.to_str()+" "+B.to_str() for A,p,B in links_to_discard]
         print("   discarded ordering constraints:")
         print([A.to_str() + ", " + B.to_str() for A,B in constraints_to_discard])
