@@ -352,6 +352,11 @@ class PartialOrderPlanner:
                 [self.ordering_constraints.discard((x,y)) for x,y in
                         added_constraints]
                 return False
+        # update dictionary of added constraints for future use
+        if C in self.conflict_resolving_constraints:
+            self.conflict_resolving_constraints[C].union(added_constraints)
+        else:
+            self.conflict_resolving_constraints[C] = added_constraints
         return True
 
 
