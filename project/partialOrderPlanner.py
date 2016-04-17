@@ -204,7 +204,7 @@ class PartialOrderPlanner:
                 removable_causal_links, dependent)
         # add constraints that were added because of conflicts
         if dependent in self.conflict_resolving_constraints:
-            removable_constraints.union(
+            removable_constraints = removable_constraints.union(
                     self.conflict_resolving_constraints[dependent])
             # no longer needed
             del self.conflict_resolving_constraints[dependent]
@@ -212,7 +212,7 @@ class PartialOrderPlanner:
         # we will reopen preconditions from this set
         restorable_causal_links = self.causal_links_to_reopen(dependent)
         # update removable constraints
-        removable_constraints.union(self.ordering_constraints_to_discard(
+        removable_constraints = removable_constraints.union(self.ordering_constraints_to_discard(
             restorable_causal_links, dependent))
 
         # from above causal links find all connected links
@@ -220,11 +220,11 @@ class PartialOrderPlanner:
                 removable_causal_links)
         # find all ordering constraints for connectors
         for action_key in connected_causal_links:
-            removable_constraints.union(self.ordering_constraints_to_discard(
+            removable_constraints = removable_constraints.union(self.ordering_constraints_to_discard(
                 connected_causal_links[action_key], action_key))
             # also add conflict resolving constraints 
             if action_key in self.conflict_resolving_constraints:
-                removable_constraints.union(
+                removable_constraints = removable_constraints.union(
                         self.conflict_resolving_constraints[action_key])
                 # no longer needed
                 del self.conflict_resolving_constraints[action_key]
@@ -235,9 +235,11 @@ class PartialOrderPlanner:
         removable_actions.add(dependent)
 
         # update removable causal links
-        removable_causal_links.union(restorable_causal_links)
+        removable_causal_links = removable_causal_links.union(
+                restorable_causal_links)
         for action_key in connected_causal_links:
-            removable_causal_links.union(connected_causal_links[action_key])
+            removable_causal_links = removable_causal_links.union(
+                    connected_causal_links[action_key])
 
         # preconditions to discard
         removable_preconditions = {(p,B) for p,B in self.open_preconditions if
@@ -356,7 +358,9 @@ class PartialOrderPlanner:
                 return False
         # update dictionary of added constraints for future use
         if C in self.conflict_resolving_constraints:
-            self.conflict_resolving_constraints[C].union(added_constraints)
+            self.conflict_resolving_constraints = (
+                    self.conflict_resolving_constraints[C].union(
+                        added_constraints))
         else:
             self.conflict_resolving_constraints[C] = added_constraints
         return True
