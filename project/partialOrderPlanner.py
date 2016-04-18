@@ -102,7 +102,9 @@ class PartialOrderPlanner:
             self.open_preconditions.add((open_precond, dependent_action))
             return 
         else:
-            # check for conflicts before adding stuff
+            self.ordering_constraints.add(new_constraint)
+
+            # check for conflicts before adding too much
             potential_conflicts = self.check_potential_conflicts(
                     achieving_action)
             if len(potential_conflicts) > 0:
@@ -114,12 +116,12 @@ class PartialOrderPlanner:
                     resolved = self.resolve_conflicts(achieving_action,
                             conflicts)
                     if not resolved:
-                        #print(" ++++ re-adding", open_precond.to_str())
+                        print("++ re-opening", open_precond.to_str())
+                        self.ordering_constraint.remove(new_constraint)
                         self.open_preconditions.add((open_precond, 
                             dependent_action))
                         return 
 
-            self.ordering_constraints.add(new_constraint)
             self.causal_links.add((achieving_action, open_precond, 
                 dependent_action))
 
@@ -358,11 +360,11 @@ class PartialOrderPlanner:
                 return False
         # update dictionary of added constraints for future use
         if C in self.conflict_resolving_constraints:
-            self.conflict_resolving_constraints = (
+            self.conflict_resolving_constraints[C] = (
                     self.conflict_resolving_constraints[C].union(
                         added_constraints))
         else:
-            self.conflict_resolving_constraints[C] = added_constraints
+            self.conflict_resolving_constraints[C] = set(added_constraints)
         return True
 
 
@@ -379,6 +381,9 @@ class PartialOrderPlanner:
         potential_conflicts = set()
         for effect in neg_effects:
             for A, p, B in self.causal_links:
+                # the action itself
+                if B is action:
+                    break
                 if p.get_literal_dict() == effect:
                     potential_conflicts.add((A,B))
         return potential_conflicts            
