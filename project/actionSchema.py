@@ -199,9 +199,9 @@ def find_applicable_actions(wanted_actions, wanted_effect):
                     #print("FREE")
                     to_become_free = wanted_effect['arguments'][0]
                     for dir in all_directions:
-                        pos = calculate_next_position(to_become_free, dir)
-                        if achievable(pos):
-                            wanted_moves.append(([pos, dir]))
+                        if achievable(calculate_next_position(
+                                to_become_free, dir)):
+                            wanted_moves.append(([to_become_free, dir]))
             elif action == PUSH:
                 #  ++++     ++++
                 #  +A0+ --> +0 + 
