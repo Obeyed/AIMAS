@@ -239,17 +239,19 @@ def find_applicable_actions(wanted_actions, wanted_effect):
                 elif wanted_literal == FREE:
                     to_become_free = wanted_effect['arguments'][0]
                     for agent_dir in all_directions:
-                        # calculate agent's next position
-                        agent_pos = calculate_next_position(to_become_free, agent_dir)
-                        if achievable(agent_pos):
+                        agent_next_pos = calculate_next_position(
+                                to_become_free, agent_dir)
+                        if achievable(agent_next_pos):
                             for box_dir in all_directions:
                                 # should not be possible to move opposite move
                                 if opposite_directions(box_dir, agent_dir):
                                     continue
                                 # calculate where box would land
-                                box_pos = calculate_next_position(agent_pos, box_dir)
-                                if achievable(box_pos):
-                                    wanted_moves.append(([agent_pos, agent_dir, box_dir]))
+                                box_next_pos = calculate_next_position(
+                                        agent_next_pos, box_dir)
+                                if achievable(box_next_pos):
+                                    wanted_moves.append((
+                                        [to_become_free, agent_dir, box_dir]))
             elif action == PULL:
                 #  ++++     ++++
                 #  +0 + --> +A0+ 
