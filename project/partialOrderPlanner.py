@@ -44,7 +44,7 @@ class PartialOrderPlanner:
         
         TODO: Fix this
         """
-        return self.plans.pop(0)
+        return self.plans[0]
 
 
     def find_action_from_precondition(precondition):
