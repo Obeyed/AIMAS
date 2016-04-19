@@ -13,10 +13,10 @@ from utilities import create_action_dict
 # DEBUGGING FLAGS
 PARTIAL_PLAN_DEBUG = True
 BACKTRACK_DEBUG = True
-CONFLICT_DEBUG = True
-VALIDATE_CONSTRAINTS_DEBUG = False
-FULL_PLAN_DEBUG = True
-ACHIEVER_DEBUG = False
+CONFLICT_DEBUG = False
+VALIDATE_CONSTRAINTS_DEBUG = True
+FULL_PLAN_DEBUG = False
+ACHIEVER_DEBUG = True
 REMAINING_ACHIEVERS_DEBUG = False
 
 class PartialOrderPlanner:
@@ -57,18 +57,9 @@ class PartialOrderPlanner:
     def create(self):
         """ Will return one object that contains possible total order plans """
         while len(self.open_preconditions) > 0:
-            if PARTIAL_PLAN_DEBUG:
-                print("## PLAN:", print_from_partial_order(list(toposort(
-                    self.create_dependency_dict()))))
-                print()
-            if FULL_PLAN_DEBUG:
-                print(" CONSTRAINTS:", [A.to_str()+"-"+B.to_str() for A,B in
-                    self.ordering_constraints])
-                print(" CAUSAL LINKS:", [A.to_str()+"-"+p.to_str()
-                    +"-"+B.to_str() for A,p,B in self.causal_links])
-                print()
             if VALIDATE_CONSTRAINTS_DEBUG:
-                print("ILLEGAL CONSTRAINTS:")
+                print_string = "ILLEGAL CONSTRAINTS:"
+                str_len = len(print_string)
                 for A,B in self.ordering_constraints:
                     if (B,A) in self.ordering_constraints:
                         print("  CYCLE:", A.to_str(), "-", B.to_str())
@@ -84,6 +75,22 @@ class PartialOrderPlanner:
                     if ((B, self.finish_action) not in self.ordering_constraints
                             and B is not self.finish_action):
                         print("  FINISH MISSING:", B.to_str())
+                if str_len != len(print_string):
+                    print(print_string)
+                    print()
+            if PARTIAL_PLAN_DEBUG:
+                print("A:", len(self.actions), "\tOC:",
+                        len(self.ordering_constraints), "\tCL:",
+                        len(self.causal_links), "\tOP:",
+                        len(self.open_preconditions))
+                #print("## PLAN:", print_from_partial_order(list(toposort(
+                #    self.create_dependency_dict()))))
+                #print()
+            if FULL_PLAN_DEBUG:
+                print(" CONSTRAINTS:", [A.to_str()+"-"+B.to_str() for A,B in
+                    self.ordering_constraints])
+                print(" CAUSAL LINKS:", [A.to_str()+"-"+p.to_str()
+                    +"-"+B.to_str() for A,p,B in self.causal_links])
                 print()
             self.successor()
         return toposort(self.create_dependency_dict())
@@ -241,7 +248,7 @@ class PartialOrderPlanner:
 
         # we will reopen preconditions from this set
         restorable_causal_links = self.causal_links_to_reopen(dependent)
-        causal_links_debug_list_2 = list(restorable_causal_links)
+
         # update removable constraints
         removable_constraints = removable_constraints.union(
                 self.ordering_constraints_to_discard(
@@ -253,6 +260,14 @@ class PartialOrderPlanner:
         causal_links_debug_list_3 = list()
         for action_key in connected_causal_links:
             causal_links_debug_list_3.append(list(connected_causal_links[action_key]))
+
+        # find potential restorable causal links from connecting links
+        potential_restorable_causal_links = set()
+        for action_key in connected_causal_links:
+            if len(connected_causal_links[action_key]) > 0:
+                potential_restorable_causal_links = (
+                        potential_restorable_causal_links.union(
+                            self.causal_links_to_reopen(action_key)))
 
         # find all ordering constraints for connectors
         for action_key in connected_causal_links:
@@ -266,13 +281,20 @@ class PartialOrderPlanner:
                 # no longer needed
                 del self.conflict_resolving_constraints[action_key]
 
-        ordering_constraints_debug_list_1 = list(removable_constraints)
-
         # we want to remove all actions that were connected to removable causal
         # links because they are no longer valid - plus the dependent action
         removable_actions = {A for A in connected_causal_links}
         removable_actions.add(dependent)
         actions_debug_list_1 = list(removable_actions)
+
+        # validate potential of restorable links
+        for A,p,B in potential_restorable_causal_links:
+            if B not in removable_actions:
+                restorable_causal_links.add((A,p,B))
+                removable_constraints.add((A,B))
+
+        causal_links_debug_list_2 = list(restorable_causal_links)
+        ordering_constraints_debug_list_1 = list(removable_constraints)
 
         # update removable causal links
         removable_causal_links = removable_causal_links.union(
@@ -331,18 +353,27 @@ class PartialOrderPlanner:
             print("   7. RESTORABLE PRECONDITIONS:")
             print([p.to_str()+" for "+B.to_str() for _,p,B in causal_links_debug_list_2])
 
+            #print("  CHECKING IF SOMETHING WAS NOT REMOVED!")
+            #for (A,B) in removable_constraints:
+            #    for (C,D) in self.ordering_constraints:
+            #        if A is not self.start_action:
+            #            if A is C or A is D:
+            #                print("A:",A.to_str(), "is still in orderings")
+            #                print(C.to_str(),"-",D.to_str())
+            #        if B is not self.finish_action:
+            #            if B is C or B is D:
+            #                print("B:",B.to_str(), "is still in orderings")
+            #                print(C.to_str(),"-",D.to_str())
+
 
     def eliminate_ambiguous_actions(self, precondition, dependent):
-        """ Eliminate actions that make zero sense.
-        """
+        """ Eliminate actions that make zero sense. """
         for idx, action in enumerate(
                 self.precondition_achiever[(precondition,dependent)]):
             action = self.create_action_from_incomplete(action)
             for p in action.preconditions:
                 if p.get_literal_dict() in (dependent.effects[0] +
                         dependent.effects[1]):
-                    #print("-- removing", action.to_str(), "with",
-                    #        p.to_str(), "for", dependent.to_str())
                     del self.precondition_achiever[(precondition,dependent)][idx]
                     break
 
