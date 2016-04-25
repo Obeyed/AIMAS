@@ -10,10 +10,8 @@ def tie_breaking_cross_product_heuristic(a, b):
     """ Cross product cost from a to b with tie breaking. 
     Source: http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#breaking-ties
     """
-    (x1, y1) = a
-    (x2, y2) = b
     tie_break = 1.0 + (1/1000) # one percent plus some factor
-    return tie_break * (abs(x1 - x2) + abs(y1 - y2))
+    return tie_break * cross_product_heuristic(a, b)
 
 def create_steps_from_parent_cells(parents, goal):
     """ Create list of steps from dict of parents """
