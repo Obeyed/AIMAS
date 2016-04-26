@@ -1,4 +1,4 @@
-from priority_queue import PriorityQueue
+import queue
 
 def cross_product_heuristic(a, b):
     """ Cross product cost from a to b. """
@@ -28,16 +28,24 @@ def a_star_search(grid, start, goal):
     Return list of steps from start to goal.
     Source: www.redblobgames.com/pathfinding/a-star/implementation.html 
     """
+    def add_to_frontier(item, priority):
+        """ Put tuple of item with priority. """
+        frontier.put((priority, item))
+    
+    def fetch_from_frontier():
+        """ Return the cell, and discard the priority. """
+        return frontier.get()[1]
+
     h = tie_breaking_cross_product_heuristic # heuristic function
 
-    frontier = PriorityQueue() 
-    frontier.put(start, 0)
+    frontier = queue.PriorityQueue() 
+    add_to_frontier(start, 0)
 
     came_from, cost_so_far = dict(), dict()
     came_from[start], cost_so_far[start] = None, 0
 
     while not frontier.empty():
-        current = frontier.get()
+        current = fetch_from_frontier()
         if current == goal: break
 
         for next in grid.neighbours(current):
@@ -46,7 +54,7 @@ def a_star_search(grid, start, goal):
                 cost_so_far[next] = new_cost
                 came_from[next] = current
                 priority = new_cost + h(goal, next)
-                frontier.put(next, priority)
+                add_to_frontier(next, priority)
 
     return create_steps_from_parent_cells(came_from, goal)
 
