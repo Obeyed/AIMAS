@@ -2,24 +2,26 @@
 class SimpleGrid:
 
     def __init__(self, walls, goals, boxes, agents, colors, free):
-        self.walls = walls      # {(0,0), (1,0), ..} 
+        self.walls = walls      # {(0,0), (1,0), ..}
         self.goals = goals      # {(x,y): 'a'), ..}
         self.boxes = boxes      # {(x,y): 'A', ..}
         self.agents = agents    # {(x,y): '0', ..}
         self.colors = colors or None  # {'green': ['0', 'A', 'a'], ..}
-        self.free = free 
+        self.free = free
+
+        self.movement_plan = set() # cell that contain objects we want to move
 
         # NOTE: there must be a better way to check the entire grid?
         self.complete_grid = walls.union(free)
         self.complete_grid = self.complete_grid.union(set(goals))
         self.complete_grid = self.complete_grid.union(set(boxes))
         self.complete_grid = self.complete_grid.union(set(agents))
-    
+
     def in_bounds(self, cell):
         return cell in self.complete_grid
 
     def passable(self, cell):
-        return (cell not in self.walls and cell not in self.boxes and 
+        return (cell not in self.walls and cell not in self.boxes and
                 cell not in self.agents)
 
     def neighbours(self, cell):
@@ -51,6 +53,13 @@ class SimpleGrid:
         results = self.neighbours(agent_cell)
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
+
+    def add_movement(self, box_cell):
+        self.movement_plan.add(box_cell)
+
+    def discard_movement(self, box_cell):
+        self.movement_plan.discard(box_cell)
+
 
 if __name__ == '__main__':
     walls = {(1,0), (1,1), (1,3), (2,2)}
