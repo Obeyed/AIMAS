@@ -4,9 +4,11 @@ from node import *
 
 class Strategy:
 
-    explored = []
-    frontier = queue.PriorityQueue()
     time = time.time()
+    frontier = queue.PriorityQueue()
+    explored = set()
+
+    #def __init__(self):
 
     def timespent(self):
         return (time.time() - self.time)
@@ -17,7 +19,7 @@ class Strategy:
             str('{0:.3g}'.format(self.timespent())),'s\n'])
 
     def addtoexplored(self,n):
-        self.explored.append(n.hashcode())
+        self.explored.add(n.hashcode())
 
     def isexplored(self,ns):
         ns[:] = [n for n in ns if not n.hashcode() in self.explored]

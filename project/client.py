@@ -1,11 +1,17 @@
 import sys
 import re
+import copy
 from node import *
 from strategy import *
 
+#TODO
+# Get color somewhere better
+# maybe only have boxes of same color as obstacles?
+
 #walls = {}
 #goals = {}
-#agents = {}
+agents = set()
+agentstates = []
 #boxes = {}
 #colors = {}
 
@@ -34,8 +40,7 @@ def parselvl():
             elif line[idx].islower():
                 initialstate.goals[count,idx] = line[idx]
             elif line[idx].isdigit():
-                initialstate.agentrow = count
-                initialstate.agentcol = idx
+                agents.add((count,idx,line[idx]))
         count += 1
 
 def search(strategy,state):
@@ -86,32 +91,81 @@ def getplan(state):
         plan.append(state.action)
         state = state.parent
 
+def addaction(string,action):
+    if action == None:
+        actionstr = 'NoOp'
+    else:
+        actionstr = action.tostring()
+
+    if len(string) == 0:
+        string = ''.join([string,actionstr])
+    else:
+        string = ''.join([string,',',actionstr])
+
+    return string
+
+
+
+def getactionstr(string):
+    return ''.join(['[',string,']\n'])
+
 
 # Main
 initialstate = parselvl()
-n = search(Strategy(),initialstate)
-if n == None:
-    sys.stderr.write('Unable to solve lvl\n')
+for row,col,a in agents:
+    agentstate = copy.copy(initialstate)
+    agentstate.agentrow = row
+    agentstate.agentcol = col
+    agentstate.agent = a
+    agentstates.append((agentstate,Strategy()))
+
+#TODO make new check if solvable
+#for agentstate,agentstrategy in agentstates:
+#    agentstate[:] = search(agentstrategy,agentstate)
+#    if agentstate == None:
+#        sys.stderr.write('Unable to solve lvl\n')
+#        sys.stderr.flush()
+#        sys.exit()
+
+agentstates[:] = [(search(strategy,state),strategy) for state,strategy in agentstates]
+plans = []
+for agentstate,_ in agentstates:
+    plan = getplan(agentstate)
+    sys.stderr.write(''.join(['Length of plan: ',str(len(plan)),'\n']))
     sys.stderr.flush()
-    sys.exit()
-
-plan = getplan(n)
-sys.stderr.write(''.join(['Found solution of length ',str(len(plan)),'\n']))
-sys.stderr.flush()
+    plans.append(getplan(agentstate))
+#plan = getplan(n)
+#sys.stderr.write(''.join(['Found solution of length ',str(len(plan)),'\n']))
+#sys.stderr.flush()
 while 1:
-    if len(plan) == 0:
-        sys.stderr.write('End of plan\n')
-        sys.stderr.flush()
-        sys.exit()
+    actionstr = ''
+    for plan in plans:
+        if len(plan) == 0:
+            #sys.stderr.write('End of plan\n')
+            #sys.stderr.flush()
+            #sys.exit()
+            plan.append(None)
+            actionstr = addaction(actionstr,action)
+        else:
+            action = plan.pop()
+            plan.append(action) #TODO find more effiecint way to keep action in plan
+            actionstr = addaction(actionstr,action)
 
-    action = plan.pop()
-
-    sys.stdout.write(action.tostring())
+    sys.stdout.write(getactionstr(actionstr))
     sys.stdout.flush()
+    sys.stderr.write(getactionstr(actionstr))
+    sys.stderr.flush()
 
     for line in sys.stdin:
-        if line == '[true]\n':
-            n = n.parent
-            break
-        elif line == '[false]\n':
-            break
+        if line == '\n':
+            continue
+        if len(line) < 1:
+            continue
+        line = line.replace('\n','')
+        line = line.replace('[','')
+        line = line.replace(']','')
+        responses = line.split(',')
+        for resp,plan in list(zip(responses,plans)):
+            if resp == 'true':
+                plan.pop()
+        break

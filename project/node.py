@@ -20,7 +20,7 @@ class Node:
             self.boxes = dict(parent.boxes)
             self.agentrow = parent.agentrow
             self.agentcol = parent.agentcol
-        #self.h = self.f()
+            self.agent = parent.agent
 
     def __lt__(self, node):
         return self.f() < node.f()
@@ -29,32 +29,42 @@ class Node:
         dx1 = abs(brow - grow)
         dy1 = abs(bcol - gcol)
         return dx1+dy1
-        #dx1 = brow - grow +0.01
-        #dy1 = bcol - gcol +0.01
-        #dx2 = self.agentrow - grow +0.01
-        #dy2 = self.agentcol - gcol +0.01
-        #return abs(dx1*dy2 - dx2*dy1)
+
+    def getdis2(self,grow,gcol,brow,bcol):
+        dx1 = brow - grow
+        dy1 = bcol - gcol
+        dx2 = self.agentrow - grow
+        dy2 = self.agentcol - gcol
+        return abs(dx1*dy2 - dx2*dy1)
 
     def getheuristic(self):
         h = 0
+        distance = -1
+        cross = -1
         #for gkey in self.goals:
         for bkey in self.boxes:
-            cross = -1
+            #cross = -1
             #for bkey in self.boxes:
             for gkey in self.goals:
                 if self.boxes[bkey].lower() == self.goals[gkey]:
-                    if cross < 0:
-                        cross = self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1])
-                    else:
-                        cross = min(cross,self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1]))
+                    if self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1]) < distance or distance == -1:
+                        cross = self.getdis2(gkey[0],gkey[1],bkey[0],bkey[1])
+                        distance = self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1])
+                    #if cross < 0:
+                        #cross = self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1])
+                    #else:
+                        #cross = min(cross,self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1]))
             h += cross
         return h
 
     def f(self):
-        return self.g + (1.01*self.getheuristic())
+        #return self.g + (1.01*self.getheuristic())
+        return (1.01*self.getheuristic())
 
     def isgoalstate(self):
         for key in self.goals.keys():
+            if self.colors[self.goals[key].upper()] != self.colors[self.agent]:
+                continue
             row, col = key
             if not self.boxat(row,col):
                 return False
@@ -84,8 +94,6 @@ class Node:
 
     def equals(self,ns):
         if ns == None:
-            return ns
-        elif len(ns) == 0:
             return ns
         boxset = set(self.boxes)
         ns[:] = [n for n in ns if self.agentrow != n.agentrow or self.agentcol
