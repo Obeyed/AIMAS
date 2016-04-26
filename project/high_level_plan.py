@@ -37,7 +37,7 @@ def generate_high_level_plan(grid):
 
 
 if __name__ == '__main__':
-    # try running this code with `python3 high_level_planner.py`
+    # try running this code with `python3 high_level_plan.py`
     from simple_grid import SimpleGrid
 
     # Level construction
