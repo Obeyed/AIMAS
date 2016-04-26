@@ -1,35 +1,38 @@
 
-def move_dict(from_tup, to_tup):
-    return {"move": from_tup, "to": to_tup}
+def move_tup(from_tup, to_tup):
+    """ Return tuple of tuples """
+    return (from_tup, to_tup)
 
 
 def generate_high_level_plan(grid):
     """ Generate High Level Plan
 
-    Return list of dictionaries as 
-      [{ 'move': (type, identifier), 'to': (type, identifier) }, ..]
+    Return list of lists of tuples
+      [ [( (type, identifier), (type, identifier) ), ..], [..], ..]
 
     Keyword arguments:
     grid -- a grid/level containing needed level info
     """
     coarse_plan = []  # the high level plan
-    goals = grid.goals
+    goals  = grid.goals
     colors = grid.colors
     
     # we need a box that matches the goal's letter
     for _, goal in goals.items():
+        goal_plan = list()  # current goal's plan
         box = goal.upper()
-        coarse_plan.append(move_dict(("box", box), ("goal", goal)))
+        goal_plan.append(move_tup(("box", box), ("goal", goal)))
 
         # now we need to find matching agent that can move the box
         if colors is not None:
             color = [c for c in colors if box in colors[c]]
             color = color[0] # only one color should match
-            step = move_dict(("agent", color), ("box", box))
+            step = move_tup(("agent", color), ("box", box))
         else:
             # if no colors are present, we should only have a single agent 
-            step = move_dict(("agent", None), ("box", box))
-        coarse_plan.append(step)
+            step = move_tup(("agent", None), ("box", box))
+        goal_plan.append(step)
+        coarse_plan.append(goal_plan)
     return coarse_plan
 
 
@@ -64,7 +67,6 @@ if __name__ == '__main__':
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
     plan = generate_high_level_plan(grid)
 
-    print("colors:", colors)
+    print(colors)
     print()
-    for step in plan:
-        print(step)
+    print(plan)
