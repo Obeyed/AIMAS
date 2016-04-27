@@ -35,53 +35,80 @@ def generate_high_level_plan(grid):
         coarse_plan.append(goal_plan)
     return coarse_plan
 
-def find_closest_box_for_goal(grid, goal):
-    """ Find closest box to goal.
 
-    Keyword arguments:
-    grid -- wrapper for level
-    goal -- tuple of letter and cell
-    """
-    g_letter, g_cell = goal
-    # (box, cell), (goal, cell), distance
-    best_combination = (None, None, float('inf'))
-    for b_cell, b_letter in grid.boxes.items():
-        if b_letter != g_letter.upper(): continue
-        if b_letter in grid.movement_plan: continue
-        cost = cross_product(b_cell, g_cell)
-        if cost < best_combination[2]:
-            best_combination = ((b_letter, b_cell), (g_letter, g_cell), cost)
-    return best_combination[:2] # (box, cell), (goal, cell)
+class HighLevelPlan:
 
+    def __init__(self, grid):
+        self.grid = grid
+        self.boxes_to_be_moved = set() # set of tuples
+        self.box_to_goal = list() # list of tuples of tuples
+        self.agent_info = dict() # dict of sets
 
-def find_shortest_box_goal_combination(grid):
-    """ For each goal, find a box that is closest to it.
-    Return list of tuples [(from), (to)],
-    where `from = (box, cell)`, and `to = (goal, cell)`.
-    """
-    result = list() # [(box, cell), (goal, cell)]
-    reserved_objects = set() # set of found cells
+    def mark_box_for_movement(self, box_cell):
+        self.boxes_to_be_moved.add(box_cell)
 
-    for g_cell, g_letter in grid.goals.items():
-        # this should never happen
-        if g_cell in reserved_objects:
-            raise Exception("Duplicate goal cells!!", (g_cell, g_letter))
-        goal = (g_letter, g_cell)
-        best_combination = find_closest_box_for_goal(grid, goal)
-        result.append(best_combination[:2])
-        # keep track of which cells have been reserved
-        reserved_objects = reserved_objects.union(set(best_combination[:2]))
-    return result
+    def discard_box_from_movement(self, box_cell):
+        self.boxes_to_be_moved.discard(box_cell)
+
+    def find_closest_box_for_goal(self, goal):
+        """ Find closest box to goal.
+
+        NOTE: Naive combination finder.
+        We could find best combined box-movement-sum for each goal-letter.
+
+        Keyword arguments:
+        goal -- tuple of letter and cell
+        """
+        g_letter, g_cell = goal
+        # (box, cell), (goal, cell), distance
+        best_combination = (None, None, float('inf'))
+        for b_cell, b_letter in self.grid.boxes.items():
+            if b_letter != g_letter.upper(): continue
+            # box already marked for movement
+            if b_cell in self.boxes_to_be_moved: continue
+            cost = cross_product(b_cell, g_cell)
+            if cost < best_combination[2]:
+                best_combination = ((b_letter, b_cell), (g_letter, g_cell), cost)
+                self.mark_box_for_movement(b_cell)
+        return best_combination[:2] # (box, cell), (goal, cell)
+
+    def find_shortest_box_goal_combination(self):
+        """ For each goal, find a box that is closest to it.
+        Generates list of tuples [(from), (to)],
+        where `from = (box, cell)`, and `to = (goal, cell)`.
+        """
+        result = list() # [(box, cell), (goal, cell)]
+        for g_cell, g_letter in self.grid.goals.items():
+            goal = (g_letter, g_cell)
+            best_combination = self.find_closest_box_for_goal(goal)
+            result.append(best_combination[:2]) # add best combination
+        # update instance variable
+        self.box_to_goal = result
+
+    def find_agent_to_box(self):
+        """ Find agents that can move boxes.
+        Creates dict of agents and a set of boxes they can move.
+        This dict should never change. Call this function only once.
+        """
+        self.agent_info = {agent: set() for agent in self.grid.agents.values()}
+        boxes = {box for box in self.grid.boxes.values()}
+        # find agents that can move box of that letter
+        if self.grid.colors is not None:
+            for box in boxes:
+                for agent in self.agent_info:
+                    for color, objects in self.grid.colors.items():
+                        if agent in objects and box in objects:
+                            self.agent_info[agent].add(box)
+        # if no colors, then all agents can move all boxes
+        else:
+            for agent in self.agent_info:
+                self.agent_info[agent] = boxes
+
 
 if __name__ == '__main__':
     # try running this code with `python3 high_level_plan.py`
     from simple_grid import SimpleGrid
 
-    # Level construction
-    # ++++++++++++++++
-    # +0     Ab      +
-    # +1     Ba      +
-    # ++++++++++++++++
     walls = { (0,0),  (0,1),  (0,2),  (0,3),  (0,4),  (0,5),  (0,6),  (0,7),
               (0,8),  (0,9), (0,10), (0,11), (0,12), (0,13), (0,14), (0,15),
               (0,16), (0,17), (0,18), (0,19), (0,20), (0,21),
@@ -95,21 +122,17 @@ if __name__ == '__main__':
             (1, 11), (1, 20), (1, 2), (2, 11), (2, 14), (2, 19), (1, 12),
             (1, 16), (2, 18), (1, 14), (2, 13), (1, 18), (1, 5), (1, 8),
             (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4) }
-    goals = {(1, 10): 'b', (2, 10): 'a', (7,3): 'b'}
+    goals = {(1, 10): 'b', (2, 10): 'a', (1,9): 'b'}
     agents = {(1, 1): '0', (2, 1): '1'}
     boxes = {(1, 9): 'A', (2, 9): 'B', (7,2): 'A', (5,3): 'B'}
     colors = {'green': ['A','0'], 'red' : ['B', '1']}
     #colors = None
 
-    grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
-    #plan = generate_high_level_plan(grid)
-
-    #print("coarse plan")
     print(colors)
-    #print(plan)
 
-    #for cell, letter in grid.goals.items():
-    #    goal = (letter, cell)
-    #    print(find_closest_box_for_goal(grid, goal))
-    p = find_shortest_box_goal_combination(grid)
-    print(len(p), p)
+    grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
+    hlp = HighLevelPlan(grid)
+    hlp.find_shortest_box_goal_combination()
+    print(len(hlp.box_to_goal), hlp.box_to_goal)
+    hlp.find_agent_to_box()
+    print(hlp.agent_info)
