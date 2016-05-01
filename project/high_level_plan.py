@@ -1,4 +1,5 @@
 from a_star_search_simple import cross_product_heuristic as cross_product
+from a_star_search_simple import a_star_search
 
 def move_tup(from_tup, to_tup):
     """ Return tuple of tuples """
@@ -40,15 +41,11 @@ class HighLevelPlan:
 
     def __init__(self, grid):
         self.grid = grid
-        self.boxes_to_be_moved = set() # set of tuples
-        self.box_to_goal = list() # list of tuples of tuples
-        self.agent_info = dict() # dict of sets
+        self.box_goal_combination = dict()
+        self.agent_for_movement = dict()
 
-    def mark_box_for_movement(self, box_cell):
-        self.boxes_to_be_moved.add(box_cell)
-
-    def discard_box_from_movement(self, box_cell):
-        self.boxes_to_be_moved.discard(box_cell)
+    def update_grid(self, grid):
+        self.grid = grid
 
     def find_closest_box_for_goal(self, goal):
         """ Find closest box to goal.
@@ -60,49 +57,47 @@ class HighLevelPlan:
         goal -- tuple of letter and cell
         """
         g_letter, g_cell = goal
-        # (box, cell), (goal, cell), distance
+        # box instance, (goal, cell), distance
         best_combination = (None, None, float('inf'))
-        for b_cell, b_letter in self.grid.boxes.items():
+        for box in self.grid.boxes:
+            b_letter, b_cell = box.name, box.position
             if b_letter != g_letter.upper(): continue
             # box already marked for movement
-            if b_cell in self.boxes_to_be_moved: continue
+            if box in self.box_goal_combination: continue
             cost = cross_product(b_cell, g_cell)
             if cost < best_combination[2]:
-                best_combination = ((b_letter, b_cell), (g_letter, g_cell), cost)
-                self.mark_box_for_movement(b_cell)
-        return best_combination[:2] # (box, cell), (goal, cell)
+                best_combination = (box, (g_letter, g_cell), cost)
+        return best_combination[:2] # box instance, (goal, cell)
 
     def find_shortest_box_goal_combination(self):
         """ For each goal, find a box that is closest to it.
         Generates list of tuples [(from), (to)],
         where `from = (box, cell)`, and `to = (goal, cell)`.
         """
-        result = list() # [(box, cell), (goal, cell)]
         for g_cell, g_letter in self.grid.goals.items():
             goal = (g_letter, g_cell)
-            best_combination = self.find_closest_box_for_goal(goal)
-            result.append(best_combination[:2]) # add best combination
-        # update instance variable
-        self.box_to_goal = result
+            box, _ = self.find_closest_box_for_goal(goal)
+            self.box_goal_combination[box] = goal
 
-    def find_agent_to_box(self):
-        """ Find agents that can move boxes.
-        Creates dict of agents and a set of boxes they can move.
-        This dict should never change. Call this function only once.
-        """
-        self.agent_info = {agent: set() for agent in self.grid.agents.values()}
-        boxes = {box for box in self.grid.boxes.values()}
-        # find agents that can move box of that letter
-        if self.grid.colors is not None:
-            for box in boxes:
-                for agent in self.agent_info:
-                    for color, objects in self.grid.colors.items():
-                        if agent in objects and box in objects:
-                            self.agent_info[agent].add(box)
-        # if no colors, then all agents can move all boxes
-        else:
-            for agent in self.agent_info:
-                self.agent_info[agent] = boxes
+    def shortest_path_to_goal(self, box, goal):
+        b_cell, g_cell = box.position, goal[1]
+        return a_star_search(self.grid, b_cell, g_cell)
+
+    def shortest_path_to_box(self, agent, box):
+        a_cell, b_cell = agent.position, box.position
+        return a_star_search(self.grid, a_cell, b_cell, backwards=True)
+
+    def create_paths(self):
+        for box, goal in self.box_goal_combination.items():
+            box_to_goal = self.shortest_path_to_goal(box, goal)
+            agent_to_box = None
+            for agent, box_letters in grid.agent_info.items():
+                if box.name not in box_letters: continue
+                if agent in self.agent_for_movement: continue
+                agent_to_box = self.shortest_path_to_box(agent, box)
+
+                if agent_to_box is not None:
+                    self.agent_for_movement[agent] = agent_to_box + box_to_goal
 
 
 if __name__ == '__main__':
@@ -122,17 +117,19 @@ if __name__ == '__main__':
             (1, 11), (1, 20), (1, 2), (2, 11), (2, 14), (2, 19), (1, 12),
             (1, 16), (2, 18), (1, 14), (2, 13), (1, 18), (1, 5), (1, 8),
             (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4) }
-    goals = {(1, 10): 'b', (2, 10): 'a', (1,9): 'b'}
+    goals = {(1, 10): 'b', (2, 10): 'a'}
     agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 9): 'A', (2, 9): 'B', (7,2): 'A', (5,3): 'B'}
+    boxes = {(1, 9): 'A', (2, 9): 'B'}
     colors = {'green': ['A','0'], 'red' : ['B', '1']}
     #colors = None
 
     print(colors)
 
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
+    print(grid.agent_info)
     hlp = HighLevelPlan(grid)
     hlp.find_shortest_box_goal_combination()
-    print(len(hlp.box_to_goal), hlp.box_to_goal)
-    hlp.find_agent_to_box()
-    print(hlp.agent_info)
+    print(hlp.box_goal_combination)
+
+    hlp.create_paths()
+    print(hlp.agent_for_movement)

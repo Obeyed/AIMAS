@@ -7,7 +7,7 @@ def cross_product_heuristic(a, b):
     return abs(x1 - x2) + abs(y1 - y2)
 
 def tie_breaking_cross_product_heuristic(a, b):
-    """ Cross product cost from a to b with tie breaking. 
+    """ Cross product cost from a to b with tie breaking.
     Source: http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#breaking-ties
     """
     tie_break = 1.0 + (1/1000) # one percent plus some factor
@@ -22,30 +22,21 @@ def create_steps_from_parent_cells(parents, goal):
         step = parents[step]
     return steps[::-1]
 
-
-def a_star_search(grid, start, goal):
+def a_star_search(grid, start, goal, backwards=False):
     """ A* search algorithm. Meant for finding a path from start to goal.
     Return list of steps from start to goal.
-    Source: www.redblobgames.com/pathfinding/a-star/implementation.html 
+    Source: www.redblobgames.com/pathfinding/a-star/implementation.html
     """
-    def add_to_frontier(item, priority):
-        """ Put tuple of item with priority. """
-        frontier.put((priority, item))
-    
-    def fetch_from_frontier():
-        """ Return the cell, and discard the priority. """
-        return frontier.get()[1]
-
     h = tie_breaking_cross_product_heuristic # heuristic function
 
-    frontier = queue.PriorityQueue() 
-    add_to_frontier(start, 0)
+    frontier = queue.PriorityQueue()
+    frontier.put((0, start))
 
     came_from, cost_so_far = dict(), dict()
     came_from[start], cost_so_far[start] = None, 0
 
     while not frontier.empty():
-        current = fetch_from_frontier()
+        current = frontier.get()[1] # Fetch cell, discard the priority
         if current == goal: break
 
         for next in grid.neighbours(current):
@@ -54,7 +45,12 @@ def a_star_search(grid, start, goal):
                 cost_so_far[next] = new_cost
                 came_from[next] = current
                 priority = new_cost + h(goal, next)
-                add_to_frontier(next, priority)
+                frontier.put((priority, next))
+
+    if backwards:
+        landing_position = grid.neighbours(goal)
+        landing_position = [pos for pos in landing_position if pos in came_from]
+        goal = landing_position[0]
 
     return create_steps_from_parent_cells(came_from, goal)
 
