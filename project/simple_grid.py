@@ -107,7 +107,7 @@ class SimpleGrid:
         results = filter(self.passable, results)
         return results
 
-    def swap_possible(self, box_cell, agent_cell, next_cell):
+    def swapable(self, box_cell, agent_cell, next_cell):
         """ Given box and agent position and we want to move towards next_cell,
         is it possible to perform a Pull and Push?
 
@@ -144,8 +144,8 @@ if __name__ == '__main__':
     print(grid.colors)
 
     box_cell, agent_cell, next_cell = (0,1), (0,2), (0,3)
-    result = grid.swap_possible(box_cell, agent_cell, next_cell)
+    result = grid.swapable(box_cell, agent_cell, next_cell)
     print(result)
     box_cell, agent_cell, next_cell = (0,0), (0,1), (0,2)
-    result = grid.swap_possible(box_cell, agent_cell, next_cell)
+    result = grid.swapable(box_cell, agent_cell, next_cell)
     print(result)
