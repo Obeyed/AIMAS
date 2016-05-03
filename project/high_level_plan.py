@@ -88,11 +88,11 @@ if __name__ == '__main__':
     colors = {'green': ['A','0'], 'red' : ['B', '1']}
 
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
-    print(grid.colors)
-    print(grid.agent_info)
+    #print(grid.agent_info)
     hlp = HighLevelPlan(grid)
     hlp.find_shortest_box_goal_combination()
-    print(hlp.box_goal_combination)
+    #print(hlp.box_goal_combination)
 
     hlp.create_paths()
-    print(hlp.agent_for_movement)
+    #print(hlp.agent_for_movement)
+
