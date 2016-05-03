@@ -109,7 +109,14 @@ class SimpleGrid:
 if __name__ == '__main__':
     walls = {(1,0), (1,1), (1,3), (2,2)}
     free  = {(0,0), (0,1), (0,2), (0,3), (1,2)}
-    grid = SimpleGrid(walls, {}, {}, {}, {}, free)
+    goals = {(1, 10): 'b', (2, 10): 'a'}
+    agents = {(1, 1): '0', (2, 1): '1'}
+    boxes = {(1, 9): 'A', (2, 9): 'B'}
+    colors = {'green': ['A','0'], 'red' : ['B', '1']}
+    grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
+
+    print(grid.agents)
+    print(grid.boxes)
 
     box_cell, agent_cell, next_cell = (0,1), (0,2), (0,3)
     result = grid.swap_possible(box_cell, agent_cell, next_cell)

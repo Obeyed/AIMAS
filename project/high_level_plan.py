@@ -1,41 +1,6 @@
 from a_star_search_simple import cross_product_heuristic as cross_product
 from a_star_search_simple import a_star_search
 
-def move_tup(from_tup, to_tup):
-    """ Return tuple of tuples """
-    return (from_tup, to_tup)
-
-def generate_high_level_plan(grid):
-    """ Generate High Level Plan
-
-    Return list of lists of tuples
-      [ [( (type, identifier), (type, identifier) ), ..], [..], ..]
-
-    Keyword arguments:
-    grid -- a grid/level containing needed level info
-    """
-    coarse_plan = []  # the high level plan
-    goals  = grid.goals
-    colors = grid.colors
-
-    # we need a box that matches the goal's letter
-    for _, goal in goals.items():
-        goal_plan = list()  # current goal's plan
-        box = goal.upper()
-        goal_plan.append(move_tup(("box", box), ("goal", goal)))
-
-        # now we need to find matching agent that can move the box
-        if colors is not None:
-            color = [c for c in colors if box in colors[c]]
-            color = color[0] # only one color should match
-            step = move_tup(("agent", color), ("box", box))
-        else:
-            # if no colors are present, we should only have a single agent
-            step = move_tup(("agent", None), ("box", box))
-        goal_plan.append(step)
-        coarse_plan.append(goal_plan)
-    return coarse_plan
-
 
 class HighLevelPlan:
 
@@ -91,7 +56,7 @@ class HighLevelPlan:
         for box, goal in self.box_goal_combination.items():
             box_to_goal = self.shortest_path_to_goal(box, goal)
             agent_to_box = None
-            for agent, box_letters in grid.agent_info.items():
+            for agent, box_letters in self.grid.agent_info.items():
                 if box.name not in box_letters: continue
                 if agent in self.agent_for_movement: continue
                 agent_to_box = self.shortest_path_to_box(agent, box)
