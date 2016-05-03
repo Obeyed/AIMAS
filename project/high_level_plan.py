@@ -84,13 +84,11 @@ if __name__ == '__main__':
             (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4) }
     goals = {(1, 10): 'b', (2, 10): 'a'}
     agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 9): 'A', (2, 9): 'B'}
+    boxes = {(1, 9): 'A', (2, 9): 'B', (10,10): 'C'}
     colors = {'green': ['A','0'], 'red' : ['B', '1']}
-    #colors = None
-
-    print(colors)
 
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
+    print(grid.colors)
     print(grid.agent_info)
     hlp = HighLevelPlan(grid)
     hlp.find_shortest_box_goal_combination()

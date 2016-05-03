@@ -11,24 +11,53 @@ def object_builder(movable, colors, _class, collection):
     collection -- set of SimpleGrid instance variables where we save objs
     """
     for cell, obj in movable.items():
-        if colors is None:
-            collection.add(_class(obj, cell, None))
-            continue
         for color, objs in colors.items():
             if obj in objs:
                 collection.add(_class(obj, cell, color))
                 break
 
+def find_uncolored_objects(colors, boxes, agents):
+    """ Return set of uncolored objects """
+    b_set, a_set = set(boxes.values()), set(agents.values())
+    c_set = set([i for l in colors.values() for i in l])
+    # find set differences
+    b_uncolored = b_set - c_set
+    a_uncolored = a_set - c_set
+
+    return b_uncolored.union(a_uncolored)
+
+def update_colors(colors, uncolored):
+    """ Update colors dict with uncolored objects """
+    colored = set()
+    if 'blue' in colors:
+        colored = set(colors['blue'])
+    colors['blue'] = list(colored.union(uncolored))
+
+    return colors
+
 
 class SimpleGrid:
 
     def __init__(self, walls, goals, boxes, agents, colors, free):
+        """ Simple grid representation.
+
+        Keyword arguments:
+        walls -- set of tuples (representing cells/positions)
+        goals -- dict of {(x,y): 'a', ..}
+        boxes -- dict of {(x,y): 'A', ..}
+        agents -- dict of {(x,y): '0', ..}
+        colors -- dict of {'green': ['0', 'A', 'a'], ..}
+            If agent or box is not in colors, they will default to 'blue'
+        free -- set of tupes (representing cells/positions)
         """
-        TODO: if box or agent is not mentioned in color, they default to blue!
-        """
+        uncolored = find_uncolored_objects(colors, boxes, agents)
+        if len(uncolored) > 0:
+            colors = update_colors(colors, uncolored)
+
         self.walls = walls      # {(0,0), (1,0), ..}
         self.goals = goals      # {(x,y): 'a', ..}
-        self.colors = colors or None  # {'green': ['0', 'A', 'a'], ..}
+
+        self.colors = colors # {'green': ['0', 'A', 'a'], ..}
         self.free = free
 
         self.boxes, self.agents = set(), set()
@@ -59,16 +88,11 @@ class SimpleGrid:
         """
         self.agent_info = {agent: set() for agent in self.agents}
         boxes = set(boxes.values())
-        # if no colors, then all agents can move all boxes
-        if colors is None:
+        for box in boxes:
             for agent in self.agent_info:
-                self.agent_info[agent] = boxes
-        else:
-            for box in boxes:
-                for agent in self.agent_info:
-                    for objs in colors.values():
-                        if agent.name in objs and box in objs:
-                            self.agent_info[agent].add(box)
+                for objs in colors.values():
+                    if agent.name in objs and box in objs:
+                        self.agent_info[agent].add(box)
 
     def in_bounds(self, cell):
         return cell in self.complete_grid
@@ -110,13 +134,14 @@ if __name__ == '__main__':
     walls = {(1,0), (1,1), (1,3), (2,2)}
     free  = {(0,0), (0,1), (0,2), (0,3), (1,2)}
     goals = {(1, 10): 'b', (2, 10): 'a'}
-    agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 9): 'A', (2, 9): 'B'}
-    colors = {'green': ['A','0'], 'red' : ['B', '1']}
+    agents = {(1, 1): '0', (2, 1): '1', (3,1): '2'}
+    boxes = {(1, 9): 'A', (2, 9): 'B', (9,9): 'C', (10,10): 'C'}
+    colors = {'green': ['A','0'], 'red' : ['B', '1'], 'blue': ['3']}
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
 
     print(grid.agents)
     print(grid.boxes)
+    print(grid.colors)
 
     box_cell, agent_cell, next_cell = (0,1), (0,2), (0,3)
     result = grid.swap_possible(box_cell, agent_cell, next_cell)
