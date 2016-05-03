@@ -10,7 +10,7 @@ def tie_breaking_cross_product_heuristic(a, b):
     """ Cross product cost from a to b with tie breaking.
     Source: http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#breaking-ties
     """
-    tie_break = 1.0 + (1/1000) # one percent plus some factor
+    tie_break = 1.0001 # one percent plus some factor
     return tie_break * cross_product_heuristic(a, b)
 
 def create_steps_from_parent_cells(parents, goal):
