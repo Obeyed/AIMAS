@@ -22,12 +22,21 @@ def create_steps_from_parent_cells(parents, goal):
         step = parents[step]
     return steps[::-1]
 
-def a_star_search(grid, start, goal, backwards=False):
+def a_star_search(grid, start, goal, heuristic=None, backwards=False):
     """ A* search algorithm. Meant for finding a path from start to goal.
     Return list of steps from start to goal.
     Source: www.redblobgames.com/pathfinding/a-star/implementation.html
+
+    Keyword arguments:
+    grid -- level representation
+    start -- tuple (cell/position)
+    goal -- tuple (cell/position)
+    heuristic -- (optional) function to use for calculating distance to goal
+        from current cell
+    backwards -- (optional) whether or not to use a neighbour to the goal as
+        the goal for constructing the path of steps
     """
-    h = tie_breaking_cross_product_heuristic # heuristic function
+    h = heuristic or tie_breaking_cross_product_heuristic # heuristic function
 
     frontier = queue.PriorityQueue()
     frontier.put((0, start))
@@ -48,6 +57,10 @@ def a_star_search(grid, start, goal, backwards=False):
                 frontier.put((priority, next))
 
     if backwards:
+        # find goal's neighbouring cells
+        # find the neighbour that is in the dict of parents (came_from)
+        # use that neighbour as the goal for constructing steps
+        # NOTE: this should be used if goal cell is a blocking object
         landing_position = grid.neighbours(goal)
         landing_position = [pos for pos in landing_position if pos in came_from]
         goal = landing_position[0]
