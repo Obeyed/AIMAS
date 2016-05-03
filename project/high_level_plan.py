@@ -65,6 +65,36 @@ class HighLevelPlan:
                     self.agent_for_movement[agent] = agent_to_box + box_to_goal
 
 
+    def untangle(self):
+        """ Iterates over all paths and fix all conflicts
+        """
+        fixed = 0
+        tmp = 0
+        while 1:
+            agents = set()
+            for agent_1,path_1 in self.agent_for_movement.items():
+                agents.add(agent_1)
+                for agent_2,path_2 in self.agent_for_movement.items():
+                    if not agent_2 in agents:
+                        #Consider using zip() and for loop instead
+                        idx = 0
+                        while idx < min(len(path_1),len(path_2)):
+                            if path_1[idx] == path_2[idx]:
+                                fixed = fixed + 1
+                                path_2.insert(idx,path_2[idx])
+                            elif (idx +1 < min(len(path_1),len(path_2)) and
+                                    path_1[idx] == path_2[idx +1] and
+                                    path_1[idx+1] == path_2[idx-1]):
+                                fixed = fixed + 1
+                                path_2.insert(idx,path_2[idx-1])
+                                path_2.insert(idx+1,path_2[idx-1])
+                            idx = idx +1
+
+            if fixed == 0: return
+            fixed = 0
+
+
+
 if __name__ == '__main__':
     # try running this code with `python3 high_level_plan.py`
     from simple_grid import SimpleGrid
@@ -83,6 +113,7 @@ if __name__ == '__main__':
             (1, 16), (2, 18), (1, 14), (2, 13), (1, 18), (1, 5), (1, 8),
             (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4) }
     goals = {(1, 10): 'b', (2, 10): 'a'}
+    #agents = {(1, 1): '0'}
     agents = {(1, 1): '0', (2, 1): '1'}
     boxes = {(1, 9): 'A', (2, 9): 'B', (10,10): 'C'}
     colors = {'green': ['A','0'], 'red' : ['B', '1']}
@@ -94,5 +125,7 @@ if __name__ == '__main__':
     #print(hlp.box_goal_combination)
 
     hlp.create_paths()
-    #print(hlp.agent_for_movement)
+    print(hlp.agent_for_movement)
 
+    hlp.untangle()
+    print(hlp.agent_for_movement)
