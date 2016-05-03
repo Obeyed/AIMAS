@@ -1,4 +1,4 @@
-import sys
+#import sys
 
 types = ['Push','Pull','Move']
 direc = ['N','W','S','E']
@@ -34,6 +34,6 @@ class Command:
 
     def tostring(self):
         if self.name == 'Move':
-            return ''.join(['[',self.name,'(',self.dir1,')]\n'])
+            return ''.join([self.name,'(',self.dir1,')'])
         else:
-            return ''.join(['[',self.name,'(',self.dir1,',',self.dir2,')]\n'])
+            return ''.join([self.name,'(',self.dir1,',',self.dir2,')'])

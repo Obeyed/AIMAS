@@ -5,10 +5,10 @@ from node import *
 class Strategy:
 
     time = time.time()
-    frontier = queue.PriorityQueue()
-    explored = set()
 
-    #def __init__(self):
+    def __init__(self):
+        self.explored = set()
+        self.frontier = queue.PriorityQueue()
 
     def timespent(self):
         return (time.time() - self.time)
@@ -40,5 +40,3 @@ class Strategy:
     def frontierisempty(self):
         return self.frontier.qsize() == 0
 
-    def __init__(self):
-        self.name = 'Strategy'

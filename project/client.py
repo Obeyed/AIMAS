@@ -3,44 +3,41 @@ import re
 import copy
 from node import *
 from strategy import *
-
-#TODO
-# Get color somewhere better
-# maybe only have boxes of same color as obstacles?
+from agent import *
 
 #walls = {}
 #goals = {}
-agents = set()
-agentstates = []
+agents = []
 #boxes = {}
 #colors = {}
+plans = {}
 
 directions = ['N','E','S','W']
 
 # parse the level, supports multicolor
 def parselvl():
-    initialstate = Node(None,None)
+    currentstate = Node(None,None)
     count = 0
     for line in sys.stdin:
         if line == '\n':
-            return initialstate
+            return currentstate
         if re.match('^[a-z]+:\s*[0-9A-Z](,\s*[0-9A-Z])*\s*$',line):
             line = line.replace('\n','')
             line = line.replace(' ','')
             color,line = line.split(':')
             for ele in line.split(','):
-                initialstate.colors[ele] = color
+                currentstate.colors[ele] = color
             continue
 
         for idx in range(len(line)):
             if line[idx] == '+':
-                initialstate.walls[count,idx] = '+'
+                currentstate.walls[count,idx] = '+'
             elif line[idx].isupper():
-                initialstate.boxes[count,idx] = line[idx]
+                currentstate.boxes[count,idx] = line[idx]
             elif line[idx].islower():
-                initialstate.goals[count,idx] = line[idx]
+                currentstate.goals[count,idx] = line[idx]
             elif line[idx].isdigit():
-                agents.add((count,idx,line[idx]))
+                agents.append(Agent(line[idx],count,idx))
         count += 1
 
 def search(strategy,state):
@@ -86,6 +83,8 @@ def search(strategy,state):
 def getplan(state):
     plan = []
     while 1:
+        if state == None:
+            return []
         if state.parent == None:
             return plan
         plan.append(state.action)
@@ -109,46 +108,63 @@ def addaction(string,action):
 def getactionstr(string):
     return ''.join(['[',string,']\n'])
 
+def agentsearch(state):
+    plan = {}
+    for agent in agents:
+        agentstate = copy.deepcopy(currentstate)
+        agentstate.agentrow = agent.row
+        agentstate.agentcol = agent.col
+        agentstate.agent = agent.name
+        strategy = Strategy()
+        agentstate = search(strategy,agentstate)
+        plans[agent.name] = getplan(agentstate)
+    return plan
+
+def updatestate(agent,action):
+    newrow,newcol = currentstate.rowcolchange(action.dir1,agent.row,agent.col)
+    if action.name == 'Move':
+        agent.row = newrow
+        agent.col = newcol
+    if action.name == 'Push':
+        newboxrow,newboxcol = currentstate.rowcolchange(action.dir2,newrow,newcol)
+        agent.row = newrow
+        agent.col = newcol
+        currentstate.boxes[newboxrow,newboxcol] = currentstate.boxes[newrow,newcol]
+        del currentstate.boxes[newrow,newcol]
+    elif action.name == 'Pull':
+        boxrow,boxcol = currentstate.rowcolchange(action.dir2,agent.row,agent.col)
+        currentstate.boxes[agent.row,agent.col] = currentstate.boxes[boxrow,boxcol]
+        del currentstate.boxes[boxrow,boxcol]
+        agent.row = newrow
+        agent.col = newcol
 
 # Main
-initialstate = parselvl()
-for row,col,a in agents:
-    agentstate = copy.copy(initialstate)
-    agentstate.agentrow = row
-    agentstate.agentcol = col
-    agentstate.agent = a
-    agentstates.append((agentstate,Strategy()))
-
-#TODO make new check if solvable
-#for agentstate,agentstrategy in agentstates:
-#    agentstate[:] = search(agentstrategy,agentstate)
-#    if agentstate == None:
-#        sys.stderr.write('Unable to solve lvl\n')
+currentstate = parselvl()
+agentsearch(currentstate)
+#tmp = 0
+#for plan in plans:
+#    while len(plan) > 1:
+#        sys.stderr.write(''.join(['plan ',str(tmp),' action ',plan.pop().tostring(),'\n']))
 #        sys.stderr.flush()
-#        sys.exit()
-
-agentstates[:] = [(search(strategy,state),strategy) for state,strategy in agentstates]
-plans = []
-for agentstate,_ in agentstates:
-    plan = getplan(agentstate)
-    sys.stderr.write(''.join(['Length of plan: ',str(len(plan)),'\n']))
-    sys.stderr.flush()
-    plans.append(getplan(agentstate))
-#plan = getplan(n)
-#sys.stderr.write(''.join(['Found solution of length ',str(len(plan)),'\n']))
-#sys.stderr.flush()
+#    tmp = tmp + 1
+failures = 0
 while 1:
+
+    if failures > 3:
+        agentsearch(currentstate)
+        failures = 0
+
     actionstr = ''
-    for plan in plans:
-        if len(plan) == 0:
+    for agent in agents:
+        if len(plans[agent.name]) == 0:
             #sys.stderr.write('End of plan\n')
             #sys.stderr.flush()
             #sys.exit()
-            plan.append(None)
-            actionstr = addaction(actionstr,action)
+            #plan.append(None)
+            actionstr = addaction(actionstr,None)
         else:
-            action = plan.pop()
-            plan.append(action) #TODO find more effiecint way to keep action in plan
+            action = plans[agent.name].pop()
+            plans[agent.name].append(action) #TODO find more effiecint way to keep action in plan
             actionstr = addaction(actionstr,action)
 
     sys.stdout.write(getactionstr(actionstr))
@@ -161,11 +177,13 @@ while 1:
             continue
         if len(line) < 1:
             continue
-        line = line.replace('\n','')
-        line = line.replace('[','')
-        line = line.replace(']','')
-        responses = line.split(',')
-        for resp,plan in list(zip(responses,plans)):
-            if resp == 'true':
-                plan.pop()
+        sys.stderr.write(line)
+        sys.stderr.flush()
+        line = line.strip('\n[]')
+        responses = line.split(', ')
+        for resp,agent in list(zip(responses,agents)):
+            if resp == 'true' and len(plans[agent.name]) > 1:
+                updatestate(agent,plans[agent.name].pop())
+            else:
+                failures = failures + 1
         break

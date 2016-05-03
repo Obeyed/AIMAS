@@ -1,3 +1,4 @@
+import copy
 from command import *
 
 class Node:
@@ -25,6 +26,14 @@ class Node:
     def __lt__(self, node):
         return self.f() < node.f()
 
+#    def __deepcopy__(self,memo):
+#        cls = self.__class__
+#        result = cls.__new__(cls)
+#        memo[id(self)] = result
+#        for k,v in self.__dict__.items():
+#            setattr(result,k,copy.deepcopy(v,memo))
+#        return result
+
     def getdistance(self, grow, gcol, brow, bcol):
         dx1 = abs(brow - grow)
         dy1 = abs(bcol - gcol)
@@ -47,24 +56,25 @@ class Node:
             #for bkey in self.boxes:
             for gkey in self.goals:
                 if self.boxes[bkey].lower() == self.goals[gkey]:
-                    if self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1]) < distance or distance == -1:
-                        cross = self.getdis2(gkey[0],gkey[1],bkey[0],bkey[1])
-                        distance = self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1])
-                    #if cross < 0:
-                        #cross = self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1])
-                    #else:
-                        #cross = min(cross,self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1]))
+                    #if self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1]) < distance or distance == -1:
+                     #   cross = self.getdis2(gkey[0],gkey[1],bkey[0],bkey[1])
+                     #   distance = self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1])
+                    if cross < 0:
+                        cross = self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1])
+                    else:
+                        cross = min(cross,self.getdistance(gkey[0],gkey[1],bkey[0],bkey[1]))
             h += cross
         return h
 
     def f(self):
-        #return self.g + (1.01*self.getheuristic())
-        return (1.01*self.getheuristic())
+        return self.g + (1.01*self.getheuristic())
+        #return (1.01*self.getheuristic())
 
     def isgoalstate(self):
         for key in self.goals.keys():
-            if self.colors[self.goals[key].upper()] != self.colors[self.agent]:
-                continue
+            if len(self.colors) != 0:
+                if self.colors[self.goals[key].upper()] != self.colors[self.agent]:
+                    continue
             row, col = key
             if not self.boxat(row,col):
                 return False
@@ -112,7 +122,7 @@ class Node:
                     expandednodes.append(n)
 
             elif (command.name == 'Push'):
-                if self.boxat(newrow,newcol):
+                if self.boxat(newrow,newcol) and (len(self.colors) == 0 or self.colors[self.boxes[newrow,newcol]] == self.colors[self.agent]):
                     newboxrow,newboxcol = self.rowcolchange(command.dir2,newrow,newcol)
                     if self.cellsfree(newboxrow,newboxcol):
                         n = self.childnode(command)
@@ -125,7 +135,7 @@ class Node:
             elif (command.name == 'Pull'):
                 if (self.cellsfree(newrow,newcol)):
                     boxrow,boxcol = self.rowcolchange(command.dir2,self.agentrow,self.agentcol)
-                    if self.boxat(boxrow,boxcol):
+                    if self.boxat(boxrow,boxcol) and (len(self.colors) == 0 or self.colors[self.boxes[boxrow,boxcol]] == self.colors[self.agent]):
                         n = self.childnode(command)
                         n.agentrow = newrow
                         n.agentcol = newcol

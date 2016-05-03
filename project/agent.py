@@ -1,13 +1,8 @@
 
 class Agent:
 
-  def __init__(self, name, position, color=None):
+  def __init__(self, name, row, col,color=None):
     self.name = name
-    self.position = position
+    self.row = row
+    self.col = col
     self.color = color
-
-  def position(self):
-    return self.position
-
-  def move(self, position):
-    self.position = position
