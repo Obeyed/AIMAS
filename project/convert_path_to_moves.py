@@ -2,6 +2,12 @@
 from high_level_plan import *
 
 
+def push_or_pull(next_box, current_agent):
+    if next_box == current_agent: 
+        return "pull"
+    else:
+        return "push"
+
 def determine_direction(step, next_step):
     """Determine what direction an agent should move based on its current position
     and the next position"""
@@ -15,7 +21,6 @@ def determine_direction(step, next_step):
         return 'E'
     elif y_value == 1:
         return'W'
-        
         
 def calculate_movements(path, grid):
     """Takes a calculated path and the grid the path was calculated on, and returns a list
@@ -35,31 +40,36 @@ def calculate_movements(path, grid):
             next_step = path[path.index(steps)+1]
         except IndexError:
             return moves
+        this_step_type = check_gridtype(this_step, grid)
         next_step_type = check_gridtype(next_step, grid)
-        print(next_step_type)
+        print( this_step_type, next_step_type)
         
-        if next_step_type is not None and next_step_type[0] == 'free':
+        if next_step_type[0] == 'free':
             moves.append(('Move', determine_direction(this_step, next_step)))
             goal  = list(grid.goals.values())[0]
             #print(goal)
           
-        elif next_step_type is not None and next_step_type[0] == 'box':
+        elif next_step_type[0] == 'box':
             tuple = next_step_type[1]
             #print(tuple.values())
             try:
                 box_next_step = path[path.index(steps)+2]
-                #vi prøver lige kun med push
                 #box_direction = determine_direction(next_step, box_next_step)
-                moves.append(('push', determine_direction(this_step, next_step), determine_direction(next_step, box_next_step)))
-                if grid.colors == None:
-                    box_direction = determine_direction(next_step, box_next_step)
-                    #last_move = moves[-1]
-                    #last_move[1]
-                    moves.append(('push', determine_direction(this_step, next_step), determine_direction(next_step, box)))
-                    #need to update grid with box new position when pull and push?
-                    #swap possible?
+               # print("STUFF: ",next_step)
+                command = push_or_pull(box_next_step, this_step)
+                if command == 'pull':
+                    
+                    ## Check for Possible moves
+                    cell_list = grid.neighbours(this_step_type[1])
+                    free_cell = None
+                    for cell in cell_list:
+                        free_cell = cell;
+                                                
+                    moves.append((command, determine_direction(free_cell, box_next_step), determine_direction(this_step, next_step)))
+                else:        
+                    moves.append((command, determine_direction(this_step, next_step), determine_direction(next_step, box_next_step)))
+                                    
                 
-                    #check if box is same color as agent
             except IndexError:
                 return moves
                 #skal den pulles eller pushes? er det den box jeg skal tage?
@@ -74,21 +84,26 @@ def calculate_movements(path, grid):
             tuple = next_step_type[1]
             try:
                 box_next_step = path[path.index(steps)+2]
-                #vi prøver lige kun med push
                 #box_direction = determine_direction(next_step, box_next_step)
-                moves.append(('push', determine_direction(this_step, next_step), determine_direction(next_step, box_next_step)))
-            #what do i do
-            #ask overlord who should move? (centralized solution with one agent as master)
-            #communicate with agent to see who should move. (decentralized solution)
-        
+                
+               # print("STUFF: ",next_step)
+                command = push_or_pull(box_next_step, this_step)
+                                    
+                if this_step_type[0] != "box":
+                    command = "move"
+                elif command == 'pull':
+                    moves.append((command, determine_direction(this_step, next_step), determine_direction(this_step, next_step)))
+             
+                else:        
+                    moves.append((command, determine_direction(this_step, next_step), determine_direction(next_step, box_next_step)))
+                        
             except IndexError:
                 return moves
                 
                 
-        elif next_step_type is not None and next_step_type[0] == 'wall':
+        elif next_step_type[0] == 'wall':
             print('wat why is there a wall in my path?')
             #recalculate route
-        
         
 def check_gridtype(step, grid):
     """Takes a position and a grid, and checks what that positon is (free, wall, box or agent)"""
@@ -167,13 +182,13 @@ if __name__ == '__main__':
               (3,8),  (3,9), (3,10), (3,11), (3,12), (3,13), (3,14), (3,15),
               (3,16), (3,17), (3,18), (3,19), (3,20), (3,21) }
     free = {(2, 7), (2, 6), (1, 3), (2, 20), (2, 16), (1, 13), (1, 7),
-            (1, 17), (1, 4), (1, 15), (1, 19), (1, 6), (2, 12), (2, 5),
+            (1, 17), (1, 4), (1, 15), (1, 19), (1, 6), (2, 9), (2, 5),
             (1, 11), (1, 20), (1, 2), (2, 11), (2, 14), (2, 19), (1, 12),
             (1, 16), (2, 18), (1, 14), (2, 13), (1, 18), (1, 5), (1, 8),
             (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4) }
     goals = {(1, 10): 'b', (2, 10): 'a'}
     agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 9): 'A', (2, 9): 'B'}
+    boxes = {(1, 9): 'A', (2, 12): 'B'}
     colors = {'green': ['A','0'], 'red' : ['B', '1']}
     #colors = None
 
@@ -190,9 +205,10 @@ if __name__ == '__main__':
     allSteps = []
     for key in hlp.agent_for_movement:
         allSteps.append(hlp.agent_for_movement[key])
-    
-    steps = allSteps[1]
+        print("AGENT: ",key.name)
+    steps = allSteps[0]
     moves = calculate_movements(steps, grid)
+    
     print(moves)
         
     
