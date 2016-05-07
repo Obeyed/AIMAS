@@ -2,6 +2,11 @@ from a_star_search_simple import cross_product_heuristic as cross_product
 from a_star_search_simple import a_star_search
 
 
+def movement_with_box(path):
+    """ wrap path in another list """
+    return [path]
+
+
 class HighLevelPlan:
 
     def __init__(self, grid):
@@ -62,7 +67,8 @@ class HighLevelPlan:
                 agent_to_box = self.shortest_path_to_box(agent, box)
 
                 if agent_to_box is not None:
-                    self.agent_for_movement[agent] = agent_to_box + box_to_goal
+                    self.agent_for_movement[agent] = ( agent_to_box +
+                            movement_with_box(box_to_goal) )
 
 
     def untangle(self):
