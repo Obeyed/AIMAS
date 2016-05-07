@@ -12,7 +12,7 @@ class HighLevelPlan:
     def __init__(self, grid):
         self.grid = grid
         self.box_goal_combination = dict()
-        self.agent_for_movement = dict()
+        self.agent_movement = dict()
 
     def update_grid(self, grid):
         self.grid = grid
@@ -63,11 +63,11 @@ class HighLevelPlan:
             agent_to_box = None
             for agent, box_letters in self.grid.agent_info.items():
                 if box.name not in box_letters: continue
-                if agent in self.agent_for_movement: continue
+                if agent in self.agent_movement: continue
                 agent_to_box = self.shortest_path_to_box(agent, box)
 
                 if agent_to_box is not None:
-                    self.agent_for_movement[agent] = ( agent_to_box +
+                    self.agent_movement[agent] = ( agent_to_box +
                             movement_with_box(box_to_goal) )
 
 
@@ -78,9 +78,9 @@ class HighLevelPlan:
         tmp = 0
         while 1:
             agents = set()
-            for agent_1,path_1 in self.agent_for_movement.items():
+            for agent_1,path_1 in self.agent_movement.items():
                 agents.add(agent_1)
-                for agent_2,path_2 in self.agent_for_movement.items():
+                for agent_2,path_2 in self.agent_movement.items():
                     if not agent_2 in agents:
                         #Consider using zip() and for loop instead
                         idx = 0
@@ -134,4 +134,4 @@ if __name__ == '__main__':
     print(hlp.agent_for_movement)
 
     hlp.untangle()
-    print(hlp.agent_for_movement)
+    print(hlp.agent_movement)
