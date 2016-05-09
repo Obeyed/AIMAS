@@ -1,5 +1,6 @@
 from a_star_search_simple import cross_product_heuristic as cross_product
 from a_star_search_simple import a_star_search
+import copy
 
 
 def movement_with_box(path):
@@ -75,7 +76,6 @@ class HighLevelPlan:
         """ Iterates over all paths and fix all conflicts
         """
         fixed = 0
-        tmp = 0
         while 1:
             agents = set()
             for agent_1,path_1 in self.agent_movement.items():
@@ -87,13 +87,33 @@ class HighLevelPlan:
                         while idx < min(len(path_1),len(path_2)):
                             if path_1[idx] == path_2[idx]:
                                 fixed = fixed + 1
-                                path_2.insert(idx,path_2[idx])
+                                blocked_grid = copy.deepcopy(self.grid)
+                                blocked_grid.walls.add(path_2[idx])
+                                a_cell, g_cell = path_2[idx-1], path_1[idx-1]
+                                tmp_path = a_star_search(blocked_grid, a_cell, g_cell)
+                                path_2.pop(idx)
+                                tmp_path.pop(0)
+                                for step in tmp_path:
+                                    path_2.insert(idx,step)
+                                #if no path
+                                #path_2.insert(idx,path_2[idx-1])
                             elif (idx +1 < min(len(path_1),len(path_2)) and
                                     path_1[idx] == path_2[idx +1] and
-                                    path_1[idx+1] == path_2[idx-1]):
+                                    path_1[idx+1] == path_2[idx]):
                                 fixed = fixed + 1
-                                path_2.insert(idx,path_2[idx-1])
-                                path_2.insert(idx+1,path_2[idx-1])
+                                blocked_grid = copy.deepcopy(self.grid)
+                                print(blocked_grid.walls)
+                                blocked_grid.walls.add(path_2[idx])
+                                print(blocked_grid.walls)
+                                a_cell, g_cell = path_2[idx-1], path_1[idx]
+                                tmp_path = a_star_search(blocked_grid, a_cell, g_cell,)
+                                path_2.pop(idx)
+                                tmp_path.pop(0)
+                                for step in tmp_path:
+                                    path_2.insert(idx,step)
+                                #if no path
+                                #path_2.insert(idx,path_2[idx-1])
+                                #path_2.insert(idx+1,path_2[idx-1])
                             idx = idx +1
 
             if fixed == 0: return
