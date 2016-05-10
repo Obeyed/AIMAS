@@ -1,3 +1,5 @@
+import sys
+
 from a_star_search_simple import cross_product_heuristic as cross_product
 from a_star_search_simple import a_star_search
 import copy
@@ -68,9 +70,28 @@ class HighLevelPlan:
                 agent_to_box = self.shortest_path_to_box(agent, box)
 
                 if agent_to_box is not None:
+                    agent_to_box = self.validate_agent_movement(agent_to_box,
+                            box_to_goal)
                     self.agent_movement[agent] = ( agent_to_box +
                             movement_with_box(box_to_goal) )
 
+    def validate_agent_movement(self, agent_to_box, box_to_goal):
+        """ Make sure that final step in agent's movement is finalized. """
+        last_idx = len(agent_to_box) - 1
+        final_step = agent_to_box[last_idx]
+        # unfinalized box_movement
+        if isinstance(final_step, list) and len(final_step) == 1:
+            #print("editing unfinalised step", file=sys.stderr)
+            for drop_cell in self.grid.neighbours(final_step[0]):
+                # cannot drop if same path we are moving/came from
+                is_next_step = (drop_cell == box_to_goal[0])
+                is_prev_step = (drop_cell == agent_to_box[last_idx-1])
+                if (is_next_step or is_prev_step): continue
+                # update box list
+                final_step.append(drop_cell)
+                # update agent movement
+                agent_to_box.append(final_step[0])
+        return agent_to_box
 
     #def fix_conflict(self,path_2,idx,inner_idx_2 = None):
     def fix_conflict(self,wall_1,a_cell,g_cell):
@@ -227,14 +248,14 @@ if __name__ == '__main__':
               (3,8),  (3,9), (3,10), (3,11), (3,12), (3,13), (3,14), (3,15),
               (3,16), (3,17), (3,18), (3,19), (3,20), (3,21) }
     free = {(2, 7), (2, 6), (1, 3), (2, 20), (2, 16), (1, 13), (1, 7),
-            (1, 17), (1, 4), (1, 15), (1, 19), (1, 6), (2, 12), (2, 5),
+            (1, 17), (1, 4), (1, 15), (1, 19), (1, 6), (2, 5), (1,9), (1,10),
             (1, 11), (1, 20), (1, 2), (2, 11), (2, 14), (2, 19), (1, 12),
-            (1, 16), (2, 18), (1, 14), (2, 13), (1, 18), (1, 5), (1, 8),
-            (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4), (2, 9) }
+            (1, 16), (2, 18), (1, 14), (1, 18), (1, 8), (2,12),
+            (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4), (2, 9), (2,10) }
     goals = {(1, 6): 'b', (2, 15): 'a'}
     #agents = {(1, 1): '0'}
     agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 5): 'B', (2, 13): 'A', (2,10): 'C'}
+    boxes = {(1, 5): 'B', (2, 13): 'A', (2,12): 'C'}
     colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
 
     for i in range(4):
@@ -244,15 +265,17 @@ if __name__ == '__main__':
             elif cell in goals: print(goals[cell], end="")
             elif cell in agents: print(agents[cell], end="")
             elif cell in boxes: print(boxes[cell], end="")
-            else: print(" ", end="")
+            elif cell in free: print(" ", end="")
+            else: print("X", end="")
         print()
 
 
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
+    #print(grid.colors)
     #print(grid.agent_info)
     hlp = HighLevelPlan(grid)
     hlp.find_shortest_box_goal_combination()
-    print("bgc:", hlp.box_goal_combination)
+    #print("bgc:", hlp.box_goal_combination)
 
     hlp.create_paths()
     #print(hlp.agent_movement)
