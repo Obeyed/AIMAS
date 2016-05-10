@@ -87,8 +87,8 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         current = frontier.get()[1] # Fetch cell, discard the priority
         if current == goal: break
 
-        print(current)
-        input()
+        #print(current)
+        #input()
         for next in grid.neighbours(current, **kwargs):
             cost, info = cost_of_move(grid, next, came_from, agent)
             new_cost = cost_so_far[current] + cost
@@ -104,15 +104,15 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
                 elif next in move_info:
                     del move_info[next]
 
-            print("  {0} [{1}, {2}]".format(next, cost_so_far[next], priority), end=" ")
+            #print("  {0} [{1}, {2}]".format(next, cost_so_far[next], priority), end=" ")
 
-        print()
+        #print()
 
-    print("current:", current)
-    print("goal:", goal)
-    print("came from:", came_from)
-    print("cost:", cost_so_far)
-    print("move info:", move_info)
+    #print("current:", current)
+    #print("goal:", goal)
+    #print("came from:", came_from)
+    #print("cost:", cost_so_far)
+    #print("move info:", move_info)
 
     if backwards:
         # find goal's neighbouring cells
@@ -120,15 +120,15 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         # use that neighbour as the goal for constructing steps
         # NOTE: this should be used if goal cell is a blocking object
         landing_position = grid.neighbours(goal, **kwargs)
-        print("landing positions")
-        print(landing_position)
+        #print("landing positions")
+        #print(landing_position)
         landing_position = [pos for pos in landing_position if pos in came_from]
-        print(landing_position)
+        #print(landing_position)
         goal = landing_position[0]
 
     relaxed_steps = create_steps_from_parent_cells(came_from, goal)
     combined_steps = fix_box_movement(grid, relaxed_steps, move_info)
-    print("combined:", combined_steps)
+    #print("combined:", combined_steps)
 
     return combined_steps
 
