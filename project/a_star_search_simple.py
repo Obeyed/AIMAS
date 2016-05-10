@@ -14,13 +14,17 @@ def tie_breaking_cross_product_heuristic(a, b):
     return tie_break * cross_product_heuristic(a, b)
 
 def create_steps_from_parent_cells(parents, goal):
-    """ Create list of steps from dict of parents """
-    steps = [goal]
-    step = parents[goal]
-    while step is not None:
-        steps.append(step)
-        step = parents[step]
-    return steps[::-1]
+    """ Create list of steps from dict of parents or None """
+    try:
+        steps = [goal]
+        step = parents[goal]
+        while step is not None:
+            steps.append(step)
+            step = parents[step]
+        steps = steps[::-1]
+    except KeyError:
+        steps = None
+    return steps
 
 def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         agent=None):
