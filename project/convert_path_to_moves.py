@@ -1,214 +1,146 @@
-# Imports
-from high_level_plan import *
-
-
-def push_or_pull(next_box, current_agent):
-    if next_box == current_agent: 
-        return "pull"
-    else:
-        return "push"
-
 def determine_direction(step, next_step):
-    """Determine what direction an agent should move based on its current position
-    and the next position"""
+    """ Determine what direction an agent should move based on its current
+    position and the next position
+
+    (x1,y1) = step => (x2,y2) = next_step
+    (1,1) => (1,2) -- y:-1,x: 0 dir:E
+    (1,1) => (1,0) -- y: 1,x: 0 dir:W
+    (1,1) => (0,1) -- y: 0,x: 1 dir:N
+    (1,1) => (2,1) -- y: 0,x:-1 dir:S
+    """
     x_value = step[0] - next_step[0]
     y_value = step[1] - next_step[1]
-    if x_value == -1:
-        return 'S'
-    elif x_value == 1:
-        return 'N'
-    elif y_value == -1:
-        return 'E'
-    elif y_value == 1:
-        return'W'
-        
+    if x_value == -1: return 'S'
+    if x_value ==  1: return 'N'
+    if y_value == -1: return 'E'
+    if y_value ==  1: return 'W'
+
+    raise Exception("unable to compute direction ({0}, {1})".format(step,
+        next_step))
+
+def track_cells(curr_list, curr_index, prev_list=None, prev_index=None):
+    prevCell = None
+    currCell = None
+    nextCell = None
+
+    currCell = curr_list[curr_index]
+
+    if prev_list:
+        if curr_index > 0:
+            prevCell = curr_list[curr_index-1]
+        else:
+            prevCell = prev_list[prev_index-1]
+
+        if curr_index < len(curr_list)-1:
+            nextCell = curr_list[curr_index+1]
+    else:
+        if curr_index > 0:
+            prevCell = curr_list[curr_index-1]
+
+        if curr_index < len(curr_list)-1:
+            nextCell = curr_list[curr_index+1]
+
+    return(prevCell, currCell, nextCell)
+
 def calculate_movements(path, grid):
-    """Takes a calculated path and the grid the path was calculated on, and returns a list
-    of moves to be made to traverse the path"""
-    
+    """ Takes a calculated path and the grid the path was calculated on, and
+    returns a list of moves to be made to traverse the path
+    """
+    agent_positions, box_positions, moves = [], [], []
+
+    # For every step in plan
+    for i, step in enumerate(path):
+        if isinstance(step,list):
+            # Box movement
+            for j, boxStep in enumerate(step):
+                # Track cells
+                prevCell, currCell, nextCell = track_cells(step, j, path, i)
+                box_positions.append(currCell)
+
+                if nextCell == agent_positions[-1]:
+                    neighbours = grid.neighbours(nextCell)
+                    freeCells = []
+                    for freeCell in neighbours:
+                        if freeCell in grid.free:
+                            freeCells.append(freeCell)
+
+                    moves.append('Pull('+str(determine_direction(nextCell, freeCells[0]))+','+str(determine_direction(nextCell, currCell,))+')')
+                    agent_positions.append(freeCells[0])
+                elif nextCell:
+                    moves.append('Push('+str(determine_direction(agent_positions[-1], currCell))+','+str(determine_direction(currCell, nextCell))+')')
+                    agent_positions.append(currCell)
+        elif not isinstance(path[i+1],list):
+            prevCell, currCell, nextCell = track_cells(path, i)
+            agent_positions.append(currCell)
+
+            moves.append('Move(' + str(determine_direction(currCell, nextCell))+')')
+        else:
+            agent_positions.append(step)
+
+    return moves
+
+###
+# obeid's updated version with NoOp
+###
+
+def get_dir(current, next):
+    return determine_direction(current, next)
+
+def get_box_movement(agent_pos, agent_end_pos, path, grid):
+    """ Create box movement.
+    NOTE figure out how to use `agent_end_pos` to calculate movement.
+    """
     moves = []
-    
-    """find agent identity"""
-    
-    agent_position = path[0]
-    #agent = grid.agents[agent_position[0], agent_position[1]]
-    #print (agent) 
-    
-    for steps in path:
-        this_step = steps
-        try:
-            next_step = path[path.index(steps)+1]
-        except IndexError:
-            return moves
-        this_step_type = check_gridtype(this_step, grid)
-        next_step_type = check_gridtype(next_step, grid)
-        print( this_step_type, next_step_type)
-        
-        if next_step_type[0] == 'free':
-            moves.append(('Move', determine_direction(this_step, next_step)))
-            goal  = list(grid.goals.values())[0]
-            #print(goal)
-          
-        elif next_step_type[0] == 'box':
-            tuple = next_step_type[1]
-            #print(tuple.values())
-            try:
-                box_next_step = path[path.index(steps)+2]
-                #box_direction = determine_direction(next_step, box_next_step)
-               # print("STUFF: ",next_step)
-                command = push_or_pull(box_next_step, this_step)
-                if command == 'pull':
-                    
-                    ## Check for Possible moves
-                    cell_list = grid.neighbours(this_step_type[1])
-                    free_cell = None
-                    for cell in cell_list:
-                        free_cell = cell;
-                                                
-                    moves.append((command, determine_direction(free_cell, box_next_step), determine_direction(this_step, next_step)))
-                else:        
-                    moves.append((command, determine_direction(this_step, next_step), determine_direction(next_step, box_next_step)))
-                                    
-                
-            except IndexError:
-                return moves
-                #skal den pulles eller pushes? er det den box jeg skal tage?
-               
-        elif next_step_type == 'agent':
-            print("test")
-            #what do i do
-            #ask overlord who should move? (centralized solution with one agent as master)
-            #communicate with agent to see who should move. (decentralized solution)
-            
-        elif next_step_type[0] == 'goal':
-            tuple = next_step_type[1]
-            try:
-                box_next_step = path[path.index(steps)+2]
-                #box_direction = determine_direction(next_step, box_next_step)
-                
-               # print("STUFF: ",next_step)
-                command = push_or_pull(box_next_step, this_step)
-                                    
-                if this_step_type[0] != "box":
-                    command = "move"
-                elif command == 'pull':
-                    moves.append((command, determine_direction(this_step, next_step), determine_direction(this_step, next_step)))
-             
-                else:        
-                    moves.append((command, determine_direction(this_step, next_step), determine_direction(next_step, box_next_step)))
-                        
-            except IndexError:
-                return moves
-                
-                
-        elif next_step_type[0] == 'wall':
-            print('wat why is there a wall in my path?')
-            #recalculate route
-        
-def check_gridtype(step, grid):
-    """Takes a position and a grid, and checks what that positon is (free, wall, box or agent)"""
-    #agent = grid.agents[agent_position[0], agent_position[1]]
-    for tuples in grid.free:
-        if tuples[0] == step[0] and tuples[1] == step[1]:
-            result = ('free', tuples)
-            return result
-    for tuples in grid.walls:
-        if tuples[0] == step[0] and tuples[1] == step[1]:
-            result = ('wall', tuples)
-            return result
-    for tuples in grid.boxes:
-        if tuples.position[0] == step[0] and tuples.position[1] == step[1]:
-            result = ('box', tuples.position)
-            return result
-    for tuples in grid.agents:
-        if tuples.position[0] == step[0] and tuples.position[1] == step[1]:
-            result = ('agent', tuples.position)
-            return result
-    for tuples in grid.goals:
-        if tuples[0] == step[0] and tuples[1] == step[1]:
-            result = ('goal', tuples)
-            return result
+    box_cur = path.pop(0)
 
-    
+    for box_next in path:
+        # if next step is equal to agent position, then we're pulling
+        if box_next == agent_pos:
+            agent_dir = get_dir(agent_pos, box_next)
+            box_dir_wrt_agent = get_dir(agent_pos, box_curr)
+            moves.append('Pull({0},{1})'.format(agent_dir, box_dir_wrt_agent))
+            # update positions
+            box_cur = agent_pos
+            agent_pos = box_next
+        else:
+            agent_dir = get_dir(agent_pos, box_cur)
+            box_dir = get_dir(box_cur, box_next)
+            moves.append('Push({0},{1})'.format(agent_dir, box_dir))
+            # update positions
+            agent_pos = box_cur
+            box_cur = box_next
 
-if __name__ == '__main__':
-    from simple_grid import SimpleGrid
-    #from convert_path_to_moves import Convert_path_to_moves
+    print("agent final:", agent_pos, "agent end:", agent_end_pos)
+    return moves
 
+def get_agent_movement(agent_position, step):
+    return 'Move({0})'.format(get_dir(agent_position, step))
 
-    #
-    # # +++++++
-    # # +0A   +
-    # # + A   +
-    # # + A A +
-    # # + A A +
-    # # +   A +
-    # # +   Aa+
-    # # +++++++
-    #
-    #
-    # walls = { (0,0), (0,1), (0,2), (0,3), (0,4), (0,5), (0,6),
-    #           (1,0),                                    (1,6),
-    #           (2,0),                                    (2,6),
-    #           (3,0),                                    (3,6),
-    #           (4,0),                                    (4,6),
-    #           (5,0),                                    (5,6),
-    #           (6,0),                                    (6,6),
-    #           (7,0), (7,1), (7,2), (7,3), (7,4), (7,5), (7,6) }
-    # free = { (1,1), (1,2), (1,3), (1,4), (1,5),
-    #          (2,1), (2,2), (2,3), (2,4), (2,5),
-    #          (3,1), (3,2), (3,3), (3,4), (3,5),
-    #          (4,1), (4,2), (4,3), (4,4), (4,5),
-    #          (5,1), (5,2), (5,3), (5,4), (5,5),
-    #          (6,1), (6,2), (6,3), (6,4), (6,5) }
-    # goals  = {(6, 5): 'a'}
-    # agents = {(1, 1): '0', }
-    # boxes  = {(1, 2): 'A', (2, 2): 'A', (3, 2): 'A', (4, 2): 'A',
-    #           (3, 4): 'A', (4, 4): 'A', (5, 4): 'A', (6, 4): 'A' }
-    # colors = None
-    #
-    # grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
-    # steps = [(1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (5, 2), (5, 3), (4, 3), (3, 3), (2, 3), (2, 4), (2, 5), (3, 5), (4, 5), (5, 5), (6, 5)]
-    # print(steps)
-    # moves = calculate_movements(steps, grid)
-    # print(moves)
-        
-    walls = { (0,0),  (0,1),  (0,2),  (0,3),  (0,4),  (0,5),  (0,6),  (0,7),
-              (0,8),  (0,9), (0,10), (0,11), (0,12), (0,13), (0,14), (0,15),
-              (0,16), (0,17), (0,18), (0,19), (0,20), (0,21),
-              (1,0), (1,21),
-              (2,0), (2,21),
-              (3,0),  (3,1),  (3,2),  (3,3),  (3,4),  (3,5),  (3,6),  (3,7),
-              (3,8),  (3,9), (3,10), (3,11), (3,12), (3,13), (3,14), (3,15),
-              (3,16), (3,17), (3,18), (3,19), (3,20), (3,21) }
-    free = {(2, 7), (2, 6), (1, 3), (2, 20), (2, 16), (1, 13), (1, 7),
-            (1, 17), (1, 4), (1, 15), (1, 19), (1, 6), (2, 9), (2, 5),
-            (1, 11), (1, 20), (1, 2), (2, 11), (2, 14), (2, 19), (1, 12),
-            (1, 16), (2, 18), (1, 14), (2, 13), (1, 18), (1, 5), (1, 8),
-            (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4) }
-    goals = {(1, 10): 'b', (2, 10): 'a'}
-    agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 9): 'A', (2, 12): 'B'}
-    colors = {'green': ['A','0'], 'red' : ['B', '1']}
-    #colors = None
+def calculate_movements_new(path, grid):
+    ignore_next_step = False
+    agent_position = path.pop(0)
+    moves = []
 
-    #print(colors)
+    for i, step in enumerate(path):
+        if ignore_next_step:
+            ignore_next_step = False
+            continue
 
-    grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
-    #print(grid.agent_info)
-    hlp = HighLevelPlan(grid)
-    hlp.find_shortest_box_goal_combination()
-    #print(hlp.box_goal_combination)
-    
-    hlp.create_paths()
-    
-    allSteps = []
-    for key in hlp.agent_for_movement:
-        allSteps.append(hlp.agent_for_movement[key])
-        print("AGENT: ",key.name)
-    steps = allSteps[0]
-    moves = calculate_movements(steps, grid)
-    
-    print(moves)
-        
-    
+        if isinstance(step, list):
+            # next step will define where agent should stand
+            agent_end_position = None
+            if len(path) > i+1:
+                ignore_next_step = True
+                # next cell defines agent's end pos, if it exists
+                agent_end_position = path[i+1]
+            moves += get_box_movement(agent_position, agent_end_position, step, grid)
+            # update position
+            agent_position = agent_end_position
+        elif agent_position == step:
+            moves.append('NoOp')
+        else:
+            moves.append(get_agent_movement(agent_position, step))
+            # update position
+            agent_position = step
+
+    return moves
