@@ -56,7 +56,7 @@ class HighLevelPlan:
 
     def shortest_path_to_box(self, agent, box):
         a_cell, b_cell = agent.position, box.position
-        return a_star_search(self.grid, a_cell, b_cell, backwards=True)
+        return a_star_search(self.grid, a_cell, b_cell, backwards=True, agent=agent)
 
     def create_paths(self):
         for box, goal in self.box_goal_combination.items():
