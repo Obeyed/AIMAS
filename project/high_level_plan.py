@@ -72,52 +72,92 @@ class HighLevelPlan:
                             movement_with_box(box_to_goal) )
 
 
+    def fix_conflict(self,path_2,idx,inner_idx_2 = None):
+        blocked_grid = copy.deepcopy(self.grid)
+        blocked_grid.walls.add(path_2[idx_1])
+        if not idx_2 == None:
+            blocked_grid.walls.add(path_2[idx_2])
+        a_cell, g_cell = path_2[idx_1-1], path_2[idx_2 + 1]
+        new_path = a_star_search(blocked_grid, a_cell, g_cell)
+        path_2.pop(idx)
+        new_path.pop(0)
+        for step in new_path:
+            path_2.insert(idx_1,step)
+
+
     def untangle(self):
         """ Iterates over all paths and fix all conflicts
         """
-        fixed = 0
         while 1:
+            fixed = 0
             agents = set()
             for agent_1,path_1 in self.agent_movement.items():
                 agents.add(agent_1)
                 for agent_2,path_2 in self.agent_movement.items():
                     if not agent_2 in agents:
                         #Consider using zip() and for loop instead
-                        idx = 0
-                        while idx < min(len(path_1),len(path_2)):
-                            if path_1[idx] == path_2[idx]:
-                                fixed = fixed + 1
-                                blocked_grid = copy.deepcopy(self.grid)
-                                blocked_grid.walls.add(path_2[idx])
-                                a_cell, g_cell = path_2[idx-1], path_1[idx-1]
-                                tmp_path = a_star_search(blocked_grid, a_cell, g_cell)
-                                path_2.pop(idx)
-                                tmp_path.pop(0)
-                                for step in tmp_path:
-                                    path_2.insert(idx,step)
-                                #if no path
-                                #path_2.insert(idx,path_2[idx-1])
-                            elif (idx +1 < min(len(path_1),len(path_2)) and
-                                    path_1[idx] == path_2[idx +1] and
-                                    path_1[idx+1] == path_2[idx]):
-                                fixed = fixed + 1
-                                blocked_grid = copy.deepcopy(self.grid)
-                                print(blocked_grid.walls)
-                                blocked_grid.walls.add(path_2[idx])
-                                print(blocked_grid.walls)
-                                a_cell, g_cell = path_2[idx-1], path_1[idx]
-                                tmp_path = a_star_search(blocked_grid, a_cell, g_cell,)
-                                path_2.pop(idx)
-                                tmp_path.pop(0)
-                                for step in tmp_path:
-                                    path_2.insert(idx,step)
-                                #if no path
-                                #path_2.insert(idx,path_2[idx-1])
-                                #path_2.insert(idx+1,path_2[idx-1])
-                            idx = idx +1
+                        #Remember to add fixed + 1 again
+                        #TODO if no path:
+                        #path_2.insert(idx,path_2[idx-1])
+                        #path_2.insert(idx+1,path_2[idx-1])
+                        idx_1 = 0
+                        idx_2 = 0
+                        inner_idx_1 = 0
+                        inner_idx_2 = 0
+                        #Shorten this with variables instead of repeating same code
+                        while (idx_1 < len(path_1) and idx_2 < len(path_2):
+                            if isinstance(path_1[idx_1],list):
+                                if isinstance(path_2[idx_2],list):
+                                    if path_1[idx_1][inner_idx_1] == path_2[idx_2][inner_idx_2]:
+                                        fix_conflict(path_2,idx_2,inner_idx_2)
+                                        fixed = fixed + 1
+                                    #elif (idx +1 < min(len(path_1),len(path_2)) and
+                                    #    path_1[idx] == path_2[idx +1] and
+                                    #    path_1[idx+1] == path_2[idx]):
+
+                                    inner_idx_2 = inner_idx_2 + 1
+                                    if inner_idx_2 == len(path_2[idx_2]):
+                                        inner_idx_2 = 0
+                                        idx_2 = idx_2 + 1
+
+                                else:
+                                    if path_1[idx][inner_idx_1] == path_2[idx]:
+
+                                    #elif (idx +1 < min(len(path_1),len(path_2)) and
+                                    #    path_1[idx] == path_2[idx +1] and
+                                    #    path_1[idx+1] == path_2[idx]):
+
+                                    idx_2 = idx_2 + 1
+
+                                inner_idx_1 = inner_idx_1 + 1
+                                if inner_idx_1 == len(path_1[idx_1]:
+                                    inner_idx_1 = 0
+                                    idx_1 = idx_1 + 1
+                            else:
+                                if isinstance(path[idx],list):
+                                    if path_1[idx] == path_2[idx][inner_idx_2]:
+
+                                    #elif (idx +1 < min(len(path_1),len(path_2)) and
+                                    #    path_1[idx] == path_2[idx +1] and
+                                    #    path_1[idx+1] == path_2[idx]):
+
+                                    inner_idx_2 = inner_idx_2 + 1
+                                    if inner_idx_2 == len(path_2[idx_2]):
+                                        inner_idx_2 = 0
+                                        idx_2 = idx_2 + 1
+
+                                else:
+                                    if path_1[idx] == path_2[idx]:
+
+                                    elif (idx +1 < min(len(path_1),len(path_2)) and
+                                        path_1[idx] == path_2[idx +1] and
+                                        path_1[idx+1] == path_2[idx]):
+
+                                    idx_2 = idx_2 + 1
+
+                                idx_1 = idx_1 + 1
 
             if fixed == 0: return
-            fixed = 0
 
 
 
