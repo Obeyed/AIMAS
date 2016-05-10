@@ -1,19 +1,25 @@
+import sys
+
 from movable import Agent, Box
 from a_star_search_simple import cross_product_heuristic as cross_product
 
-def object_builder(movable, colors, _class, collection):
+def object_builder(movable, colors, _class, instance_collection,
+        position_collection):
     """ Create box or agent instances.
 
     Keyword arguments:
     movable -- dict of either boxes or agents {(x,y): 'A'}
     colors -- None or dict of colors {'blue': ['0', 'A']}
     _class -- class' constructor (either Box or Agent)
-    collection -- set of SimpleGrid instance variables where we save objs
+    instance_collection -- set of Movable instances
+    position_collection -- dict defining instance's positition
     """
     for cell, obj in movable.items():
         for color, objs in colors.items():
             if obj in objs:
-                collection.add(_class(obj, cell, color))
+                instance = _class(obj, cell, color)
+                instance_collection.add(instance)
+                position_collection[cell] = instance
                 break
 
 def find_uncolored_objects(colors, boxes, agents):
@@ -60,7 +66,11 @@ class SimpleGrid:
         self.colors = colors # {'green': ['0', 'A', 'a'], ..}
         self.free = free
 
+        # sets of instances of movable objects
         self.boxes, self.agents = set(), set()
+        # dicts of instances' positions { cell: instance }
+        self.box_position, self.agent_position = dict(), dict()
+        # populate ojects
         self.build_boxes(boxes, colors)   # {(x,y): 'A', ..}
         self.build_agents(agents, colors) # {(x,y): '0', ..}
 
@@ -68,19 +78,16 @@ class SimpleGrid:
         self.populate_agent_info(agents, boxes, colors)
 
         # NOTE: there must be a better way to check the entire grid?
-        self.complete_grid = walls.union(free)
-        self.complete_grid = self.complete_grid.union(set(goals))
-        self.complete_grid = self.complete_grid.union(set(boxes))
-        self.complete_grid = self.complete_grid.union(set(agents))
+        self.complete_grid = ( walls.union(free).union(set(goals))
+            .union(set(boxes)).union(set(agents)) )
 
-        self.unpassable = walls.union(set(boxes))
-        self.unpassable = self.unpassable.union(set(agents))
+        self.unpassable = walls.union(set(boxes)).union(set(agents))
 
     def build_boxes(self, boxes, colors):
-        object_builder(boxes, colors, Box, self.boxes)
+        object_builder(boxes, colors, Box, self.boxes, self.box_position)
 
     def build_agents(self, agents, colors):
-        object_builder(agents, colors, Agent, self.agents)
+        object_builder(agents, colors, Agent, self.agents, self.agent_position)
 
     def populate_agent_info(self, agents, boxes, colors):
         """ Find agents that can move boxes.
@@ -129,6 +136,37 @@ class SimpleGrid:
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
 
+    def move(self, old, new):
+        """ Update grid with new info about movable objects.
+
+        Keyword arguments:
+        old -- current position
+        new -- position to move movable object
+        """
+        if old not in self.box_position and old not in self.agent_position:
+            print("warn: nothing to move at {0}".format(old), file=sys.stderr)
+            return
+
+        if old in self.box_position:
+            box = self.box_position[old]
+            box.move(new)
+            # update position
+            del self.box_position[old]
+            self.box_position[new] = box
+        else:
+            agent = self.agent_position[old]
+            agent.move(new)
+            # update position
+            del self.agent_position[old]
+            self.agent_position[new] = agent
+
+        # update free fields
+        self.free.discard(new)
+        self.free.add(old)
+        # update unpassable fields
+        self.unpassable.discard(old)
+        self.unpassable.add(new)
+
 
 if __name__ == '__main__':
     walls = {(1,0), (1,1), (1,3), (2,2)}
@@ -146,6 +184,8 @@ if __name__ == '__main__':
     box_cell, agent_cell, next_cell = (0,1), (0,2), (0,3)
     result = grid.swapable(box_cell, agent_cell, next_cell)
     print(result)
-    box_cell, agent_cell, next_cell = (0,0), (0,1), (0,2)
-    result = grid.swapable(box_cell, agent_cell, next_cell)
-    print(result)
+
+    print(grid.agent_position)
+    print(grid.box_position)
+    grid.move((1,9), (1,10))
+    print(grid.box_position)
