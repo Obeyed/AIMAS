@@ -30,20 +30,12 @@ def create_steps_from_parent_cells(parents, goal):
 def cost_of_move(grid, next, came_from, agent):
     """ Cost of next move.
     Check if next move is a box and its color.
-
-    NOTE: two consecutive boxes return infinity.
     """
     info = None
     HELP_COST = 20
     SELF_COST = 2
     if (agent is None): return 1, info
     if (next not in grid.box_position): return 1, info
-
-    if next in came_from:
-        parent = came_from[next]
-        if (parent in grid.box_position and next in grid.box_position):
-            print("found two consecutive boxes -- return inf", file=sys.stderr)
-            return float('inf'), info
 
     box = grid.box_position[next]
     if (box.color == agent.color):
@@ -127,6 +119,7 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         goal = landing_position[0]
 
     relaxed_steps = create_steps_from_parent_cells(came_from, goal)
+    #print("...", relaxed_steps)
     combined_steps = fix_box_movement(grid, relaxed_steps, move_info)
     #print("combined:", combined_steps)
 
@@ -138,6 +131,8 @@ def fix_box_movement(grid, path, move_info):
     NOTE: this is very naive.
         it will not return correct result, if box cannot be dropped before
         reaching intended goal!
+        if final step is one long list (longer than one element) then it has
+        failed!
     TODO: maybe some functionality to find where box can be placed to not block
     """
     combined, box_movement = [], []
@@ -165,9 +160,11 @@ def fix_box_movement(grid, path, move_info):
 
         if len(box_movement) > 0:
             for drop_cell in grid.neighbours(cell):
-                # cannot drop if same path we are moving
-                if (drop_cell == path[i+1]):
-                    continue
+                # cannot drop if same path we are moving/came from
+                #print("drop:", drop_cell, "curr:", cell, "prev:", path[i-1])
+                is_next_step = (drop_cell == path[i+1] if len(path) > i+1 else False)
+                is_prev_step = (drop_cell == path[i-1])
+                if (is_next_step or is_prev_step): continue
                 # update box list
                 box_movement.append(cell)
                 box_movement.append(drop_cell)
@@ -182,6 +179,10 @@ def fix_box_movement(grid, path, move_info):
                 box_movement.append(cell)
         else:
             combined.append(cell)
+
+    if len(box_movement) > 0:
+        # add unresolved movement
+        combined.append(box_movement)
 
     return combined
 
@@ -206,7 +207,6 @@ if __name__ == '__main__':
     goals  = {(6, 5): 'a'}
     agents = {(1, 1): '0', }
     boxes  = {(1, 2): 'B', (2, 2): 'A', (3, 2): 'A', (4, 2): 'A', (2,3): 'A',
-            (2,4): 'A',
               (3, 4): 'A', (4, 4): 'A', (5, 4): 'A', (6, 4): 'A' }
     colors = {'green': ['0', 'B']}
 
