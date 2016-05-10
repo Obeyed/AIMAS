@@ -12,7 +12,7 @@ def object_builder(movable, colors, _class, instance_collection,
     colors -- None or dict of colors {'blue': ['0', 'A']}
     _class -- class' constructor (either Box or Agent)
     instance_collection -- set of Movable instances
-    position_collection -- dict defining instance's positition
+    position_collection -- dict defining instance's position
     """
     for cell, obj in movable.items():
         for color, objs in colors.items():
@@ -107,11 +107,22 @@ class SimpleGrid:
     def passable(self, cell):
         return cell not in self.unpassable
 
-    def neighbours(self, cell):
+    def neighbours(self, cell, with_box=False):
+        """ find neighbours of cell
+
+        Keyword arguments:
+        cell -- cell to find neighbours of
+        with_box -- (optional) whether or not to include boxes
+        """
         (x,y) = cell
         results = [(x+1,y), (x-1,y), (x,y+1), (x,y-1)]
-        results = filter(self.in_bounds, results)
-        results = filter(self.passable, results)
+        results = [r for r in results if self.in_bounds(r)]
+
+        box_pos = ( [c for c in results if c in self.box_position]
+                if with_box else [] )
+        results = [r for r in results if self.passable(r)]
+        results += box_pos
+
         return results
 
     def swapable(self, box_cell, agent_cell, next_cell):
