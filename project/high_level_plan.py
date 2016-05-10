@@ -72,18 +72,38 @@ class HighLevelPlan:
                             movement_with_box(box_to_goal) )
 
 
-    def fix_conflict(self,path_2,idx,inner_idx_2 = None):
+    #def fix_conflict(self,path_2,idx,inner_idx_2 = None):
+    def fix_conflict(self,wall_1,a_cell,g_cell):
+        """ Runs a_star_search to get a new path in case of conflict
+        """
         blocked_grid = copy.deepcopy(self.grid)
-        blocked_grid.walls.add(path_2[idx_1])
-        if not idx_2 == None:
-            blocked_grid.walls.add(path_2[idx_2])
-        a_cell, g_cell = path_2[idx_1-1], path_2[idx_2 + 1]
-        new_path = a_star_search(blocked_grid, a_cell, g_cell)
-        path_2.pop(idx)
-        new_path.pop(0)
-        for step in new_path:
-            path_2.insert(idx_1,step)
+        blocked_grid.walls.add(wall_1)
+        return a_star_search(blocked_grid, a_cell, g_cell)
 
+    def get_next_ele(self,path,idx,inner_idx):
+        """ Receives the next element in the list or list of lists
+        """
+        if isinstance(path[idx],list):
+            if len(path[idx]) > inner_idx+1:
+                return path[idx][inner_idx+1]
+        if len(path) == idx+1: return None
+        elif isinstance(path[idx+1],list):
+            return path[idx+1][0]
+        else:
+            return path[idx+1]
+
+    def insert_new_path(self,path,new_path,idx,inner_idx):
+        """ Inserts new path into the original at idx
+        """
+        if isinstance(path[idx],list):
+            path[idx].pop(inner_idx)
+            for step in new_path[::-1]:
+                path[idx].insert(inner_idx,step)
+        else:
+            path.pop(idx)
+            for step in new_path[::-1]:
+                path.insert(idx,step)
+        return path
 
     def untangle(self):
         """ Iterates over all paths and fix all conflicts
@@ -98,63 +118,96 @@ class HighLevelPlan:
                         #Consider using zip() and for loop instead
                         #Remember to add fixed + 1 again
                         #TODO if no path:
-                        #path_2.insert(idx,path_2[idx-1])
-                        #path_2.insert(idx+1,path_2[idx-1])
                         idx_1 = 0
                         idx_2 = 0
                         inner_idx_1 = 0
                         inner_idx_2 = 0
+                        old_ele_1 = None
+                        old_ele_2 = None
                         #Shorten this with variables instead of repeating same code
-                        while (idx_1 < len(path_1) and idx_2 < len(path_2):
+                        while idx_1 < len(path_1) and idx_2 < len(path_2):
+                            next_ele_1 = self.get_next_ele(path_1,idx_1,inner_idx_1)
+                            next_ele_2 = self.get_next_ele(path_2,idx_2,inner_idx_2)
                             if isinstance(path_1[idx_1],list):
                                 if isinstance(path_2[idx_2],list):
                                     if path_1[idx_1][inner_idx_1] == path_2[idx_2][inner_idx_2]:
-                                        fix_conflict(path_2,idx_2,inner_idx_2)
                                         fixed = fixed + 1
-                                    #elif (idx +1 < min(len(path_1),len(path_2)) and
-                                    #    path_1[idx] == path_2[idx +1] and
-                                    #    path_1[idx+1] == path_2[idx]):
+                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
+                                    elif (not next_ele_1 == None and
+                                            not next_ele_2 == None and
+                                            path_1[idx_1][inner_idx_1] == next_ele_2 and
+                                            path_2[idx_2][inner_idx_2] == next_ele_1):
+                                        fixed = fixed + 1
+                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
+                                    old_ele_2 = path_2[idx_2][inner_idx_2]
                                     inner_idx_2 = inner_idx_2 + 1
                                     if inner_idx_2 == len(path_2[idx_2]):
                                         inner_idx_2 = 0
                                         idx_2 = idx_2 + 1
 
                                 else:
-                                    if path_1[idx][inner_idx_1] == path_2[idx]:
+                                    if path_1[idx_1][inner_idx_1] == path_2[idx_2]:
+                                        fixed = fixed + 1
+                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
+                                    elif (not next_ele_1 == None and
+                                            not next_ele_2 == None and
+                                            path_1[idx_1][inner_idx_1] == next_ele_2 and
+                                            path_2[idx_2] == next_ele_1):
+                                        fixed = fixed + 1
+                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
-                                    #elif (idx +1 < min(len(path_1),len(path_2)) and
-                                    #    path_1[idx] == path_2[idx +1] and
-                                    #    path_1[idx+1] == path_2[idx]):
-
+                                    old_ele_2 = path_2[idx_2]
                                     idx_2 = idx_2 + 1
 
+                                old_ele_1 = path_1[idx_1][inner_idx_1]
                                 inner_idx_1 = inner_idx_1 + 1
-                                if inner_idx_1 == len(path_1[idx_1]:
+                                if inner_idx_1 == len(path_1[idx_1]):
                                     inner_idx_1 = 0
                                     idx_1 = idx_1 + 1
                             else:
-                                if isinstance(path[idx],list):
-                                    if path_1[idx] == path_2[idx][inner_idx_2]:
+                                if isinstance(path_2[idx_2],list):
+                                    if path_1[idx_1] == path_2[idx_2][inner_idx_2]:
+                                        fixed = fixed + 1
+                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
-                                    #elif (idx +1 < min(len(path_1),len(path_2)) and
-                                    #    path_1[idx] == path_2[idx +1] and
-                                    #    path_1[idx+1] == path_2[idx]):
+                                    elif (not next_ele_1 == None and
+                                            not next_ele_2 == None and
+                                            path_1[idx_1] == next_ele_2 and
+                                            path_2[idx_2][inner_idx_2] == next_ele_1):
+                                        fixed = fixed + 1
+                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
+                                    old_ele_2 = path_2[idx_2][inner_idx_2]
                                     inner_idx_2 = inner_idx_2 + 1
                                     if inner_idx_2 == len(path_2[idx_2]):
                                         inner_idx_2 = 0
                                         idx_2 = idx_2 + 1
 
                                 else:
-                                    if path_1[idx] == path_2[idx]:
+                                    if path_1[idx_1] == path_2[idx_2]:
+                                        fixed = fixed + 1
+                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
-                                    elif (idx +1 < min(len(path_1),len(path_2)) and
-                                        path_1[idx] == path_2[idx +1] and
-                                        path_1[idx+1] == path_2[idx]):
+                                    elif (not old_ele_1 == None and
+                                            not old_ele_2 == None and
+                                            path_1[idx_1] == next_ele_2 and
+                                            path_2[idx_2] == next_ele_1):
+                                        fixed = fixed + 1
+                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
+                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
+                                    old_ele_2 = path_2[idx_2]
                                     idx_2 = idx_2 + 1
 
+                                old_ele_1 = path_1[idx_1]
                                 idx_1 = idx_1 + 1
 
             if fixed == 0: return
