@@ -238,6 +238,7 @@ class HighLevelPlan:
 if __name__ == '__main__':
     # try running this code with `python3 high_level_plan.py`
     from simple_grid import SimpleGrid
+    from convert_path_to_moves import calculate_movements_new
 
     walls = { (0,0),  (0,1),  (0,2),  (0,3),  (0,4),  (0,5),  (0,6),  (0,7),
               (0,8),  (0,9), (0,10), (0,11), (0,12), (0,13), (0,14), (0,15),
@@ -282,6 +283,7 @@ if __name__ == '__main__':
     for a, p in hlp.agent_movement.items():
         print(a.name)
         print("  ", p)
+        print(calculate_movements_new(p, grid))
 
     #hlp.untangle()
     #print(hlp.agent_movement)
