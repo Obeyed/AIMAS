@@ -231,20 +231,34 @@ if __name__ == '__main__':
             (1, 11), (1, 20), (1, 2), (2, 11), (2, 14), (2, 19), (1, 12),
             (1, 16), (2, 18), (1, 14), (2, 13), (1, 18), (1, 5), (1, 8),
             (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4) }
-    goals = {(1, 10): 'b', (2, 10): 'a'}
+    goals = {(1, 6): 'b', (2, 15): 'a'}
     #agents = {(1, 1): '0'}
     agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 9): 'A', (2, 9): 'B', (10,10): 'C'}
-    colors = {'green': ['A','0'], 'red' : ['B', '1']}
+    boxes = {(1, 5): 'B', (2, 13): 'A'}#, (2,10): 'C'}
+    colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
+
+    for i in range(4):
+        for j in range(22):
+            cell = (i,j)
+            if cell in walls: print("+", end="")
+            elif cell in goals: print(goals[cell], end="")
+            elif cell in agents: print(agents[cell], end="")
+            elif cell in boxes: print(boxes[cell], end="")
+            else: print(" ", end="")
+        print()
+
 
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
     #print(grid.agent_info)
     hlp = HighLevelPlan(grid)
     hlp.find_shortest_box_goal_combination()
-    #print(hlp.box_goal_combination)
+    print("bgc:", hlp.box_goal_combination)
 
     hlp.create_paths()
-    print(hlp.agent_for_movement)
+    #print(hlp.agent_movement)
+    for a, p in hlp.agent_movement.items():
+        print(a.name)
+        print("  ", p)
 
-    hlp.untangle()
-    print(hlp.agent_movement)
+    #hlp.untangle()
+    #print(hlp.agent_movement)
