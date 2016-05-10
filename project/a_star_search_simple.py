@@ -26,6 +26,26 @@ def create_steps_from_parent_cells(parents, goal):
         steps = None
     return steps
 
+def cost_of_move(grid, next, came_from, agent):
+    """ Cost of next move.
+    Check if next move is a box and its color.
+
+    NOTE: two consecutive boxes return infinity.
+    """
+    if (agent is None): return 1
+    if (next not in grid.box_position): return 1
+
+    if next in came_from:
+        parent = came_from[next]
+        if (parent in grid.box_position and next in grid.box_position):
+            print(parent, next, grid.box_position)
+            return float('inf')
+
+    box = grid.box_position[next]
+    if (box.color == agent.color): cost = 2
+    else: cost = 5
+    return cost
+
 def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         agent=None):
     """ A* search algorithm. Meant for finding a path from start to goal.
@@ -44,6 +64,9 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         cell to it.
     agent -- (optional) agent instance
     """
+    # will be used as kwargs in call to grid.neighbours
+    kwargs = {'with_box': True } if agent is not None else {}
+
     h = heuristic or tie_breaking_cross_product_heuristic # heuristic function
 
     frontier = queue.PriorityQueue()
@@ -56,13 +79,22 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         current = frontier.get()[1] # Fetch cell, discard the priority
         if current == goal: break
 
-        for next in grid.neighbours(current):
-            new_cost = cost_so_far[current] + 1 # any move has same cost
+        #print(current)
+        nexts = grid.neighbours(current, **kwargs)
+        #print(nexts)
+        for next in nexts:
+            #print("  ", next)
+            #input()
+            new_cost = cost_so_far[current] + cost_of_move(grid, next, came_from, agent)
             if new_cost < cost_so_far.get(next, float('inf')):
                 cost_so_far[next] = new_cost
                 came_from[next] = current
                 priority = new_cost + h(goal, next)
                 frontier.put((priority, next))
+
+    #print(current)
+    #print(came_from)
+    print(cost_so_far)
 
     if backwards:
         # find goal's neighbouring cells
@@ -104,15 +136,16 @@ if __name__ == '__main__':
              (6,1), (6,2), (6,3), (6,4), (6,5) }
     goals  = {(6, 5): 'a'}
     agents = {(1, 1): '0', }
-    boxes  = {(1, 2): 'A', (2, 2): 'A', (3, 2): 'A', (4, 2): 'A',
+    boxes  = {(1, 2): 'B', (2, 2): 'A', (3, 2): 'A', (4, 2): 'A',
               (3, 4): 'A', (4, 4): 'A', (5, 4): 'A', (6, 4): 'A' }
-    colors = None
+    colors = {'green': ['0', 'B']}
 
     grid = SimpleGrid(walls, goals, boxes, agents, colors, free)
 
     goal  = list(goals.keys())[0]
     start = list(agents.keys())[0]
 
-    steps = a_star_search(grid, start, goal)
+    agent = grid.agent_position[(1, 1)]
+    steps = a_star_search(grid, start, goal, agent=agent)
 
     print(steps)
