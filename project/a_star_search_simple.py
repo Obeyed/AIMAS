@@ -189,6 +189,7 @@ def fix_box_movement(grid, path, move_info):
 
 if __name__ == '__main__':
     from simple_grid import SimpleGrid
+    from convert_path_to_moves import calculate_movements_new
 
     walls = { (0,0), (0,1), (0,2), (0,3), (0,4), (0,5), (0,6),
               (1,0),                                    (1,6),
@@ -229,3 +230,4 @@ if __name__ == '__main__':
     steps = a_star_search(grid, start, goal, agent=agent)
 
     print(steps)
+    print(calculate_movements_new(steps, grid))
