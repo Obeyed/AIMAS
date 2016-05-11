@@ -87,21 +87,20 @@ def get_dir(current, next):
     return determine_direction(current, next)
 
 def get_box_movement(agent_pos, agent_end_pos, path, grid):
-    """ Create box movement.
-    NOTE figure out how to use `agent_end_pos` to calculate movement.
-    """
+    """ Create box movement. """
     moves = []
     box_cur = path.pop(0)
 
-    for box_next in path:
+    for i, box_next in enumerate(path):
         # if next step is equal to agent position, then we're pulling
         if box_next == agent_pos:
-            agent_dir = get_dir(agent_pos, box_next)
-            box_dir_wrt_agent = get_dir(agent_pos, box_curr)
+            agent_next = path[i+1] if len(path) > i+1 else agent_end_pos
+            agent_dir = get_dir(agent_pos, agent_next)
+            box_dir_wrt_agent = get_dir(agent_pos, box_cur)
             moves.append('Pull({0},{1})'.format(agent_dir, box_dir_wrt_agent))
             # update positions
             box_cur = agent_pos
-            agent_pos = box_next
+            agent_pos = agent_next
         else:
             agent_dir = get_dir(agent_pos, box_cur)
             box_dir = get_dir(box_cur, box_next)
@@ -144,3 +143,15 @@ def calculate_movements_new(path, grid):
             agent_position = step
 
     return moves
+
+if __name__ == '__main__':
+    from simple_grid import SimpleGrid
+
+    agents = {(1, 1): '0'}
+    boxes = {(1, 3): 'B'}
+    goals = {(2,2): 'b'}
+
+    grid = SimpleGrid(set(), goals, boxes, agents, {}, set())
+
+    path = [(1,1), (1,2), [(1,3), (1,2), (2,2)], (3,2), (3,1), (2,1), [(2,2), (2,3)]]
+    print(calculate_movements_new(path, grid))
