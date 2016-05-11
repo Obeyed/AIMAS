@@ -141,9 +141,9 @@ def fix_box_movement(grid, path, move_info):
         if cell in move_info:
             box_movement.append(cell)
             # if we can drop it immediately, do it
-            print("finding neighbours for", cell)
-            neighbours = grid.neighbours(cell)
-            print(neighbours, len(path), i)
+            #print("finding neighbours for", cell)
+            #neighbours = grid.neighbours(cell)
+            #print(neighbours, len(path), i)
 
             for drop_cell in grid.neighbours(cell):
                 is_next_step = (drop_cell == path[i+1] if len(path) > i+1 else False)
