@@ -285,5 +285,9 @@ if __name__ == '__main__':
         print("  ", p)
         print(calculate_movements_new(p, grid))
 
-    #hlp.untangle()
-    #print(hlp.agent_movement)
+    hlp.untangle()
+    print("untangle");
+    for a, p in hlp.agent_movement.items():
+        print(a.name)
+        print("  ", p)
+        print(calculate_movements_new(p, grid))
