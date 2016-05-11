@@ -11,11 +11,10 @@ def parselvl():
       break
 
     # parse colors of agents and boxes
-    if re.match('^[a-z]+:\s*[0-9A-Z](,\s*[0-9A-Z])*\s*$',line):
-      line = line.replace('\n','').replace(' ','')
-      color, line = line.split(':')
-      for ele in line.split(','):
-        colors[ele] = color
+    if ":" in line:
+      line = line.replace("\r\n", "").replace("\n", "")
+      color, objs = line.split(":")
+      colors[color.strip()] = objs.strip().split(",")
       continue
 
     # keys are coordinates (tuples)
