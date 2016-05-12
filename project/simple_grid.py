@@ -1,5 +1,5 @@
 import sys
-
+import re
 from movable import Agent, Box
 from a_star_search_simple import cross_product_heuristic as cross_product
 
@@ -149,13 +149,19 @@ class SimpleGrid:
 
     def move(self, agent, step,inform):
         """ Update grid with new info about movable objects.
-
+        NOTE: NoOp does not call this function
         Keyword arguments:
-        old -- current position
-        new -- position to move movable object
+        agent - the agent's number
+        step - Move(E),... etc.
         """
-        
-        inform(agent)
+
+        split_step = step.split('(')
+        move_type = split_step[0]
+        dirs = split_step[1].replace(')','').split(',')
+        first_dir = dirs[0]
+        second_dir = None
+        if len(dirs) > 1: second_dir = dirs[1]
+        inform(str(move_type +' , '+ first_dir + " , " + str(second_dir)))
         # if old not in self.box_position and old not in self.agent_position:
  #            print("warn: nothing to move at {0}".format(old), file=sys.stderr)
  #            return
