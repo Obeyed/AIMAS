@@ -83,6 +83,18 @@ def calculate_movements(path, grid):
 # obeid's updated version with NoOp
 ###
 
+def get_random_free_position(agent_pos, agent_end_pos,grid):
+    if agent_end_pos:
+        return agent_end_pos
+    else:
+        neighbours = grid.neighbours(agent_pos)
+        freeCells = []
+        for freeCell in neighbours:
+            if freeCell in grid.free:
+                freeCells.append(freeCell)
+        return freeCells[0]
+                
+
 def get_dir(current, next):
     return determine_direction(current, next)
 
@@ -132,6 +144,8 @@ def calculate_movements_new(path, grid):
                 ignore_next_step = True
                 # next cell defines agent's end pos, if it exists
                 agent_end_position = path[i+1]
+            
+            agent_end_position = get_random_free_position(agent_position,agent_end_position,grid)
             moves += get_box_movement(agent_position, agent_end_position, step, grid)
             # update position
             agent_position = agent_end_position
