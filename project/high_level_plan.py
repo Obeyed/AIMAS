@@ -72,20 +72,67 @@ class HighLevelPlan:
                 if agent_to_box is not None:
                     agent_to_box = self.validate_agent_movement(agent_to_box,
                             box_to_goal)
-                    self.agent_movement[agent] = ( agent_to_box +
-                            movement_with_box(box_to_goal) )
+                    box_to_goal = self.validate_box_movement(agent_to_box,
+                            box_to_goal)
+                    self.agent_movement[agent] = agent_to_box + box_to_goal
+
+    def validate_box_movement(self, agent_to_box, box_to_goal):
+        """ Make sure agent movement and box movement can be combined properly.
+        We must set up a proper end for the agent, and possible swaps must be
+        made.
+
+        NOTE if blocking object (box/agent) must be moved first!
+        """
+        agent_origin = agent_to_box[0]
+        agent_pos = agent_to_box[-1]
+        box_pos, box_next = box_to_goal[:2]
+
+        # we will be pulling
+        # check if agent can end properly after pulling
+        if agent_pos == box_next:
+            box_end_prev, box_end = box_to_goal[-2:]
+            # check were agent can stand
+            possible_ends = self.grid.neighbours(box_end)
+            possible_ends = [c for c in possible_ends if c != box_end_prev]
+            if len(possible_ends):
+                # NOTE smarter way to pick this?
+                agent_end = possible_ends[0]
+                box_to_goal = movement_with_box(box_to_goal) +  agent_end
+            else:
+                complete_movement, pull_movement = [], []
+                # if we can't end correctly, try to swap
+                for i, box_pos in enumerate(box_to_goal):
+                    if len(box_to_goal) == i+2: break
+                    agent_pos = box_to_goal[i+1]
+                    future_step = box_to_goal[i+2]
+                    swap_pos = self.grid.swapable(box_pos, agent_pos,
+                            future_step, agent_origin)
+                    if swap_pos is not None:
+                        agent_next = swap_pos
+                        pull_movement += [box_pos, agent_pos]
+                        complete_movement.append(pull_movement)
+                        complete_movement.append(agent_next)
+                        complete_movement.append(box_to_goal[i+1:])
+                        # update box movement
+                        box_to_goal = complete_movement
+                        break
+                    else:
+                        pull_movement.append(box_pos)
+        else:
+            box_to_goal = movement_with_box(box_to_goal)
+
+        return box_to_goal
 
     def validate_agent_movement(self, agent_to_box, box_to_goal):
         """ Make sure that final step in agent's movement is finalized. """
-        last_idx = len(agent_to_box) - 1
-        final_step = agent_to_box[last_idx]
+        final_step = agent_to_box[-1]
         # unfinalized box_movement
         if isinstance(final_step, list) and len(final_step) == 1:
             #print("editing unfinalised step", file=sys.stderr)
             for drop_cell in self.grid.neighbours(final_step[0]):
                 # cannot drop if same path we are moving/came from
                 is_next_step = (drop_cell == box_to_goal[0])
-                is_prev_step = (drop_cell == agent_to_box[last_idx-1])
+                is_prev_step = (drop_cell == agent_to_box[-2])
                 if (is_next_step or is_prev_step): continue
                 # update box list
                 final_step.append(drop_cell)
