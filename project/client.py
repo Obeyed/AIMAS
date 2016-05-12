@@ -41,10 +41,21 @@ def next_move():
     a = ",".join(s)
     return "[" + a + "]"
     
-def update_grid(server_response, move):
+def update_grid(server_response, moves):
     """ Update grid if move successful """
-    if server_response == '[true]':
-        grid.move(move,move,inform)
+    S1 = server_response.replace('[','')
+    S2 = S1.replace(']','')
+    S3 = S2.replace(' ', '')
+    response_list = S3.split(',')
+    M1 = moves.replace('[','')
+    M2 = M1.replace(']','')
+    M3 = M2.replace(' ','')
+    move_list = M3.split(',')
+    
+    for i, response in enumerate(response_list):
+        if response == 'true':
+            grid.move(i,move,inform)
+        
     
 
 # parse level from server, setup grid and planner
