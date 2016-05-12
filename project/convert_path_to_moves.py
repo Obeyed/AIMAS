@@ -83,6 +83,10 @@ def calculate_movements(path, grid):
 # obeid's updated version with NoOp
 ###
 
+def get_random_free_position(agent_pos, agent_end_pos):
+    
+    
+
 def get_dir(current, next):
     return determine_direction(current, next)
 
