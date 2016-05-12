@@ -118,12 +118,13 @@ class SimpleGrid:
     def passable(self, cell):
         return cell not in self.unpassable
 
-    def neighbours(self, cell, with_box=False):
+    def neighbours(self, cell, with_box=False, with_agent=False):
         """ find neighbours of cell
 
         Keyword arguments:
         cell -- cell to find neighbours of
         with_box -- (optional) whether or not to include boxes
+        with_agent -- (optional) whether or not to include agents
         """
         (x,y) = cell
         results = [(x+1,y), (x-1,y), (x,y+1), (x,y-1)]
@@ -131,8 +132,10 @@ class SimpleGrid:
 
         box_pos = ( [c for c in results if c in self.box_position]
                 if with_box else [] )
+        agent_pos = ( [c for c in results if c in self.agent_position]
+                if with_agent else [] )
         results = [r for r in results if self.passable(r)]
-        results += box_pos
+        results += box_pos + agent_pos
 
         return results
 
