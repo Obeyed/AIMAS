@@ -125,7 +125,7 @@ class SimpleGrid:
 
         return results
 
-    def swapable(self, box_cell, agent_cell, next_cell):
+    def swapable(self, box_cell, agent_cell, next_cell, agent_origin):
         """ Given box and agent position and we want to move towards next_cell,
         is it possible to perform a Pull and Push?
 
@@ -138,12 +138,16 @@ class SimpleGrid:
         box_cell -- box's position
         agent_cell -- agent's position
         next_cell -- next cell to move towards
+        agent_origin -- where did agent originate from
+            grid thinks agent's start position is blocked.
         """
         # if box and agent or agent and next are not neighbours, return
         if cross_product(box_cell, agent_cell) is not 1: return None
         if cross_product(agent_cell, next_cell) is not 1: return None
 
         results = self.neighbours(agent_cell)
+        if agent_cell != agent_origin:
+            results = [agent_origin] + results
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
 
