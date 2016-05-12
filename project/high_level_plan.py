@@ -97,7 +97,7 @@ class HighLevelPlan:
             if len(possible_ends):
                 # NOTE smarter way to pick this?
                 agent_end = possible_ends[0]
-                box_to_goal = movement_with_box(box_to_goal) +  agent_end
+                box_to_goal = movement_with_box(box_to_goal) +  [agent_end]
             else:
                 complete_movement, pull_movement = [], []
                 # if we can't end correctly, try to swap

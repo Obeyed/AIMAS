@@ -146,7 +146,8 @@ class SimpleGrid:
         if cross_product(agent_cell, next_cell) is not 1: return None
 
         results = self.neighbours(agent_cell)
-        if agent_cell != agent_origin:
+        if agent_cell != agent_origin and cross_product(agent_cell,
+                agent_origin) is 1:
             results = [agent_origin] + results
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
