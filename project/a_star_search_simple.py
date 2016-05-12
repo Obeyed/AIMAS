@@ -27,27 +27,48 @@ def create_steps_from_parent_cells(parents, goal):
         steps = None
     return steps
 
-def cost_of_move(grid, next, came_from, agent):
+def cost_of_move(grid, next, box, agent):
     """ Cost of next move.
     Check if next move is a box and its color.
     """
-    info = None
-    HELP_COST = 20
-    SELF_COST = 2
-    if (agent is None): return 1, info
-    if (next not in grid.box_position): return 1, info
+    info, cost = None, 1
+    HELP_COST, SELF_COST = 20, 2
+    AGENT_MOVE = 3
 
-    box = grid.box_position[next]
-    if (box.color == agent.color):
-        cost = SELF_COST
-        info = "self"
-    else:
-        cost = HELP_COST
-        info = "help"
+    # if neither box nor agent given
+    if agent is None and box is None:
+        return cost, info
+    # if next cell is free
+    if next not in grid.box_position and next not in grid.agent_position:
+        return cost, info
+
+    agent_next_to_agent = (agent is not None and next in grid.agent_position)
+    agent_next_to_box   = (agent is not None and next in grid.box_position)
+    box_next_to_box     = (box is not None and next in grid.box_position)
+    box_next_to_agent   = (box is not None and next in grid.agent_position)
+
+    if agent_next_to_box:
+        box_next = grid.box_position[next]
+        if (box_next.color == agent.color):
+            cost, info = SELF_COST, "self"
+        else:
+            cost, info = HELP_COST, "help"
+    elif box_next_to_box:
+        box_next = grid.box_position[next]
+        # NOTE box should not be called without an agent
+        if (box_next.color == agent.color):
+            cost, info = SELF_COST, "self"
+        else:
+            cost, info = HELP_COST, "help"
+    elif agent_next_to_agent:
+        cost, info = AGENT_MOVE, "move"
+    elif box_next_to_agent:
+        cost, info = AGENT_MOVE, "move"
+
     return cost, info
 
 def a_star_search(grid, start, goal, heuristic=None, backwards=False,
-        agent=None):
+        agent=None, box=None):
     """ A* search algorithm. Meant for finding a path from start to goal.
     Return list of steps from start to goal.
     Source: www.redblobgames.com/pathfinding/a-star/implementation.html
@@ -65,7 +86,9 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
     agent -- (optional) agent instance
     """
     # will be used as kwargs in call to grid.neighbours
-    kwargs = {'with_box': True } if agent is not None else {}
+    kwargs = {}
+    if agent is not None: kwargs['with_box'] = True
+    if box is not None:   kwargs['with_agent'] = True
 
     h = heuristic or tie_breaking_cross_product_heuristic # heuristic function
 
@@ -79,10 +102,8 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         current = frontier.get()[1] # Fetch cell, discard the priority
         if current == goal: break
 
-        #print(current)
-        #input()
         for next in grid.neighbours(current, **kwargs):
-            cost, info = cost_of_move(grid, next, came_from, agent)
+            cost, info = cost_of_move(grid, next, box, agent)
             new_cost = cost_so_far[current] + cost
             if new_cost < cost_so_far.get(next, float('inf')):
                 cost_so_far[next] = new_cost
@@ -96,37 +117,29 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
                 elif next in move_info:
                     del move_info[next]
 
-            #print("  {0} [{1}, {2}]".format(next, cost_so_far[next], priority), end=" ")
-
-        #print()
-
-    #print("current:", current)
-    #print("goal:", goal)
-    #print("came from:", came_from)
-    #print("cost:", cost_so_far)
-    #print("move info:", move_info)
-
     if backwards:
         # find goal's neighbouring cells
         # find the neighbour that is in the dict of parents (came_from)
         # use that neighbour as the goal for constructing steps
         # NOTE: this should be used if goal cell is a blocking object
         landing_position = grid.neighbours(goal, **kwargs)
-        #print("landing positions")
-        #print(landing_position)
         landing_position = [pos for pos in landing_position if pos in came_from]
-        #print(landing_position)
         goal = landing_position[0]
 
     relaxed_steps = create_steps_from_parent_cells(came_from, goal)
-    #print("...", relaxed_steps)
+    print("rs:", relaxed_steps, file=sys.stderr)
+    print("mi:", move_info, file=sys.stderr)
     combined_steps = fix_box_movement(grid, relaxed_steps, move_info)
-    #print("combined:", combined_steps)
-
     return combined_steps
 
 def fix_box_movement(grid, path, move_info):
     """ If box is to be moved, we must update path.
+
+    move_info is a dict indexed by cells (x,y),
+        and may contain 'move', 'help', 'self'
+        'move' => agent at index-cell must move
+        'help' => box at cell must be moved by other agent
+        'self' => box at cell must be moved by own agent
 
     NOTE: this is very naive.
         it will not return correct result, if box cannot be dropped before
@@ -141,10 +154,6 @@ def fix_box_movement(grid, path, move_info):
         if cell in move_info:
             box_movement.append(cell)
             # if we can drop it immediately, do it
-            #print("finding neighbours for", cell)
-            #neighbours = grid.neighbours(cell)
-            #print(neighbours, len(path), i)
-
             for drop_cell in grid.neighbours(cell):
                 is_next_step = (drop_cell == path[i+1] if len(path) > i+1 else False)
                 is_prev_step = (drop_cell == path[i-1])
