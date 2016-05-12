@@ -147,36 +147,38 @@ class SimpleGrid:
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
 
-    def move(self, old, new):
+    def move(self, agent, step,inform):
         """ Update grid with new info about movable objects.
 
         Keyword arguments:
         old -- current position
         new -- position to move movable object
         """
-        if old not in self.box_position and old not in self.agent_position:
-            print("warn: nothing to move at {0}".format(old), file=sys.stderr)
-            return
-
-        if old in self.box_position:
-            box = self.box_position[old]
-            box.move(new)
-            # update position
-            del self.box_position[old]
-            self.box_position[new] = box
-        else:
-            agent = self.agent_position[old]
-            agent.move(new)
-            # update position
-            del self.agent_position[old]
-            self.agent_position[new] = agent
-
-        # update free fields
-        self.free.discard(new)
-        self.free.add(old)
-        # update unpassable fields
-        self.unpassable.discard(old)
-        self.unpassable.add(new)
+        
+        inform(agent)
+        # if old not in self.box_position and old not in self.agent_position:
+ #            print("warn: nothing to move at {0}".format(old), file=sys.stderr)
+ #            return
+ #
+ #        if old in self.box_position:
+ #            box = self.box_position[old]
+ #            box.move(new)
+ #            # update position
+ #            del self.box_position[old]
+ #            self.box_position[new] = box
+ #        else:
+ #            agent = self.agent_position[old]
+ #            agent.move(new)
+ #            # update position
+ #            del self.agent_position[old]
+ #            self.agent_position[new] = agent
+ #
+ #        # update free fields
+ #        self.free.discard(new)
+ #        self.free.add(old)
+ #        # update unpassable fields
+ #        self.unpassable.discard(old)
+ #        self.unpassable.add(new)
 
 
 if __name__ == '__main__':

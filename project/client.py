@@ -40,6 +40,12 @@ def next_move():
     s = [MOVES[i].pop(0) for i in range(NUM_AGENTS)]
     a = ",".join(s)
     return "[" + a + "]"
+    
+def update_grid(server_response, move):
+    """ Update grid if move successful """
+    if server_response == '[true]':
+        grid.move(move,move,inform)
+    
 
 # parse level from server, setup grid and planner
 grid, hlp = setup()
@@ -66,12 +72,14 @@ for idx in range(NUM_AGENTS):
 
 align_movements()
 
+first_response = input()
 while True:
-    server_response = input()
-    inform("server response: " + server_response)
-
     if len(MOVES[0]) > 0:
         move = next_move()
-
         inform(move) # debug
-        print(move)  # send to server
+        print(move)  # send to server        
+        server_response = input() # Read server input
+        inform("server response: " + server_response)
+        update_grid(server_response,move) # Call update grid function
+        
+   
