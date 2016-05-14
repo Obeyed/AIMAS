@@ -65,7 +65,7 @@ class SimpleGrid:
         agents -- dict of {(x,y): '0', ..}
         colors -- dict of {'green': ['0', 'A', 'a'], ..}
             If agent or box is not in colors, they will default to 'blue'
-        free -- set of tupes (representing cells/positions)
+        free -- set of tuples (representing cells/positions)
         """
         uncolored = find_uncolored_objects(colors, boxes, agents)
         if len(uncolored) > 0:
@@ -165,6 +165,10 @@ class SimpleGrid:
             results = [agent_origin] + results
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
+
+    def get_free_from_list(self, path):
+        """ Return set difference of free cells and cells in path """
+        return self.free - set(path)
 
     def get_open_goals(self):
         """ find goals that are unsolved and return dict of cell and letter """
