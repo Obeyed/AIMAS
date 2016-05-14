@@ -17,6 +17,17 @@ class HighLevelPlan:
         self.box_goal_combination = dict()
         self.agent_movement = dict()
 
+    def find_closest_agent_for_box(self, box):
+        """ return agent closest to box """
+        agents = [agent for agent in self.grid.agent_info if
+                box in self.grid.agent_info[agent]]
+        best_combination = (None, float('inf'))
+        for agent in agents:
+            cost = cross_product(box.position, agent.position)
+            if cost < best_combination[1]:
+                best_combination = (agent, cost)
+        return best_combination[0]
+
     def find_closest_box_for_goal(self, goal):
         """ Find closest box to goal.
 
@@ -37,7 +48,7 @@ class HighLevelPlan:
             cost = cross_product(b_cell, g_cell)
             if cost < best_combination[2]:
                 best_combination = (box, (g_letter, g_cell), cost)
-        return best_combination[:2] # box instance, (goal, cell)
+        return best_combination[0] # box instance
 
     def find_shortest_box_goal_combination(self):
         """ For each goal, find a box that is closest to it.
@@ -46,7 +57,7 @@ class HighLevelPlan:
         """
         for g_cell, g_letter in self.grid.goals.items():
             goal = (g_letter, g_cell)
-            box, _ = self.find_closest_box_for_goal(goal)
+            box = self.find_closest_box_for_goal(goal)
             self.box_goal_combination[box] = goal
 
     def shortest_path_to_goal(self, box, goal):
@@ -56,6 +67,40 @@ class HighLevelPlan:
     def shortest_path_to_box(self, agent, box):
         a_cell, b_cell = agent.position, box.position
         return a_star_search(self.grid, a_cell, b_cell, backwards=True, agent=agent)
+
+    def shortest_path_to_goal_with_agent(self, box, goal, agent):
+        b_cell, g_cell = box.position, goal[1]
+        return a_star_search(self.grid, b_cell, g_cell, box=box, agent=agent)
+
+    def find_next_path(self, goal):
+        """ For given goal find next wanted movement. This movement could be to
+        move some object that is blocking the initial wanted movement.
+        """
+        box = self.find_closest_box_for_goal(goal)
+        agent = self.find_closest_agent_for_box(box)
+        # box_to_goal -- path if it exists, otherwise None
+        # blocking -- cell on which a blocking object resides
+        # safe_path -- path that blocking object must be removed from
+        box_to_goal, blocking, safe_path = self.shortest_path_to_goal_with_agent(box, goal, agent)
+
+        # as long as box_to_goal is None an blocking is a tuple
+        # we know we have a blocking object that must be moved moved outside of safe_path
+        while box_to_goal is None and isinstance(blocking, tuple):
+            # find path to move and return it
+            pass
+
+        agent_to_box, blocking, safe_path = self.shortest_path_to_box(agent, box)
+
+        # as long as box_to_goal is None an blocking is a tuple
+        # we know we have a blocking object that must be moved moved outside of safe_path
+        while agent_to_box is None and isinstance(blocking, tuple):
+            # find path to move and return it
+            pass
+
+        # re-think this
+        agent_to_box = self.validate_agent_movement(agent_to_box, box_to_goal)
+        box_to_goal = self.validate_box_movement(agent_to_box, box_to_goal)
+        return agent_to_box + box_to_goal
 
     def create_paths(self):
         for box, goal in self.box_goal_combination.items():
