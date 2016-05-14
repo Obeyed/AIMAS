@@ -17,9 +17,6 @@ class HighLevelPlan:
         self.box_goal_combination = dict()
         self.agent_movement = dict()
 
-    def update_grid(self, grid):
-        self.grid = grid
-
     def find_closest_box_for_goal(self, goal):
         """ Find closest box to goal.
 
