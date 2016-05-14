@@ -166,6 +166,20 @@ class SimpleGrid:
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
 
+    def get_open_goals(self):
+        """ find goals that are unsolved and return dict of cell and letter """
+        open_goals = dict()
+        boxes = {box.position: box.name for box in self.boxes}
+        for g_cell, g_letter in self.goals.items():
+            if g_cell not in boxes:
+                open_goals[g_cell] = g_letter
+            elif g_cell in boxes:
+                b_letter = boxes[g_cell]
+                if b_letter != g_letter:
+                    open_goals[g_cell] = g_letter
+        print("og:",open_goals, file=sys.stderr)
+        return open_goals
+
     def move(self, agent, step):
         """ Update grid with new info about movable objects.
 
