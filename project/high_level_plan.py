@@ -140,7 +140,6 @@ class HighLevelPlan:
                 agent_to_box.append(final_step[0])
         return agent_to_box
 
-    #def fix_conflict(self,path_2,idx,inner_idx_2 = None):
     def fix_conflict(self,wall_1,a_cell,g_cell):
         """ Runs a_star_search to get a new path in case of conflict
         """
@@ -152,9 +151,9 @@ class HighLevelPlan:
         """ Receives the next element in the list or list of lists
         """
         if isinstance(path[idx],list):
-            if len(path[idx]) > inner_idx+1:
+            if not inner_idx +1 == len(path[idx]):
                 return path[idx][inner_idx+1]
-        if len(path) == idx+1: return None
+        if len(path) == idx +1: return None
         elif isinstance(path[idx+1],list):
             return path[idx+1][0]
         else:
@@ -163,12 +162,13 @@ class HighLevelPlan:
     def insert_new_path(self,path,new_path,idx,inner_idx):
         """ Inserts new path into the original at idx
         """
+        print('aloha')
         if isinstance(path[idx],list):
-            path[idx].pop(inner_idx)
+            #path[idx].pop(inner_idx)
             for step in new_path[::-1]:
                 path[idx].insert(inner_idx,step)
         else:
-            path.pop(idx)
+            #path.pop(idx)
             for step in new_path[::-1]:
                 path.insert(idx,step)
         return path
@@ -176,110 +176,80 @@ class HighLevelPlan:
     def untangle(self):
         """ Iterates over all paths and fix all conflicts
         """
+        #Loop until there are no more fixes
         while 1:
             fixed = 0
+
             agents = set()
             for agent_1,path_1 in self.agent_movement.items():
                 agents.add(agent_1)
                 for agent_2,path_2 in self.agent_movement.items():
                     if not agent_2 in agents:
-                        #Consider using zip() and for loop instead
-                        #Remember to add fixed + 1 again
-                        #TODO if no path:
+
                         idx_1 = 0
                         idx_2 = 0
                         inner_idx_1 = 0
                         inner_idx_2 = 0
                         old_ele_1 = None
                         old_ele_2 = None
-                        #Shorten this with variables instead of repeating same code
-                        while idx_1 < len(path_1) and idx_2 < len(path_2):
+
+                        while 1:
+
+                            cur_ele_1 = None
+                            cur_ele_2 = None
+                            # Get next elements
                             next_ele_1 = self.get_next_ele(path_1,idx_1,inner_idx_1)
                             next_ele_2 = self.get_next_ele(path_2,idx_2,inner_idx_2)
+
+                            # Get current elements
                             if isinstance(path_1[idx_1],list):
-                                if isinstance(path_2[idx_2],list):
-                                    if path_1[idx_1][inner_idx_1] == path_2[idx_2][inner_idx_2]:
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
-                                    elif (not next_ele_1 == None and
-                                            not next_ele_2 == None and
-                                            path_1[idx_1][inner_idx_1] == next_ele_2 and
-                                            path_2[idx_2][inner_idx_2] == next_ele_1):
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
+                                cur_ele_1 = path_1[idx_1][inner_idx_1]
+                            else:
+                                cur_ele_1 = path_1[idx_1]
 
-                                    old_ele_2 = path_2[idx_2][inner_idx_2]
-                                    inner_idx_2 = inner_idx_2 + 1
-                                    if inner_idx_2 == len(path_2[idx_2]):
-                                        inner_idx_2 = 0
-                                        idx_2 = idx_2 + 1
+                            if isinstance(path_2[idx_2],list):
+                                cur_ele_2 = path_2[idx_2][inner_idx_2]
+                            else:
+                                cur_ele_2 = path_2[idx_2]
 
-                                else:
-                                    if path_1[idx_1][inner_idx_1] == path_2[idx_2]:
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
-                                    elif (not next_ele_1 == None and
-                                            not next_ele_2 == None and
-                                            path_1[idx_1][inner_idx_1] == next_ele_2 and
-                                            path_2[idx_2] == next_ele_1):
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
+                            # Look for overlap
+                            if cur_ele_1 == cur_ele_2:
+                                fixed = 1
+                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2)
+                                path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
+                            elif (not next_ele_1 == None and
+                                    not next_ele_2 == None and
+                                    cur_ele_1 == next_ele_2 and
+                                    cur_ele_2 == next_ele_1):
+                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2)
+                                path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
-                                    old_ele_2 = path_2[idx_2]
-                                    idx_2 = idx_2 + 1
+                            # Save current elements as old elements
+                            old_ele_1 = cur_ele_1
+                            old_ele_2 = cur_ele_2
 
-                                old_ele_1 = path_1[idx_1][inner_idx_1]
+                            #incr idexes
+                            if isinstance(path_1[idx_1],list):
                                 inner_idx_1 = inner_idx_1 + 1
                                 if inner_idx_1 == len(path_1[idx_1]):
                                     inner_idx_1 = 0
                                     idx_1 = idx_1 + 1
                             else:
-                                if isinstance(path_2[idx_2],list):
-                                    if path_1[idx_1] == path_2[idx_2][inner_idx_2]:
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
+                                idx_1 = idx_1 +1
 
-                                    elif (not next_ele_1 == None and
-                                            not next_ele_2 == None and
-                                            path_1[idx_1] == next_ele_2 and
-                                            path_2[idx_2][inner_idx_2] == next_ele_1):
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2][inner_idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
+                            if isinstance(path_2[idx_2],list):
+                                inner_idx_2 = inner_idx_2 + 1
+                                if inner_idx_2 == len(path_2[idx_2]):
+                                    inner_idx_2 = 0
+                                    idx_1 = idx_2 + 1
+                            else:
+                                idx_2 = idx_2 + 1
 
-                                    old_ele_2 = path_2[idx_2][inner_idx_2]
-                                    inner_idx_2 = inner_idx_2 + 1
-                                    if inner_idx_2 == len(path_2[idx_2]):
-                                        inner_idx_2 = 0
-                                        idx_2 = idx_2 + 1
-
-                                else:
-                                    if path_1[idx_1] == path_2[idx_2]:
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
-
-                                    elif (not old_ele_1 == None and
-                                            not old_ele_2 == None and
-                                            path_1[idx_1] == next_ele_2 and
-                                            path_2[idx_2] == next_ele_1):
-                                        fixed = fixed + 1
-                                        new_path = self.fix_conflict(path_2[idx_2],old_ele_2,next_ele_2)
-                                        path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
-
-                                    old_ele_2 = path_2[idx_2]
-                                    idx_2 = idx_2 + 1
-
-                                old_ele_1 = path_1[idx_1]
-                                idx_1 = idx_1 + 1
+                            # break at end
+                            if next_ele_1 == None or next_ele_2 == None: break
 
             if fixed == 0: return
-
+            print('fixed something')
 
 
 if __name__ == '__main__':
@@ -330,9 +300,9 @@ if __name__ == '__main__':
     for a, p in hlp.agent_movement.items():
         print(a.name)
         print("  ", p)
-        print(calculate_movements_new(p, grid))
+        #print(calculate_movements_new(p, grid))
 
-    hlp.untangle()
+    #hlp.untangle()
     print("untangle");
     for a, p in hlp.agent_movement.items():
         print(a.name)
