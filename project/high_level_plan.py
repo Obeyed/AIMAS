@@ -140,12 +140,13 @@ class HighLevelPlan:
                 agent_to_box.append(final_step[0])
         return agent_to_box
 
-    def fix_conflict(self,wall_1,a_cell,g_cell):
+    def fix_conflict(self,wall_1,a_cell,g_cell,inner_list):
         """ Runs a_star_search to get a new path in case of conflict
         """
         blocked_grid = copy.deepcopy(self.grid)
         blocked_grid.walls.add(wall_1)
-        return a_star_search(blocked_grid, a_cell, g_cell)
+        blocked_grid.free.remove(wall_1)
+        return a_star_search(blocked_grid, a_cell, g_cell,backwards = inner_list)
 
     def get_next_ele(self,path,idx,inner_idx):
         """ Receives the next element in the list or list of lists
@@ -162,13 +163,13 @@ class HighLevelPlan:
     def insert_new_path(self,path,new_path,idx,inner_idx):
         """ Inserts new path into the original at idx
         """
-        print('aloha')
+        new_path.pop(0)
         if isinstance(path[idx],list):
-            #path[idx].pop(inner_idx)
+            path[idx].pop(inner_idx)
             for step in new_path[::-1]:
                 path[idx].insert(inner_idx,step)
         else:
-            #path.pop(idx)
+            path.pop(idx)
             for step in new_path[::-1]:
                 path.insert(idx,step)
         return path
@@ -192,6 +193,7 @@ class HighLevelPlan:
                         inner_idx_2 = 0
                         old_ele_1 = None
                         old_ele_2 = None
+                        inner_list = False
 
                         while 1:
 
@@ -209,19 +211,20 @@ class HighLevelPlan:
 
                             if isinstance(path_2[idx_2],list):
                                 cur_ele_2 = path_2[idx_2][inner_idx_2]
+                                inner_list = True
                             else:
                                 cur_ele_2 = path_2[idx_2]
 
                             # Look for overlap
                             if cur_ele_1 == cur_ele_2:
                                 fixed = 1
-                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2)
+                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2,inner_list)
                                 path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
                             elif (not next_ele_1 == None and
                                     not next_ele_2 == None and
                                     cur_ele_1 == next_ele_2 and
                                     cur_ele_2 == next_ele_1):
-                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2)
+                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2,inner_list)
                                 path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
 
                             # Save current elements as old elements
@@ -266,15 +269,19 @@ if __name__ == '__main__':
               (3,8),  (3,9), (3,10), (3,11), (3,12), (3,13), (3,14), (3,15),
               (3,16), (3,17), (3,18), (3,19), (3,20), (3,21) }
     free = {(2, 7), (2, 6), (1, 3), (2, 20), (2, 16), (1, 13), (1, 7),
-            (1, 17), (1, 4), (1, 15), (1, 19), (1, 6), (2, 5), (1,9), (1,10),
+            (1, 17), (1, 6), (1, 15), (1, 19), (2,1), (2, 5), (1,8), (1,10),
             (1, 11), (1, 20), (1, 2), (2, 11), (2, 14), (2, 19), (1, 12),
-            (1, 16), (2, 18), (1, 14), (1, 18), (1, 8), (2,12),
+            (1, 16), (2, 18), (1, 14), (1, 18), (1, 5), (2,12),(2,12),
             (2, 8), (2, 17), (2, 2), (2, 15), (2, 3), (2, 4), (2, 9), (2,10) }
-    goals = {(1, 6): 'b', (2, 15): 'a'}
+    goals = {(1,1): 'a',(1,12): 'b'}
+    agents = {(1,2): '1', (1,11): '0'}
+    boxes = {(1,4): 'B', (1,9): 'A'}
+    colors = {'blue': ['0','A'],'green': ['1','B']}
+    #goals = {(1, 6): 'b', (2, 15): 'a'}
     #agents = {(1, 1): '0'}
-    agents = {(1, 1): '0', (2, 1): '1'}
-    boxes = {(1, 5): 'B', (2, 13): 'A', (2,12): 'C', (2,10): 'C', (1,10): 'B'}
-    colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
+    #agents = {(1, 1): '0', (2, 1): '1'}
+    #boxes = {(1, 5): 'B', (2, 13): 'A', (2,12): 'C', (2,10): 'C', (1,10): 'B'}
+    #colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
 
     for i in range(4):
         for j in range(22):
@@ -302,9 +309,9 @@ if __name__ == '__main__':
         print("  ", p)
         #print(calculate_movements_new(p, grid))
 
-    #hlp.untangle()
+    hlp.untangle()
     print("untangle");
     for a, p in hlp.agent_movement.items():
         print(a.name)
         print("  ", p)
-        print(calculate_movements_new(p, grid))
+        #print(calculate_movements_new(p, grid))

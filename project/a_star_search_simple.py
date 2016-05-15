@@ -100,6 +100,9 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
 
         #print()
 
+    if not current == goal:
+        return None
+
     #print("current:", current)
     #print("goal:", goal)
     #print("came from:", came_from)
