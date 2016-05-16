@@ -85,8 +85,7 @@ def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
     agent -- (optional) agent instance
     clearing_path -- find a cell not in this path
     """
-    print("A* start:", start, file=sys.stderr)
-    print("A* goal:", goal, file=sys.stderr)
+    print("A* start, goal:", start, goal, backwards, file=sys.stderr)
     # will be used as kwargs in call to grid.neighbours
     kwargs = {}
     if agent is not None: kwargs['with_box'] = True
@@ -125,12 +124,11 @@ def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
                     del move_info[next]
 
     if backwards:
-        # find goal's neighbouring cells
-        # find the neighbour that is in the dict of parents (came_from)
-        # use that neighbour as the goal for constructing steps
         # NOTE: this should be used if goal cell is a blocking object
+        kwargs['with_agent'] = True # we might have agent next to box
         landing_position = grid.neighbours(goal, **kwargs)
-        landing_position = [pos for pos in landing_position if pos in came_from]
+        landing_position = [pos for pos in landing_position if pos in came_from
+                or pos == agent.position]
         goal = landing_position[0]
 
     steps = create_steps_from_parent_cells(came_from, goal)
