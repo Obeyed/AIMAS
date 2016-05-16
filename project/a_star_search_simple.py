@@ -46,6 +46,7 @@ def cost_of_move(grid, next, box, agent):
     agent_next_to_box   = (agent is not None and next in grid.box_position)
     box_next_to_box     = (box is not None and next in grid.box_position)
     box_next_to_agent   = (box is not None and next in grid.agent_position)
+    agent_blocking = box_next_to_agent or agent_next_to_agent
 
     if agent_next_to_box:
         box_next = grid.box_position[next]
@@ -60,15 +61,13 @@ def cost_of_move(grid, next, box, agent):
             cost, info = SELF_COST, "self"
         else:
             cost, info = HELP_COST, "help"
-    elif agent_next_to_agent:
-        cost, info = AGENT_MOVE, "move"
-    elif box_next_to_agent:
+    elif agent_blocking:
         cost, info = AGENT_MOVE, "move"
 
     return cost, info
 
-def a_star_search(grid, start, goal, heuristic=None, backwards=False,
-        agent=None, box=None):
+def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
+        agent=None, box=None, clearing_path=None):
     """ A* search algorithm. Meant for finding a path from start to goal.
     Return list of steps from start to goal.
     Source: www.redblobgames.com/pathfinding/a-star/implementation.html
@@ -84,7 +83,10 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         This is use because we do not want to land on a box, but on the nearest
         cell to it.
     agent -- (optional) agent instance
+    clearing_path -- find a cell not in this path
     """
+    print("A* start:", start, file=sys.stderr)
+    print("A* goal:", goal, file=sys.stderr)
     # will be used as kwargs in call to grid.neighbours
     kwargs = {}
     if agent is not None: kwargs['with_box'] = True
@@ -101,6 +103,11 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
     while not frontier.empty():
         current = frontier.get()[1] # Fetch cell, discard the priority
         if current == goal: break
+        # if we have found cell not in clearing path
+        if clearing_path is not None and current not in clearing_path:
+            if current in grid.free:
+                goal = current
+                break
 
         for next in grid.neighbours(current, **kwargs):
             cost, info = cost_of_move(grid, next, box, agent)
@@ -126,11 +133,11 @@ def a_star_search(grid, start, goal, heuristic=None, backwards=False,
         landing_position = [pos for pos in landing_position if pos in came_from]
         goal = landing_position[0]
 
-    relaxed_steps = create_steps_from_parent_cells(came_from, goal)
-    print("rs:", relaxed_steps, file=sys.stderr)
-    print("mi:", move_info, file=sys.stderr)
-    combined_steps = fix_box_movement(grid, relaxed_steps, move_info)
-    return combined_steps
+    steps = create_steps_from_parent_cells(came_from, goal)
+    print("A* move_info:", move_info, file=sys.stderr)
+    print("A* steps:", steps, file=sys.stderr)
+
+    return steps, move_info
 
 def fix_box_movement(grid, path, move_info):
     """ If box is to be moved, we must update path.
