@@ -179,7 +179,7 @@ class SimpleGrid:
                 open_goals[g_cell] = g_letter
             elif g_cell in boxes:
                 b_letter = boxes[g_cell]
-                if b_letter != g_letter:
+                if b_letter != g_letter.upper():
                     open_goals[g_cell] = g_letter
         print("og:",open_goals, file=sys.stderr)
         return open_goals
