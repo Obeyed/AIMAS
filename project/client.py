@@ -64,30 +64,43 @@ def update_grid(server_response, moves):
 grid, hlp = setup()
 # setup agents
 NUM_AGENTS, AGENTS = order_agents()
-# moves
-MOVES = dict()
 
 # testing debugging prints
 inform("write to stderr, without server doing anything")
 for a in AGENTS:
     inform("{0} ({1}) at {2}".format(a.name, a.color, a.position))
 
-# initial plan
-hlp.find_shortest_box_goal_combination()
-hlp.create_paths()
-# debug agents' plans
-for a, p in hlp.agent_movement.items():
-    inform(a.name + " " + str(p))
-
-# convert to moves
-for idx in range(NUM_AGENTS):
-    MOVES[idx] = calculate_movements_new(hlp.agent_movement[AGENTS[idx]], grid)
-
-align_movements()
-
 first_response = input()
 while True:
-    if len(MOVES[0]) > 0:
+    print(grid.complete_grid, file=sys.stderr)
+    # debug grid representation
+    for i in range(4):
+        line = ""
+        for j in range(22):
+            cell = (i,j)
+            if cell in grid.walls: line+="+"
+            elif cell in grid.goals: line+=grid.goals[cell]
+            elif cell in grid.agent_position: line+=grid.agent_position[cell].name
+            elif cell in grid.box_position: line+=grid.box_position[cell].name
+            elif cell in grid.free: line+=" "
+            else: line+="X"
+        inform(line)
+
+    open_goals = grid.get_open_goals()
+    if len(open_goals) == 0:
+        break
+    # reset and start over
+    MOVES = {i: [] for i in range(NUM_AGENTS)}
+    g_cell, g_letter = next(iter(open_goals.items()))
+    goal = (g_letter, g_cell) # reverse
+    next_path = hlp.find_next_path(goal)
+    inform(next_path)
+    # find agent's index
+    agent_idx = AGENTS.index(grid.agent_position[next_path[0]])
+    MOVES[agent_idx] = calculate_movements_new(next_path, grid)
+    align_movements()
+    inform(MOVES)
+    while len(MOVES[agent_idx]):
         move = next_move()
         inform(move) # debug
         print(move)  # send to server
