@@ -173,68 +173,62 @@ class SimpleGrid:
         second_dir = None # NESW
         if len(dirs) > 1: second_dir = dirs[1]
        
-        old_agent_pos = agent.position
+        old_pos_agent = agent.position
         
         if move_type == 'Move':
             """ Update agent only """
-            new_pos = new_cell_from_direction(old_agent_pos, first_dir)
-            agent.move(new_pos)
+            new_pos_agent = new_cell_from_direction(old_pos_agent, first_dir)
+            agent.move(new_pos_agent)
             
-            del self.agent_position[old_agent_pos]
-            self.agent_position[new_pos] = agent
-            
+            del self.agent_position[old_pos_agent]
+            self.agent_position[new_pos_agent] = agent
+          
+            self.free.discard(new_pos_agent)
+            self.free.add(old_pos_agent)
+            self.unpassable.discard(old_pos_agent)
+            self.unpassable.add(new_pos_agent)
+
         elif move_type == 'Push':
             """ Update agent + box """
-            new_pos_agent = new_cell_from_direction(old_agent_pos, first_dir)
-            new_pos_box = new_cell_from_direction(new_agent_pos, second_dir)
-            
+            new_pos_agent = new_cell_from_direction(old_pos_agent, first_dir)
+            new_pos_box = new_cell_from_direction(new_pos_agent, second_dir)
             box = self.box_position[new_pos_agent]
+            
             agent.move(new_pos_agent)
             box.move(new_pos_box)
             
-            del self.agent_position[old_agent_pos]
-            self.agent_position[new_pos_agent] = agent
-            
+            del self.agent_position[old_pos_agent]            
             del self.box_position[new_pos_agent]
+            
+            self.agent_position[new_pos_agent] = agent
             self.box_position[new_pos_box] = box
+            
+            self.free.discard(new_pos_box)
+            self.free.add(old_pos_agent)
+            self.unpassable.discard(old_pos_agent)
+            self.unpassable.add(new_pos_box)
+            
         elif move_type == 'Pull':
             """ Update agent + box """
             
-            new_pos_agent = new_cell_from_direction(old_agent_pos, first_dir)
+            new_pos_agent = new_cell_from_direction(old_pos_agent, first_dir)
+            old_pos_box = new_cell_from_direction(old_pos_agent, second_dir) 
+            box = self.box_position[old_pos_box]
             
-            new_pos_box = new_cell_from_direction(old_agent_pos, second_dir)
-            box = self.box_position[new_pos_agent]
             agent.move(new_pos_agent)
-            box.move(new_pos_box)
+            box.move(old_pos_agent)
             
-            del self.agent_position[old_agent_pos]
+            del self.agent_position[old_pos_agent]
+            del self.box_position[old_pos_box]
+            
             self.agent_position[new_pos_agent] = agent
+            self.box_position[old_pos_agent] = box    
             
-            del self.box_position[new_pos_agent]
-            self.box_position[new_pos_box] = box       
-        # if old not in self.box_position and old not in self.agent_position:
- #            print("warn: nothing to move at {0}".format(old), file=sys.stderr)
- #            return
- #
- #        if old in self.box_position:
- #            box = self.box_position[old]
- #            box.move(new)
- #            # update position
- #            del self.box_position[old]
- #            self.box_position[new] = box
- #        else:
- #            agent = self.agent_position[old]
- #            agent.move(new)
- #            # update position
- #            del self.agent_position[old]
- #            self.agent_position[new] = agent
- #
- #        # update free fields
- #        self.free.discard(new)
- #        self.free.add(old)
- #        # update unpassable fields
- #        self.unpassable.discard(old)
- #        self.unpassable.add(new)
+            self.free.discard(new_pos_agent)
+            self.free.add(old_pos_box)  
+            self.unpassable.discard(old_pos_box)
+            self.unpassable.add(new_pos_agent) 
+
 
 
 if __name__ == '__main__':
