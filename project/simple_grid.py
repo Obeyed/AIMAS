@@ -41,6 +41,17 @@ def update_colors(colors, uncolored):
 
     return colors
 
+def new_cell_from_direction(old_cell, direction):
+    """ Calculate new cell from direction """
+    (Y,X) = old_cell 
+    if direction == 'N':
+        return (Y-1,X)
+    elif direction == 'E':
+        return (Y,X+1)
+    elif direction == 'W':
+        return (Y,X-1)
+    elif direction == 'S':
+        return (Y+1,X)
 
 class SimpleGrid:
 
@@ -146,7 +157,7 @@ class SimpleGrid:
         results = self.neighbours(agent_cell)
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
-
+    
     def move(self, agent, step,inform):
         """ Update grid with new info about movable objects.
         NOTE: NoOp does not call this function
@@ -154,14 +165,53 @@ class SimpleGrid:
         agent - the agent's number
         step - Move(E),... etc.
         """
-
+        # Parsing input
         split_step = step.split('(')
         move_type = split_step[0]
         dirs = split_step[1].replace(')','').split(',')
-        first_dir = dirs[0]
-        second_dir = None
+        first_dir = dirs[0] # NESW
+        second_dir = None # NESW
         if len(dirs) > 1: second_dir = dirs[1]
-        inform(str(move_type +' , '+ first_dir + " , " + str(second_dir)))
+       
+        old_agent_pos = agent.position
+        
+        if move_type == 'Move':
+            """ Update agent only """
+            new_pos = new_cell_from_direction(old_agent_pos, first_dir)
+            agent.move(new_pos)
+            
+            del self.agent_position[old_agent_pos]
+            self.agent_position[new_pos] = agent
+            
+        elif move_type == 'Push':
+            """ Update agent + box """
+            new_pos_agent = new_cell_from_direction(old_agent_pos, first_dir)
+            new_pos_box = new_cell_from_direction(new_agent_pos, second_dir)
+            
+            box = self.box_position[new_pos_agent]
+            agent.move(new_pos_agent)
+            box.move(new_pos_box)
+            
+            del self.agent_position[old_agent_pos]
+            self.agent_position[new_pos_agent] = agent
+            
+            del self.box_position[new_pos_agent]
+            self.box_position[new_pos_box] = box
+        elif move_type == 'Pull':
+            """ Update agent + box """
+            
+            new_pos_agent = new_cell_from_direction(old_agent_pos, first_dir)
+            
+            new_pos_box = new_cell_from_direction(old_agent_pos, second_dir)
+            box = self.box_position[new_pos_agent]
+            agent.move(new_pos_agent)
+            box.move(new_pos_box)
+            
+            del self.agent_position[old_agent_pos]
+            self.agent_position[new_pos_agent] = agent
+            
+            del self.box_position[new_pos_agent]
+            self.box_position[new_pos_box] = box       
         # if old not in self.box_position and old not in self.agent_position:
  #            print("warn: nothing to move at {0}".format(old), file=sys.stderr)
  #            return

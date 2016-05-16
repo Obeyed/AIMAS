@@ -43,7 +43,7 @@ def next_move():
     
 def update_grid(server_response, moves):
     """ Update grid if move successful 
-        I know, the below is ugly, but it works ELIAS! """
+        I know, the below is ugly, but it works """
     S1 = server_response.replace('[','')
     S2 = S1.replace(']','')
     S3 = S2.replace(' ', '')
@@ -53,17 +53,16 @@ def update_grid(server_response, moves):
     M3 = M2.replace(' ','')
     move_list = M3.split(',')
     i = 0
-    for response in response_list:
+    for agent_num, response in enumerate(response_list):
         if response == 'true':
             #grid.move(i,move_list[i],inform)
             if i<len(move_list)-1 and ')' in move_list[i+1] and not '(' in move_list[i+1]:
                 this_move = "{0},{1}".format(move_list[i],move_list[i+1])
-                grid.move(i, this_move, inform)
-                i += 2
-                continue
+                grid.move(AGENTS[agent_num], this_move, inform)
+                i += 2 ; continue
             elif '(' in move_list[i] and ')' in move_list[i]:
                 this_move = move_list[i]
-                grid.move(i, this_move, inform)
+                grid.move(AGENTS[agent_num], this_move, inform)
             i += 1
         
     
