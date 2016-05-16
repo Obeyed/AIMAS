@@ -111,7 +111,7 @@ class HighLevelPlan:
         for cell in path:
             if cell in block_info:
                 # we allow own agent to block (and attempt to swap later)
-                if block_info[cell] == 'move' and cell == agent.position:
+                if cell == agent.position or (box is not None and cell == box.position):
                     continue
                 blocking_cell = cell
                 break
@@ -126,12 +126,7 @@ class HighLevelPlan:
                         self.find_path_to_remove_blocking_object(path_to_clear,
                             block_cell, agent_obj, None) )
                 block_cell = self.detect_blocking_objects(move_path, block_info,
-                        agent_obj, box_obj)
-                # if we have blocked cell, then we have another conflict to
-                # resolve first
-                if block_cell is not None:
-                    path_to_clear += move_path
-                    continue
+                    agent_obj, None)
             else:
                 box_obj = self.grid.box_position[block_cell]
                 agent_obj = self.find_closest_agent_for_box(box_obj)
@@ -157,9 +152,10 @@ class HighLevelPlan:
                 # TODO will we ever have a conflict here?!
                 print("bcp:", box_clear_path, file=sys.stderr)
                 box_clear_path, _ = self.validate_box_movement(agent_to_clear,
-                        box_clear_path)
+                        box_clear_path, resolving=True)
+                print(box_clear_path, file=sys.stderr)
                 move_path = agent_to_clear + box_clear_path
-            return move_path
+        return move_path
 
     def find_next_path(self, goal):
         """ For given goal find next wanted movement. This movement could be to
@@ -252,7 +248,7 @@ class HighLevelPlan:
                             box_to_goal)
                     self.agent_movement[agent] = agent_to_box + box_to_goal
 
-    def validate_box_movement(self, agent_to_box, box_to_goal):
+    def validate_box_movement(self, agent_to_box, box_to_goal, resolving=None):
         """ Make sure agent movement and box movement can be combined properly.
         We must set up a proper end for the agent, and possible swaps must be
         made.
@@ -266,37 +262,48 @@ class HighLevelPlan:
         # we will be pulling
         # check if agent can end properly after pulling
         if agent_pos == box_next:
-            box_end_prev, box_end = box_to_goal[-2:]
-            # check were agent can stand
-            possible_ends = self.grid.neighbours(box_end)
-            possible_ends = [c for c in possible_ends if c != box_end_prev]
-            # if agent can end next to goal
-            if len(possible_ends):
-                # NOTE smarter way to pick this?
-                agent_end = possible_ends[0]
-                box_to_goal = movement_with_box(box_to_goal)
-                box_to_goal.append(agent_end)
+            if not resolving:
+                print("pulling", file=sys.stderr)
+                box_end_prev, box_end = box_to_goal[-2:]
+                # check were agent can stand
+                possible_ends = self.grid.neighbours(box_end)
+                possible_ends = [c for c in possible_ends if c != box_end_prev]
+                # if agent can end next to goal
+                if len(possible_ends):
+                    # NOTE smarter way to pick this?
+                    agent_end = possible_ends[0]
+                    box_to_goal = movement_with_box(box_to_goal)
+                    box_to_goal.append(agent_end)
+                else:
+                    complete_movement, pull_movement = [], []
+                    for i, box_pos in enumerate(box_to_goal):
+                        if len(box_to_goal) == i+2: break # NOTE unable to fix
+                        agent_pos = box_to_goal[i+1]
+                        future_step = box_to_goal[i+2]
+                        swap_pos = self.grid.swapable(box_pos, agent_pos,
+                                future_step, agent_origin)
+                        if swap_pos is not None:
+                            agent_next = swap_pos
+                            pull_movement += [box_pos, agent_pos]
+                            complete_movement.append(pull_movement)
+                            complete_movement.append(agent_next)
+                            complete_movement.append(box_to_goal[i+1:])
+                            # update box movement
+                            box_to_goal = complete_movement
+                            break
+                        else:
+                            pull_movement.append(box_pos)
+                    if len(complete_movement) == 0:
+                        find_swapable_combination = True
             else:
-                complete_movement, pull_movement = [], []
-                for i, box_pos in enumerate(box_to_goal):
-                    if len(box_to_goal) == i+2: break # NOTE unable to fix
-                    agent_pos = box_to_goal[i+1]
-                    future_step = box_to_goal[i+2]
-                    swap_pos = self.grid.swapable(box_pos, agent_pos,
-                            future_step, agent_origin)
-                    if swap_pos is not None:
-                        agent_next = swap_pos
-                        pull_movement += [box_pos, agent_pos]
-                        complete_movement.append(pull_movement)
-                        complete_movement.append(agent_next)
-                        complete_movement.append(box_to_goal[i+1:])
-                        # update box movement
-                        box_to_goal = complete_movement
-                        break
-                    else:
-                        pull_movement.append(box_pos)
-                if len(compelete_movement) == 0:
-                    find_swapable_combination = True
+                box_end, box_pre_end = box_to_goal[-1], box_to_goal[-2]
+                print("1", box_end, box_pre_end, file=sys.stderr)
+                agent_end_pos = self.grid.neighbours(box_end)
+                agent_end_pos = [c for c in agent_end_pos if c != box_pre_end]
+                agent_end_pos += reversed([c for c in agent_to_box if c not in
+                        box_to_goal])
+                print("2", agent_end_pos, file=sys.stderr)
+                box_to_goal = movement_with_box(box_to_goal) + [agent_end_pos[0]]
         else:
             box_to_goal = movement_with_box(box_to_goal)
 
