@@ -118,7 +118,7 @@ class SimpleGrid:
     def passable(self, cell):
         return cell not in self.unpassable
 
-    def neighbours(self, cell, with_box=False, with_agent=False):
+    def neighbours(self, cell, with_box=False, with_agent=False, diagonals=False):
         """ find neighbours of cell
 
         Keyword arguments:
@@ -128,6 +128,8 @@ class SimpleGrid:
         """
         (x,y) = cell
         results = [(x+1,y), (x-1,y), (x,y+1), (x,y-1)]
+        if diagonals : results += [(x+1,y+1),(x-1,y+1),(x+1,y-1),(x-1,y-1)]
+        
         results = [r for r in results if self.in_bounds(r)]
 
         box_pos = ( [c for c in results if c in self.box_position]
@@ -170,6 +172,15 @@ class SimpleGrid:
         """ Return set difference of free cells and cells in path """
         return self.free - set(path)
 
+    def get_goal_priorities(self, open_goals):
+        """ Sort open goals to avoid blockage """
+        sorted_goals = list()
+        for g_cell in open_goals:
+            g_letter = open_goals[g_cell]
+            nigh = self.neighbours(g_cell, diagonals=True)
+            print("NEIGH: "+g_letter,nigh, file=sys.stderr)
+        return open_goals
+
     def get_open_goals(self):
         """ find goals that are unsolved and return dict of cell and letter """
         open_goals = dict()
@@ -181,7 +192,7 @@ class SimpleGrid:
                 b_letter = boxes[g_cell]
                 if b_letter != g_letter.upper():
                     open_goals[g_cell] = g_letter
-        print("og:",open_goals, file=sys.stderr)
+        print("op:",open_goals, file=sys.stderr)
         return open_goals
 
     def move(self, agent, step):

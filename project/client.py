@@ -73,6 +73,7 @@ for a in AGENTS:
 goal = None
 while True:
     open_goals = grid.get_open_goals()
+    open_goals = grid.get_goal_priorities(open_goals)
     if len(open_goals) == 0:
         break
     if goal is None or goal[1] not in open_goals:
