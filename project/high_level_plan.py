@@ -330,7 +330,7 @@ class HighLevelPlan:
                 # update agent movement
                 agent_to_box.append(final_step[0])
         return agent_to_box
-
+    """
     def move_foreign_box(self,box,path):
         #find agent to move box
         #find place to move box to
@@ -343,7 +343,7 @@ class HighLevelPlan:
                     #make a_star search to move box away from path
                     #update other agent and grid
         return agent_to_box, box_to_goal
-
+    """
     def fix_conflict(self,wall_1,a_cell,g_cell,inner_list):
         """ Runs a_star_search to get a new path in case of conflict
         """
@@ -377,7 +377,7 @@ class HighLevelPlan:
             for step in new_path[::-1]:
                 path.insert(idx,step)
         return path
-
+    """
     def updated_grid(grid,step):
         for agent,path in self.agent_movement.items():
             idx = 0
@@ -401,7 +401,7 @@ class HighLevelPlan:
                             #TODO make color check
                             grid.move(path[idx][inner_idx],get_next_ele(path,idx,inner_idx))
         return grid
-
+    """
     def untangle(self):
         """ Iterates over all paths and fix all conflicts
 
@@ -430,12 +430,12 @@ class HighLevelPlan:
                         cur_ele_2 = None
 
                         inner_list = False
-                        step = 0
+                        #step = 0
 
                         while 1:
 
                             #TODO update grid
-                            updated_grid = update_grid(updated_grid,step)
+                            #updated_grid = update_grid(updated_grid,step)
 
                             # Get next elements
                             next_ele_1 = self.get_next_ele(path_1,idx_1,inner_idx_1)
@@ -454,11 +454,11 @@ class HighLevelPlan:
                             else:
                                 cur_ele_2 = path_2[idx_2]
 
-                            if grid.box_position[cur_ele_1]:
-                                #TODO fix this
-                                if not grid.colors[cur_ele_1].color == agent.color:
-                                    #and update grid
-                                    move_foreign_box(cur_ele_1,path)
+                            #if grid.box_position[cur_ele_1]:
+                            #    #TODO fix this
+                            #    if not grid.colors[cur_ele_1].color == agent.color:
+                            #        #and update grid
+                            #        move_foreign_box(cur_ele_1,path)
 
                             # Look for overlap
                             if cur_ele_1 == cur_ele_2:
@@ -495,7 +495,7 @@ class HighLevelPlan:
 
                             # break at end
                             if next_ele_1 == None or next_ele_2 == None: break
-                            step = step + 1
+                            #step = step + 1
 
             if fixed == 0: return
 
@@ -524,15 +524,15 @@ if __name__ == '__main__':
     colors = {'blue': ['0','A'],'green': ['1','B']}
     #goals = {(1, 6): 'b', (2, 15): 'a'}
     #agents = {(1, 1): '0'}
-<<<<<<< HEAD
+#<<<<<<< HEAD
     #agents = {(1, 1): '0', (2, 1): '1'}
     #boxes = {(1, 5): 'B', (2, 13): 'A', (2,12): 'C', (2,10): 'C', (1,10): 'B'}
     #colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
-=======
+#=======
     agents = {(1, 1): '0', (2, 1): '1'}
     boxes = {(1, 5): 'B', (2, 13): 'A', (2,12): 'C', (1,10): 'B'}
     colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
->>>>>>> 5f8d25ccf6a55516f5f11a0c5f0574137583f17a
+#>>>>>>> 5f8d25ccf6a55516f5f11a0c5f0574137583f17a
 
     for i in range(4):
         for j in range(22):
@@ -550,7 +550,7 @@ if __name__ == '__main__':
     open_goals = grid.get_open_goals()
 
     hlp = HighLevelPlan(grid)
-<<<<<<< HEAD
+#<<<<<<< HEAD
     hlp.find_shortest_box_goal_combination()
     #print("bgc:", hlp.box_goal_combination)
 
@@ -567,8 +567,8 @@ if __name__ == '__main__':
         print(a.name)
         print("  ", p)
         #print(calculate_movements_new(p, grid))
-=======
-    for g_cell, g_letter in open_goals.items():
-        goal = (g_letter, g_cell)
-        print("  ", hlp.find_next_path(goal))
->>>>>>> 5f8d25ccf6a55516f5f11a0c5f0574137583f17a
+#=======
+#    for g_cell, g_letter in open_goals.items():
+#        goal = (g_letter, g_cell)
+#        print("  ", hlp.find_next_path(goal))
+#>>>>>>> 5f8d25ccf6a55516f5f11a0c5f0574137583f17a
