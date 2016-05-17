@@ -202,7 +202,7 @@ class SimpleGrid:
                             start_score += 1
                         elif n_cell in self.free:
                             start_score += 2
-
+                        
                     g_matrix[row][column] = start_score
                     if g_matrix[row][column] == max(g_matrix[row]):
                         index_of_max = column
