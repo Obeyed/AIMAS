@@ -2,6 +2,8 @@ import sys
 
 from movable import Agent, Box
 from a_star_search_simple import cross_product_heuristic as cross_product
+from operator import itemgetter
+
 
 def object_builder(movable, colors, _class, instance_collection,
         position_collection):
@@ -174,35 +176,75 @@ class SimpleGrid:
 
     def get_goal_priorities(self, open_goals):
         """ Sort open goals to avoid blockage """
-        g_scores = dict()
-        for i in range(len(open_goals)):
-            for g_cell in open_goals:
-                g_letter = open_goals[g_cell]
-                n_cells = self.neighbours(g_cell,diagonals=True)
-                if g_cell not in g_scores:
-                    g_scores[g_cell] = len(n_cells)
-                else:
-                    n_scores = list()
-                    score = g_scores[g_cell]
-                    for n_cell in n_cells:
-                        if n_cell in g_scores:
-                            n_scores.append(g_scores[n_cell])
-                    if len(n_scores) > 0:
-                        n_max = max(n_scores)
-                        n_min = min(n_scores)
-                        if n_min < score and score == n_max:
-                            g_scores[g_cell] = score + 1
-               
-        sorted_goals = [None] * (len(g_scores)+1) 
-        for cell in g_scores:
-            sorted_goals[g_scores[cell]] = (cell,open_goals[cell])
-            
-        goals_without_none = [x for x in sorted_goals if x is not None]
-                
-        print("G_SCORES: ",goals_without_none, file=sys.stderr)
         
-        return goals_without_none
+        cell_refs = sorted(list(open_goals), key=itemgetter(1))
+        g_rows = [0] * len(open_goals)
+        g_matrix = [cell_refs] + [g_rows[:] for _ in range(len(open_goals))]
+        
+        for row in range(len(g_matrix)):
+            for column,cell in enumerate(g_matrix[row]):
+                if row == 0:
+                    continue;
+                g_cell = g_matrix[0][column]
+                n_cells = self.neighbours(g_cell)
+                if row == 1:
+                    start_score = len(n_cells)
+                    g_matrix[row][column] = start_score
+                elif column<len(g_matrix[row])-1:
+                    prev_score = g_matrix[row-1][column]
+                    prev_next_score = g_matrix[row-1][column+1]
+                    if prev_score == prev_next_score:
+                        g_matrix[row][column] = prev_score+1
+                    else:
+                        g_matrix[row][column] = prev_score
+                else:
+                    prev_score = g_matrix[row-1][column]
+                    g_matrix[row][column] = prev_score
+                    
+        
+        sorted_goals = list()
+        for i, cell in enumerate(g_matrix[0]):
+            sorted_goals.append((g_matrix[-1][i], cell, open_goals[cell]))
+            
+        sorted_goals = sorted(list(sorted_goals), key=itemgetter(0))
+        
+        sorted_goals = [(i[1], i[2]) for i in sorted_goals]
+        print("MATRIX: ",sorted_goals, file=sys.stderr)   
+        
 
+        # n_free = self.neighbours(g_cell)
+# cur_score = g_matrix[row][column]
+ #
+        # for i in range(len(open_goals)):
+#             for g_cell in open_goals:
+#                 g_letter = open_goals[g_cell]
+#                 n_cells = self.neighbours(g_cell,diagonals=False)
+#                 if g_cell not in g_scores:
+#                     g_scores[g_cell] = len(n_cells)
+#                 else:
+#                     n_scores = list()
+#                     score = g_scores[g_cell]
+#                     for n_cell in n_cells:
+#                         if n_cell in g_scores:
+#                             n_scores.append(g_scores[n_cell])
+#                     if len(n_scores) > 0:
+#                         n_max = max(n_scores)
+#                         n_min = min(n_scores)
+#                         if n_min < score and score == n_max:
+#                             g_scores[g_cell] = score + 1
+               
+        # sorted_goals = [None] * (len(g_scores)+1)
+ #        for cell in g_scores:
+ #            sorted_goals[g_scores[cell]] = (cell,open_goals[cell])
+ #
+ #        goals_without_none = [x for x in sorted_goals if x is not None]
+ #
+ #        print("G_SCORES: ",goals_without_none, file=sys.stderr)
+ #
+ #        return goals_without_none
+        return sorted_goals
+        
+        
     def get_open_goals(self):
         """ find goals that are unsolved and return dict of cell and letter """
         open_goals = dict()
