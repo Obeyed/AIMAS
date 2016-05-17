@@ -140,6 +140,19 @@ class HighLevelPlan:
                 agent_to_box.append(final_step[0])
         return agent_to_box
 
+    def move_foreign_box(self,box,path):
+        #find agent to move box
+        #find place to move box to
+        #update agent plan
+        for step in path:
+            if self.grid.boxes[step]:
+                box_color = self.grid.color[self.grid.boxes[step]]
+                if not box_color == color:
+                    #find agent to move box
+                    #make a_star search to move box away from path
+                    #update other agent and grid
+        return agent_to_box, box_to_goal
+
     def fix_conflict(self,wall_1,a_cell,g_cell,inner_list):
         """ Runs a_star_search to get a new path in case of conflict
         """
@@ -174,13 +187,39 @@ class HighLevelPlan:
                 path.insert(idx,step)
         return path
 
+    def updated_grid(grid,step):
+        for agent,path in self.agent_movement.items():
+            idx = 0
+            innner_idx = 0
+            total_idx = 0
+            while 1:
+                if total_idx < step:
+                    if isinstance(path[idx],list):
+                        inner_idx = inner_idx + 1
+                        if inner_idx == len(path[idx]):
+                            inner_idx = 0
+                            idx_1 = idx + 1
+
+                    else:
+                        idx = idx + 1
+                    total_idx = total_idx + 1
+                    continue
+                else:
+                    if isinstance(path[idx],list):
+                        if grid.box_position[path[idx][inner_idx]:
+                            #TODO make color check
+                            grid.move(path[idx][inner_idx],get_next_ele(path,idx,inner_idx))
+        return grid
+
     def untangle(self):
         """ Iterates over all paths and fix all conflicts
+
+        assumes 2 agents doesnt start in the same cell
         """
         #Loop until there are no more fixes
         while 1:
             fixed = 0
-
+            updated_grid = copy.deepcopy(self.grid)
             agents = set()
             for agent_1,path_1 in self.agent_movement.items():
                 agents.add(agent_1)
@@ -189,20 +228,29 @@ class HighLevelPlan:
 
                         idx_1 = 0
                         idx_2 = 0
+
                         inner_idx_1 = 0
                         inner_idx_2 = 0
+
                         old_ele_1 = None
                         old_ele_2 = None
+
+                        cur_ele_1 = None
+                        cur_ele_2 = None
+
                         inner_list = False
+                        step = 0
 
                         while 1:
 
-                            cur_ele_1 = None
-                            cur_ele_2 = None
+                            #TODO update grid
+                            updated_grid = update_grid(updated_grid,step)
+
                             # Get next elements
                             next_ele_1 = self.get_next_ele(path_1,idx_1,inner_idx_1)
                             next_ele_2 = self.get_next_ele(path_2,idx_2,inner_idx_2)
 
+                            #TODO move this to bottom as cur = next
                             # Get current elements
                             if isinstance(path_1[idx_1],list):
                                 cur_ele_1 = path_1[idx_1][inner_idx_1]
@@ -214,6 +262,12 @@ class HighLevelPlan:
                                 inner_list = True
                             else:
                                 cur_ele_2 = path_2[idx_2]
+
+                            if grid.box_position[cur_ele_1]:
+                                #TODO fix this
+                                if not grid.colors[cur_ele_1].color == agent.color:
+                                    #and update grid
+                                    move_foreign_box(cur_ele_1,path)
 
                             # Look for overlap
                             if cur_ele_1 == cur_ele_2:
@@ -250,9 +304,9 @@ class HighLevelPlan:
 
                             # break at end
                             if next_ele_1 == None or next_ele_2 == None: break
+                            step = step + 1
 
             if fixed == 0: return
-            print('fixed something')
 
 
 if __name__ == '__main__':
