@@ -77,7 +77,7 @@ while True:
     if len(open_goals) == 0:
         break
     if goal is None or goal[1] not in open_goals:
-        g_cell, g_letter = next(iter(open_goals.items()))
+        g_cell, g_letter = next(iter(sorted_goals))
         goal = (g_letter, g_cell) # reverse
     # reset and start over
     MOVES = {i: [] for i in range(NUM_AGENTS)}
