@@ -58,9 +58,10 @@ class HighLevelPlan:
                 continue
             # box already marked for movement
             if box in self.box_goal_combination: continue
-            cost = cross_product(b_cell, g_cell)
+            path, _ = a_star_search(self.grid, b_cell, g_cell, box=box)
+            cost = cross_product(b_cell, g_cell) if path is not None else float('inf')
             if cost < best_combination[2]:
-                best_combination = (box, (g_letter, g_cell), cost)
+                best_combination = (box, goal, cost)
         return best_combination[0] # box instance
 
     def find_shortest_box_goal_combination(self):
