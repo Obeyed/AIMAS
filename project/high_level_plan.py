@@ -79,7 +79,8 @@ class HighLevelPlan:
 
     def shortest_path_to_box(self, agent, box):
         a_cell, b_cell = agent.position, box.position
-        return a_star_search(self.grid, a_cell, b_cell, backwards=True, agent=agent)
+        return a_star_search(self.grid, a_cell, b_cell, backwards=True,
+                agent=agent, box=box)
 
     def shortest_path_to_goal_with_agent(self, box, goal, agent):
         b_cell, g_cell = box.position, goal[1]
@@ -121,15 +122,16 @@ class HighLevelPlan:
         return blocking_cell
 
     def find_next_resolving_path(self, block_cell, path_to_clear, block_info):
-        print("find resolving path", block_cell, path_to_clear, file=sys.stderr)
+        print("find resolving path ({0})".format(block_cell), file=sys.stderr)
         while block_cell is not None:
             # which object is at block cell?
             if block_cell in self.grid.agent_position:
                 print("agent to move", file=sys.stderr)
                 agent_obj = self.grid.agent_position[block_cell]
-                move_path, block_info = (
+                move_path, b_info = (
                         self.find_path_to_remove_blocking_object(path_to_clear,
                             block_cell, agent_obj, None) )
+                block_info.update(b_info)
                 block_cell = self.detect_blocking_objects(move_path, block_info,
                     agent_obj, None)
             else:
@@ -137,19 +139,22 @@ class HighLevelPlan:
                 box_obj = self.grid.box_position[block_cell]
                 agent_obj = self.find_closest_agent_for_box(box_obj)
                 # get path from agent to box, and block_info
-                agent_to_clear, block_info = self.shortest_path_to_box(agent_obj,
+                agent_to_clear, b_info = self.shortest_path_to_box(agent_obj,
                         box_obj)
+                block_info.update(b_info)
                 block_cell = self.detect_blocking_objects(agent_to_clear,
                         block_info, agent_obj, box_obj)
+                path_to_clear += agent_to_clear
                 # if we have blocked cell, then we have another conflict to
                 # resolve first
                 if block_cell is not None:
                     print("new conflict (while find agent to clear)", block_cell, file=sys.stderr)
                     path_to_clear += agent_to_clear
                     continue
-                box_clear_path, block_info = (
+                box_clear_path, b_info = (
                         self.find_path_to_remove_blocking_object(path_to_clear,
                             box_obj.position, agent_obj, box_obj) )
+                block_info.update(b_info)
                 block_cell = self.detect_blocking_objects(box_clear_path, block_info,
                         agent_obj, box_obj)
                 # if we have blocked cell, then we have another conflict to resolve first
@@ -157,10 +162,15 @@ class HighLevelPlan:
                     print("new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
                     path_to_clear += box_clear_path
                     continue
-                # TODO will we ever have a conflict here?!
                 #print("bcp:", box_clear_path, file=sys.stderr)
-                box_clear_path, _ = self.validate_box_movement(agent_to_clear,
-                        box_clear_path, resolving=True)
+                box_clear_path, _ = self.validate_box_movement(
+                        agent_to_clear, box_clear_path, resolving=True)
+                block_cell = self.detect_blocking_objects(box_clear_path, block_info,
+                        agent_obj, box_obj)
+                if block_cell is not None:
+                    print("new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
+                    path_to_clear += box_clear_path
+                    continue
                 move_path = agent_to_clear + box_clear_path
         return move_path
 
@@ -307,7 +317,14 @@ class HighLevelPlan:
                 agent_end_pos = [c for c in agent_end_pos if c != box_pre_end]
                 agent_end_pos += reversed([c for c in agent_to_box if c not in
                         box_to_goal])
-                box_to_goal = movement_with_box(box_to_goal) + [agent_end_pos[0]]
+                if len(agent_end_pos) == 0:
+                    n = self.grid.neighbours(box_end, with_box=True, with_agent=True)
+                    n = [c for c in n if c != box_pre_end and c not in
+                            agent_to_box and c not in box_to_goal]
+                    box_to_goal = movement_with_box(box_to_goal) + [n[0]]
+                    find_swapable_combination = True # there is a conflict
+                else:
+                    box_to_goal = movement_with_box(box_to_goal) + [agent_end_pos[0]]
         else:
             box_to_goal = movement_with_box(box_to_goal)
 
