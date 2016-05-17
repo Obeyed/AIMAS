@@ -315,8 +315,6 @@ class HighLevelPlan:
                 box_end, box_pre_end = box_to_goal[-1], box_to_goal[-2]
                 agent_end_pos = self.grid.neighbours(box_end)
                 agent_end_pos = [c for c in agent_end_pos if c != box_pre_end]
-                agent_end_pos += reversed([c for c in agent_to_box if c not in
-                        box_to_goal])
                 if len(agent_end_pos) == 0:
                     n = self.grid.neighbours(box_end, with_box=True, with_agent=True)
                     n = [c for c in n if c != box_pre_end and c not in
