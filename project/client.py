@@ -41,37 +41,56 @@ def next_move():
     a = ",".join(s)
     return "[" + a + "]"
 
+def update_grid(server_response, moves):
+    """ Update grid if move successful """
+    server_response = server_response[1:-1].split(",")
+    server_response = [res.strip() for res in server_response]
+    incomplete_moves = moves[1:-1].split(",")
+    # fix moves with comma in string
+    complete_moves, skip_next = [], False
+    for i, move in enumerate(incomplete_moves):
+        if skip_next: skip_next = False; continue;
+        if move != "NoOp" and move[-1] != ')':
+            skip_next = True
+            complete_moves.append("{0},{1}".format(move,incomplete_moves[i+1]))
+        else:
+            complete_moves.append(move)
+    moves = complete_moves
+    for agent_idx, (res, move) in enumerate(zip(server_response, moves)):
+        if res == TRUE:
+            grid.move(AGENTS[agent_idx], move)
+
 # parse level from server, setup grid and planner
 grid, hlp = setup()
 # setup agents
 NUM_AGENTS, AGENTS = order_agents()
-# moves
-MOVES = dict()
 
 # testing debugging prints
 inform("write to stderr, without server doing anything")
 for a in AGENTS:
     inform("{0} ({1}) at {2}".format(a.name, a.color, a.position))
 
-# initial plan
-hlp.find_shortest_box_goal_combination()
-hlp.create_paths()
-# debug agents' plans
-for a, p in hlp.agent_movement.items():
-    inform(a.name + " " + str(p))
-
-# convert to moves
-for idx in range(NUM_AGENTS):
-    MOVES[idx] = calculate_movements_new(hlp.agent_movement[AGENTS[idx]], grid)
-
-align_movements()
-
+# NOTE this is only needed sometimes...
+#first_response = input()
 while True:
-    server_response = input()
-    inform("server response: " + server_response)
-
-    if len(MOVES[0]) > 0:
+    open_goals = grid.get_open_goals()
+    if len(open_goals) == 0:
+        break
+    # reset and start over
+    MOVES = {i: [] for i in range(NUM_AGENTS)}
+    g_cell, g_letter = next(iter(open_goals.items()))
+    goal = (g_letter, g_cell) # reverse
+    next_path = hlp.find_next_path(goal)
+    inform(next_path)
+    # find agent's index
+    agent_idx = AGENTS.index(grid.agent_position[next_path[0]])
+    MOVES[agent_idx] = calculate_movements_new(next_path, grid)
+    align_movements()
+    while len(MOVES[agent_idx]):
         move = next_move()
-
         inform(move) # debug
         print(move)  # send to server
+        server_response = input()
+        inform("server response: " + server_response)
+        update_grid(server_response, move)
+

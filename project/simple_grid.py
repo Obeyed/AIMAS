@@ -41,6 +41,17 @@ def update_colors(colors, uncolored):
 
     return colors
 
+def new_cell_from_direction(old_cell, direction):
+    """ Calculate new cell from direction """
+    (Y,X) = old_cell
+    if direction == 'N':
+        return (Y-1,X)
+    elif direction == 'E':
+        return (Y,X+1)
+    elif direction == 'W':
+        return (Y,X-1)
+    elif direction == 'S':
+        return (Y+1,X)
 
 class SimpleGrid:
 
@@ -54,7 +65,7 @@ class SimpleGrid:
         agents -- dict of {(x,y): '0', ..}
         colors -- dict of {'green': ['0', 'A', 'a'], ..}
             If agent or box is not in colors, they will default to 'blue'
-        free -- set of tupes (representing cells/positions)
+        free -- set of tuples (representing cells/positions)
         """
         uncolored = find_uncolored_objects(colors, boxes, agents)
         if len(uncolored) > 0:
@@ -107,12 +118,13 @@ class SimpleGrid:
     def passable(self, cell):
         return cell not in self.unpassable
 
-    def neighbours(self, cell, with_box=False):
+    def neighbours(self, cell, with_box=False, with_agent=False):
         """ find neighbours of cell
 
         Keyword arguments:
         cell -- cell to find neighbours of
         with_box -- (optional) whether or not to include boxes
+        with_agent -- (optional) whether or not to include agents
         """
         (x,y) = cell
         results = [(x+1,y), (x-1,y), (x,y+1), (x,y-1)]
@@ -120,8 +132,10 @@ class SimpleGrid:
 
         box_pos = ( [c for c in results if c in self.box_position]
                 if with_box else [] )
+        agent_pos = ( [c for c in results if c in self.agent_position]
+                if with_agent else [] )
         results = [r for r in results if self.passable(r)]
-        results += box_pos
+        results += box_pos + agent_pos
 
         return results
 
@@ -152,36 +166,70 @@ class SimpleGrid:
         results = [c for c in results if c != box_cell and c != next_cell]
         return results[0] if len(results) > 0 else None
 
-    def move(self, old, new):
+    def get_free_from_list(self, path):
+        """ Return set difference of free cells and cells in path """
+        return self.free - set(path)
+
+    def get_open_goals(self):
+        """ find goals that are unsolved and return dict of cell and letter """
+        open_goals = dict()
+        boxes = {box.position: box.name for box in self.boxes}
+        for g_cell, g_letter in self.goals.items():
+            if g_cell not in boxes:
+                open_goals[g_cell] = g_letter
+            elif g_cell in boxes:
+                b_letter = boxes[g_cell]
+                if b_letter != g_letter.upper():
+                    open_goals[g_cell] = g_letter
+        print("og:",open_goals, file=sys.stderr)
+        return open_goals
+
+    def move(self, agent, step):
         """ Update grid with new info about movable objects.
 
         Keyword arguments:
-        old -- current position
-        new -- position to move movable object
+        agent - the agent's number
+        step - Move(E),... etc.
         """
-        if old not in self.box_position and old not in self.agent_position:
-            print("warn: nothing to move at {0}".format(old), file=sys.stderr)
-            return
+        # Parsing input
+        move_type = step[:4]
+        if move_type == 'NoOp': return
 
-        if old in self.box_position:
-            box = self.box_position[old]
-            box.move(new)
-            # update position
-            del self.box_position[old]
-            self.box_position[new] = box
+        dirs = step[5:-1].split(",")
+        first_dir = dirs[0]
+        second_dir = dirs[1] if len(dirs) > 1 else None
+
+        # update agent position
+        old_pos_agent = agent.position
+        new_pos_agent = new_cell_from_direction(old_pos_agent, first_dir)
+        agent.move(new_pos_agent)
+        del self.agent_position[old_pos_agent]
+        self.agent_position[new_pos_agent] = agent
+
+        if move_type == 'Move':
+            box = None
+            new_free, new_unpassable = old_pos_agent, new_pos_agent
+        elif move_type == 'Push':
+            old_pos_box = new_pos_agent
+            new_pos_box = new_cell_from_direction(old_pos_box, second_dir)
+            box = self.box_position[old_pos_box]
+            new_free, new_unpassable = old_pos_agent, new_pos_box
         else:
-            agent = self.agent_position[old]
-            agent.move(new)
-            # update position
-            del self.agent_position[old]
-            self.agent_position[new] = agent
+            new_pos_box = old_pos_agent
+            old_pos_box = new_cell_from_direction(old_pos_agent, second_dir)
+            box = self.box_position[old_pos_box]
+            new_free, new_unpassable = old_pos_box, new_pos_agent
 
-        # update free fields
-        self.free.discard(new)
-        self.free.add(old)
-        # update unpassable fields
-        self.unpassable.discard(old)
-        self.unpassable.add(new)
+        if box is not None:
+            box.move(new_pos_box)
+            del self.box_position[old_pos_box]
+            self.box_position[new_pos_box] = box
+
+        # update grid
+        self.free.discard(new_unpassable)
+        self.free.add(new_free)
+        self.unpassable.discard(new_free)
+        self.unpassable.add(new_unpassable)
 
 
 if __name__ == '__main__':
