@@ -32,7 +32,7 @@ def cost_of_move(grid, next, box, agent):
     Check if next move is a box and its color.
     """
     info, cost = None, 1
-    HELP_COST, SELF_COST = 20, 2
+    HELP_COST, SELF_COST = 20, 4
     AGENT_MOVE = 3
 
     # if neither box nor agent given
