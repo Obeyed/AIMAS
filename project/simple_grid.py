@@ -212,7 +212,7 @@ class SimpleGrid:
         elif move_type == 'Push':
             old_pos_box = new_pos_agent
             new_pos_box = new_cell_from_direction(old_pos_box, second_dir)
-            box = self.box_position[new_pos_agent]
+            box = self.box_position[old_pos_box]
             new_free, new_unpassable = old_pos_agent, new_pos_box
         else:
             new_pos_box = old_pos_agent

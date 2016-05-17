@@ -70,22 +70,9 @@ inform("write to stderr, without server doing anything")
 for a in AGENTS:
     inform("{0} ({1}) at {2}".format(a.name, a.color, a.position))
 
-first_response = input()
+# NOTE this is only needed sometimes...
+#first_response = input()
 while True:
-    print(grid.complete_grid, file=sys.stderr)
-    # debug grid representation
-    for i in range(4):
-        line = ""
-        for j in range(22):
-            cell = (i,j)
-            if cell in grid.walls: line+="+"
-            elif cell in grid.goals: line+=grid.goals[cell]
-            elif cell in grid.agent_position: line+=grid.agent_position[cell].name
-            elif cell in grid.box_position: line+=grid.box_position[cell].name
-            elif cell in grid.free: line+=" "
-            else: line+="X"
-        inform(line)
-
     open_goals = grid.get_open_goals()
     if len(open_goals) == 0:
         break
@@ -99,7 +86,6 @@ while True:
     agent_idx = AGENTS.index(grid.agent_position[next_path[0]])
     MOVES[agent_idx] = calculate_movements_new(next_path, grid)
     align_movements()
-    inform(MOVES)
     while len(MOVES[agent_idx]):
         move = next_move()
         inform(move) # debug
