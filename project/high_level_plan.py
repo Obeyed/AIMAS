@@ -14,9 +14,17 @@ def get_swap_positions_prioritized(grid, box):
     """ return priority queue of cells where swaps are possible """
     swapables = queue.PriorityQueue()
     not_walls = grid.complete_grid - grid.walls
-    for pos in [c for c in not_walls if len(grid.neighbours(c, with_box=True,
-        with_agent=True)) > 2]:
-        swapables.put((cross_product(pos, box.position), pos))
+    free_swaps = [c for c in not_walls if len(grid.neighbours(c)) > 2]
+    all_swaps = [c for c in not_walls if len(grid.neighbours(c, with_box=True,
+        with_agent=True)) > 2]
+
+    if len(free_swaps):
+        for pos in free_swaps:
+            swapables.put((cross_product(pos, box.position), pos))
+    else:
+        for pos in all_swaps:
+            swapables.put((cross_product(pos, box.position), pos))
+
     return swapables
 
 
@@ -145,7 +153,7 @@ class HighLevelPlan:
                 block_info.update(b_info)
                 block_cell = self.detect_blocking_objects(agent_to_clear,
                         block_info, agent_obj, box_obj)
-                path_to_clear += agent_to_clear
+                #path_to_clear += agent_to_clear
                 # if we have blocked cell, then we have another conflict to
                 # resolve first
                 if block_cell is not None:
@@ -164,12 +172,19 @@ class HighLevelPlan:
                     path_to_clear += box_clear_path
                     continue
                 #print("bcp:", box_clear_path, file=sys.stderr)
-                box_clear_path, _ = self.validate_box_movement(
+                print(block_info, file=sys.stderr)
+                print(agent_to_clear, box_clear_path, file=sys.stderr)
+                box_clear_path, conflict = self.validate_box_movement(
                         agent_to_clear, box_clear_path, resolving=True)
-                block_cell = self.detect_blocking_objects(box_clear_path, block_info,
-                        agent_obj, box_obj)
+                if conflict:
+                    move_path = self.find_swapable_position(agent_to_clear, box_obj, agent_obj)
+                    print("mp", move_path, file=sys.stderr)
+                    break
+                block_cell = self.detect_blocking_objects(box_clear_path,
+                        block_info, agent_obj, box_obj)
                 if block_cell is not None:
-                    print("new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
+                    print("new conflict (while find box to be cleared)",
+                            block_cell, file=sys.stderr)
                     path_to_clear += box_clear_path
                     continue
                 move_path = agent_to_clear + box_clear_path
@@ -201,46 +216,53 @@ class HighLevelPlan:
 
         box_to_goal, conflict = self.validate_box_movement(agent_to_box, box_to_goal)
         # if swap was not possible on path to goal, find another spot
-        path = agent_to_box + box_to_goal
         if conflict:
-            swapables = get_swap_positions_prioritized(self.grid, box)
-            # must create new path from box to swap position
-            # get nearest swapable position
-            swap_pos = swapables.get()[1]
-            # path for box to goal
-            # 1. push box to swap_pos (which is a cell with at least two neighbours)
-            box_to_swap, block_info = a_star_search(grid=self.grid,
-                    start=box.position, goal=swap_pos, box=box, agent=agent)
-            # 2. push box to random neighbour of swap_pos
-            swap_cells = self.grid.neighbours(swap_pos, with_box=True,
-                    with_agent=True)
-            # do not move backwards
-            swap_cells = [n for n in swap_cells if n != box_to_swap[-2]]
-            # add cell to pushing action
-            box_to_swap.append(swap_cells[0])
-            self.update_block_info(block_info, swap_cells[0], box, agent)
-            # 3. pull box to random neighbour of swap_pos that was not on box_to_swap
-            box_pre_end, box_end = box_to_swap[-1], box_to_swap[-2]
-            box_pull_for_swap = movement_with_box([box_pre_end, box_end])
-            # now add agent end pos to pull movement
-            box_pull_for_swap.append(swap_cells[1])
-            self.update_block_info(block_info, swap_cells[1], box, agent)
-            # finalize box_to_swap cells with agent end pos
-            agent_end_pos = box_end
-            box_to_swap = movement_with_box(box_to_swap)
-            box_to_swap.append(agent_end_pos)
+            path = self.find_swapable_position(agent_to_box, box, agent, goal)
+        else:
+            path = agent_to_box + box_to_goal
+        return path
 
+    def find_swapable_position(self, agent_to_box, box, agent, goal=None):
+        swapables = get_swap_positions_prioritized(self.grid, box)
+        # must create new path from box to swap position
+        # get nearest swapable position
+        swap_pos = swapables.get()[1]
+        # path for box to goal
+        # 1. push box to swap_pos (which is a cell with at least two neighbours)
+        box_to_swap, block_info = a_star_search(grid=self.grid,
+                start=box.position, goal=swap_pos, box=box, agent=agent)
+        # 2. push box to random neighbour of swap_pos
+        swap_cells = self.grid.neighbours(swap_pos, with_box=True,
+                with_agent=True)
+        # do not move backwards
+        swap_cells = [n for n in swap_cells if n != box_to_swap[-2]]
+        # add cell to pushing action
+        box_to_swap.append(swap_cells[0])
+        self.update_block_info(block_info, swap_cells[0], box, agent)
+        # 3. pull box to random neighbour of swap_pos that was not on box_to_swap
+        box_pre_end, box_end = box_to_swap[-1], box_to_swap[-2]
+        box_pull_for_swap = movement_with_box([box_pre_end, box_end])
+        # now add agent end pos to pull movement
+        box_pull_for_swap.append(swap_cells[1])
+        self.update_block_info(block_info, swap_cells[1], box, agent)
+        # finalize box_to_swap cells with agent end pos
+        agent_end_pos = box_end
+        box_to_swap = movement_with_box(box_to_swap)
+        box_to_swap.append(agent_end_pos)
+
+        path = agent_to_box + box_to_swap + box_pull_for_swap
+        if goal:
             # find new (maybe improved) movement to goal
             revised_box_to_goal, b_info = ( a_star_search(grid=self.grid,
                         start=box_end, goal=goal[1], box=box, agent=agent) )
             block_info.update(b_info)
-            path = agent_to_box + box_to_swap + box_pull_for_swap
             path += movement_with_box(revised_box_to_goal)
-            # if by some chance an object is still blocking, remove it
-            block_cell = self.detect_blocking_objects(path, block_info,
-                    agent, box)
-            if block_cell is not None:
-                return self.find_next_resolving_path(block_cell, path, block_info)
+        # if by some chance an object is still blocking, remove it
+        block_cell = self.detect_blocking_objects(path, block_info,
+                agent, box)
+        if block_cell is not None:
+            print("blocking cell", block_cell, file=sys.stderr)
+            return self.find_next_resolving_path(block_cell, path, block_info)
         return path
 
     def update_block_info(self, block_info, cell, box, agent):
@@ -316,14 +338,16 @@ class HighLevelPlan:
                 box_end, box_pre_end = box_to_goal[-1], box_to_goal[-2]
                 agent_end_pos = self.grid.neighbours(box_end)
                 agent_end_pos = [c for c in agent_end_pos if c != box_pre_end]
+
+                box_to_goal = movement_with_box(box_to_goal)
                 if len(agent_end_pos) == 0:
                     n = self.grid.neighbours(box_end, with_box=True, with_agent=True)
                     n = [c for c in n if c != box_pre_end and c not in
                             agent_to_box and c not in box_to_goal]
-                    box_to_goal = movement_with_box(box_to_goal) + [n[0]]
+                    if len(n): box_to_goal.append(n[0])
                     find_swapable_combination = True # there is a conflict
                 else:
-                    box_to_goal = movement_with_box(box_to_goal) + [agent_end_pos[0]]
+                    box_to_goal.append(agent_end_pos[0])
         else:
             box_to_goal = movement_with_box(box_to_goal)
 
