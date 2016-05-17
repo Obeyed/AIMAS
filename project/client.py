@@ -1,4 +1,5 @@
 import sys
+import queue
 
 from parselvl import parselvl
 from high_level_plan import HighLevelPlan
@@ -70,15 +71,42 @@ inform("write to stderr, without server doing anything")
 for a in AGENTS:
     inform("{0} ({1}) at {2}".format(a.name, a.color, a.position))
 
+def prioritized_goals(goals):
+    priorities = queue.PriorityQueue()
+    for cell, letter in goals.items():
+        goal = (letter, cell)
+        x,y = cell
+        neighbours = [(x+1,y), (x-1,y), (x,y+1), (x,y-1)]
+        priority = []
+        for n in neighbours:
+            if n in grid.walls: v = 0
+            elif n in grid.goals: v = 1
+            else: v = 3
+            priority.append(v)
+        priority = sum(priority)
+        priorities.put((priority, goal))
+    return priorities
+
+complex_priority = True
+for arg in sys.argv:
+    if arg == "--simple-priority":
+        complex_priority = False
+
 goal = None
 while True:
     open_goals = grid.get_open_goals()
-    sorted_goals = grid.get_goal_priorities(open_goals)
     if len(open_goals) == 0:
         break
     if goal is None or goal[1] not in open_goals:
-        g_cell, g_letter = next(iter(sorted_goals))
-        goal = (g_letter, g_cell) # reverse
+        if complex_priority:
+            sorted_goals = grid.get_goal_priorities(open_goals)
+            g_cell, g_letter = next(iter(sorted_goals))
+            goal = (g_letter, g_cell) # reverse
+        else:
+            prioritized = prioritized_goals(open_goals)
+            while not prioritized.empty():
+                goal = prioritized.get()[1]
+                if goal[1] in open_goals: break
     # reset and start over
     MOVES = {i: [] for i in range(NUM_AGENTS)}
 
