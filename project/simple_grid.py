@@ -174,12 +174,34 @@ class SimpleGrid:
 
     def get_goal_priorities(self, open_goals):
         """ Sort open goals to avoid blockage """
-        sorted_goals = list()
-        for g_cell in open_goals:
-            g_letter = open_goals[g_cell]
-            nigh = self.neighbours(g_cell, diagonals=True)
-            print("NEIGH: "+g_letter,nigh, file=sys.stderr)
-        return open_goals
+        g_scores = dict()
+        for i in range(len(open_goals)):
+            for g_cell in open_goals:
+                g_letter = open_goals[g_cell]
+                n_cells = self.neighbours(g_cell,diagonals=True)
+                if g_cell not in g_scores:
+                    g_scores[g_cell] = len(n_cells)
+                else:
+                    n_scores = list()
+                    score = g_scores[g_cell]
+                    for n_cell in n_cells:
+                        if n_cell in g_scores:
+                            n_scores.append(g_scores[n_cell])
+                    if len(n_scores) > 0:
+                        n_max = max(n_scores)
+                        n_min = min(n_scores)
+                        if n_min < score and score == n_max:
+                            g_scores[g_cell] = score + 1
+               
+        sorted_goals = [None] * (len(g_scores)+1) 
+        for cell in g_scores:
+            sorted_goals[g_scores[cell]] = (cell,open_goals[cell])
+            
+        goals_without_none = [x for x in sorted_goals if x is not None]
+                
+        print("G_SCORES: ",goals_without_none, file=sys.stderr)
+        
+        return goals_without_none
 
     def get_open_goals(self):
         """ find goals that are unsolved and return dict of cell and letter """

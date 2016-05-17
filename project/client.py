@@ -73,7 +73,7 @@ for a in AGENTS:
 goal = None
 while True:
     open_goals = grid.get_open_goals()
-    open_goals = grid.get_goal_priorities(open_goals)
+    sorted_goals = grid.get_goal_priorities(open_goals)
     if len(open_goals) == 0:
         break
     if goal is None or goal[1] not in open_goals:
@@ -81,6 +81,7 @@ while True:
         goal = (g_letter, g_cell) # reverse
     # reset and start over
     MOVES = {i: [] for i in range(NUM_AGENTS)}
+
     next_path = hlp.find_next_path(goal)
     inform(next_path)
     # find agent's index
