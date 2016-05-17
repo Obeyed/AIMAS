@@ -210,6 +210,11 @@ class SimpleGrid:
                         else:
                             g_matrix[row][column] = prev_score+1
                     elif prev_prev_score and prev_prev_score == prev_score:
+                        if prev_score > prev_next_score:
+                            g_matrix[row][column] = prev_score
+                        else:
+                            g_matrix[row][column] = prev_score+1
+                    elif prev_score == max(g_matrix[row-1]):
                         g_matrix[row][column] = prev_score+1
                     else:
                         g_matrix[row][column] = prev_score
