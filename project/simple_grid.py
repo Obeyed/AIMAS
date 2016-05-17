@@ -178,22 +178,38 @@ class SimpleGrid:
         """ Sort open goals to avoid blockage """
         
         cell_refs = sorted(list(open_goals), key=itemgetter(1))
+        #cell_refs.reverse()
+       # cell_refs = sorted(list(cell_refs), key=itemgetter(0))
+        """VERTICAL SORT??"""
         g_rows = [0] * len(open_goals)
         g_matrix = [cell_refs] + [g_rows[:] for _ in range(len(open_goals))]
-        
+        index_of_max = 0
         for row in range(len(g_matrix)):
             for column,cell in enumerate(g_matrix[row]):
                 if row == 0:
                     continue;
                 g_cell = g_matrix[0][column]
-                n_cells = self.neighbours(g_cell)
+                n_cells = self.neighbours(g_cell,diagonals=False)
+                prev_prev_score = None
+                
+                if column>0 :
+                    prev_prev_score= g_matrix[row-1][column-1]
+                                    
                 if row == 1:
                     start_score = len(n_cells)
                     g_matrix[row][column] = start_score
+                    if g_matrix[row][column] == max(g_matrix[row]):
+                        index_of_max = column
+                    
                 elif column<len(g_matrix[row])-1:
                     prev_score = g_matrix[row-1][column]
                     prev_next_score = g_matrix[row-1][column+1]
                     if prev_score == prev_next_score:
+                        if prev_prev_score and prev_prev_score < prev_score:
+                            g_matrix[row][column] = prev_score
+                        else:
+                            g_matrix[row][column] = prev_score+1
+                    elif prev_prev_score and prev_prev_score == prev_score:
                         g_matrix[row][column] = prev_score+1
                     else:
                         g_matrix[row][column] = prev_score
@@ -201,17 +217,19 @@ class SimpleGrid:
                     prev_score = g_matrix[row-1][column]
                     g_matrix[row][column] = prev_score
                     
-        
         sorted_goals = list()
         for i, cell in enumerate(g_matrix[0]):
             sorted_goals.append((g_matrix[-1][i], cell, open_goals[cell]))
             
         sorted_goals = sorted(list(sorted_goals), key=itemgetter(0))
-        
         sorted_goals = [(i[1], i[2]) for i in sorted_goals]
-        print("MATRIX: ",sorted_goals, file=sys.stderr)   
-        
+        print_order = [i[1] for i in sorted_goals]
 
+        print("MATRIX: ",print_order, file=sys.stderr)   
+        for row in g_matrix:
+            print("ROW: ",row, file=sys.stderr)   
+        
+        
         # n_free = self.neighbours(g_cell)
 # cur_score = g_matrix[row][column]
  #
