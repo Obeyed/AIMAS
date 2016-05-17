@@ -57,7 +57,7 @@ def cost_of_move(grid, next, box, agent):
     elif box_next_to_box:
         box_next = grid.box_position[next]
         # NOTE box should not be called without an agent
-        if (box_next.color == agent.color):
+        if (box_next.color == box.color):
             cost, info = SELF_COST, "self"
         else:
             cost, info = HELP_COST, "help"
@@ -88,8 +88,9 @@ def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
     #print("A* start, goal:", start, goal, backwards, file=sys.stderr)
     # will be used as kwargs in call to grid.neighbours
     kwargs = {}
-    if agent is not None: kwargs['with_box'] = True
-    if box is not None:   kwargs['with_agent'] = True
+    #if agent is not None: kwargs['with_box'] = True
+    #if box is not None:   kwargs['with_agent'] = True
+    kwargs = {'with_box': True, 'with_agent': True}
 
     h = heuristic or tie_breaking_cross_product_heuristic # heuristic function
 
@@ -125,7 +126,6 @@ def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
 
     if backwards:
         # NOTE: this should be used if goal cell is a blocking object
-        kwargs['with_agent'] = True # we might have agent next to box
         landing_position = grid.neighbours(goal, **kwargs)
         landing_position = [pos for pos in landing_position if pos in came_from
                 or pos == agent.position]
