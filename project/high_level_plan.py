@@ -524,15 +524,9 @@ if __name__ == '__main__':
     colors = {'blue': ['0','A'],'green': ['1','B']}
     #goals = {(1, 6): 'b', (2, 15): 'a'}
     #agents = {(1, 1): '0'}
-#<<<<<<< HEAD
-    #agents = {(1, 1): '0', (2, 1): '1'}
-    #boxes = {(1, 5): 'B', (2, 13): 'A', (2,12): 'C', (2,10): 'C', (1,10): 'B'}
-    #colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
-#=======
     agents = {(1, 1): '0', (2, 1): '1'}
     boxes = {(1, 5): 'B', (2, 13): 'A', (2,12): 'C', (1,10): 'B'}
     colors = {'green': ['A','1','C'], 'red' : ['B', '0']}
-#>>>>>>> 5f8d25ccf6a55516f5f11a0c5f0574137583f17a
 
     for i in range(4):
         for j in range(22):
@@ -550,25 +544,3 @@ if __name__ == '__main__':
     open_goals = grid.get_open_goals()
 
     hlp = HighLevelPlan(grid)
-#<<<<<<< HEAD
-    hlp.find_shortest_box_goal_combination()
-    #print("bgc:", hlp.box_goal_combination)
-
-    hlp.create_paths()
-    #print(hlp.agent_movement)
-    for a, p in hlp.agent_movement.items():
-        print(a.name)
-        print("  ", p)
-        #print(calculate_movements_new(p, grid))
-
-    hlp.untangle()
-    print("untangle");
-    for a, p in hlp.agent_movement.items():
-        print(a.name)
-        print("  ", p)
-        #print(calculate_movements_new(p, grid))
-#=======
-#    for g_cell, g_letter in open_goals.items():
-#        goal = (g_letter, g_cell)
-#        print("  ", hlp.find_next_path(goal))
-#>>>>>>> 5f8d25ccf6a55516f5f11a0c5f0574137583f17a

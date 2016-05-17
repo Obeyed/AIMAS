@@ -123,22 +123,6 @@ def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
                 elif next in move_info:
                     del move_info[next]
 
-#<<<<<<< HEAD
-            #print("  {0} [{1}, {2}]".format(next, cost_so_far[next], priority), end=" ")
-
-        #print()
-
-    if not current == goal:
-        return None
-
-    #print("current:", current)
-    #print("goal:", goal)
-    #print("came from:", came_from)
-    #print("cost:", cost_so_far)
-    #print("move info:", move_info)
-
-#=======
-#>>>>>>> 5f8d25ccf6a55516f5f11a0c5f0574137583f17a
     if backwards:
         # NOTE: this should be used if goal cell is a blocking object
         kwargs['with_agent'] = True # we might have agent next to box
