@@ -70,16 +70,16 @@ inform("write to stderr, without server doing anything")
 for a in AGENTS:
     inform("{0} ({1}) at {2}".format(a.name, a.color, a.position))
 
-# NOTE this is only needed sometimes...
-#first_response = input()
+goal = None
 while True:
     open_goals = grid.get_open_goals()
     if len(open_goals) == 0:
         break
+    if goal is None or goal[1] not in open_goals:
+        g_cell, g_letter = next(iter(open_goals.items()))
+        goal = (g_letter, g_cell) # reverse
     # reset and start over
     MOVES = {i: [] for i in range(NUM_AGENTS)}
-    g_cell, g_letter = next(iter(open_goals.items()))
-    goal = (g_letter, g_cell) # reverse
     next_path = hlp.find_next_path(goal)
     inform(next_path)
     # find agent's index
