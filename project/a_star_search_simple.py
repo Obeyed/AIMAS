@@ -85,7 +85,7 @@ def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
     agent -- (optional) agent instance
     clearing_path -- find a cell not in this path
     """
-    #print("A* start, goal:", start, goal, backwards, file=sys.stderr)
+    #print("A*:", start, goal, backwards, file=sys.stderr)
     # will be used as kwargs in call to grid.neighbours
     kwargs = {}
     #if agent is not None: kwargs['with_box'] = True

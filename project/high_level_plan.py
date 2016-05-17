@@ -3,7 +3,6 @@ import queue
 
 from a_star_search_simple import cross_product_heuristic as cross_product
 from a_star_search_simple import a_star_search, cost_of_move
-import copy
 
 
 def movement_with_box(path):
@@ -12,19 +11,15 @@ def movement_with_box(path):
 
 def get_swap_positions_prioritized(grid, box):
     """ return priority queue of cells where swaps are possible """
-    swapables = queue.PriorityQueue()
     not_walls = grid.complete_grid - grid.walls
     free_swaps = [c for c in not_walls if len(grid.neighbours(c)) > 2]
     all_swaps = [c for c in not_walls if len(grid.neighbours(c, with_box=True,
         with_agent=True)) > 2]
 
-    if len(free_swaps):
-        for pos in free_swaps:
-            swapables.put((cross_product(pos, box.position), pos))
-    else:
-        for pos in all_swaps:
-            swapables.put((cross_product(pos, box.position), pos))
-
+    positions = free_swaps if len(free_swaps) else all_swaps
+    swapables = queue.PriorityQueue()
+    for pos in positions:
+        swapables.put((cross_product(pos, box.position), pos))
     return swapables
 
 
@@ -32,8 +27,6 @@ class HighLevelPlan:
 
     def __init__(self, grid):
         self.grid = grid
-        self.box_goal_combination = dict()
-        self.agent_movement = dict()
 
     def find_closest_agent_for_box(self, box):
         """ return agent closest to box """
@@ -41,7 +34,10 @@ class HighLevelPlan:
                 box.name in self.grid.agent_info[agent]]
         best_combination = (None, float('inf'))
         for agent in agents:
-            cost = cross_product(box.position, agent.position)
+            # make sure a path exists!
+            path, _ = a_star_search(self.grid, agent.position, box.position,
+                    box=box, agent=agent, backwards=True)
+            cost = cross_product(box.position, agent.position) if path is not None else float('inf')
             if cost < best_combination[1]:
                 best_combination = (agent, cost)
         return best_combination[0]
@@ -55,36 +51,24 @@ class HighLevelPlan:
         Keyword arguments:
         goal -- tuple of letter and cell
         """
+        print(goal, file=sys.stderr)
         g_letter, g_cell = goal
         # box instance, (goal, cell), distance
         best_combination = (None, None, float('inf'))
         for box in self.grid.boxes:
             b_letter, b_cell = box.name, box.position
             if b_letter != g_letter.upper(): continue
-            if (b_cell in self.grid.goals and b_letter ==
-                    self.grid.goals[b_cell].upper()):
+            # if box already on correct goal
+            if (b_cell in self.grid.goals and
+                    b_letter == self.grid.goals[b_cell].upper()):
                 continue
-            # box already marked for movement
-            if box in self.box_goal_combination: continue
+            # make sure a path exists!
             path, _ = a_star_search(self.grid, b_cell, g_cell, box=box)
             cost = cross_product(b_cell, g_cell) if path is not None else float('inf')
             if cost < best_combination[2]:
                 best_combination = (box, goal, cost)
+        print(best_combination, file=sys.stderr)
         return best_combination[0] # box instance
-
-    def find_shortest_box_goal_combination(self):
-        """ For each goal, find a box that is closest to it.
-        Generates list of tuples [(from), (to)],
-        where `from = (box, cell)`, and `to = (goal, cell)`.
-        """
-        for g_cell, g_letter in self.grid.goals.items():
-            goal = (g_letter, g_cell)
-            box = self.find_closest_box_for_goal(goal)
-            self.box_goal_combination[box] = goal
-
-    def shortest_path_to_goal(self, box, goal):
-        b_cell, g_cell = box.position, goal[1]
-        return a_star_search(self.grid, b_cell, g_cell, box=box)
 
     def shortest_path_to_box(self, agent, box):
         a_cell, b_cell = agent.position, box.position
@@ -147,6 +131,7 @@ class HighLevelPlan:
                 print("box to move", file=sys.stderr)
                 box_obj = self.grid.box_position[block_cell]
                 agent_obj = self.find_closest_agent_for_box(box_obj)
+                print(1, file=sys.stderr)
                 # get path from agent to box, and block_info
                 agent_to_clear, b_info = self.shortest_path_to_box(agent_obj,
                         box_obj)
@@ -157,7 +142,7 @@ class HighLevelPlan:
                 # if we have blocked cell, then we have another conflict to
                 # resolve first
                 if block_cell is not None:
-                    print("new conflict (while find agent to clear)", block_cell, file=sys.stderr)
+                    print("1 new conflict (while find agent to clear)", block_cell, file=sys.stderr)
                     path_to_clear += agent_to_clear
                     continue
                 box_clear_path, b_info = (
@@ -168,22 +153,22 @@ class HighLevelPlan:
                         agent_obj, box_obj)
                 # if we have blocked cell, then we have another conflict to resolve first
                 if block_cell is not None:
-                    print("new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
+                    print("2 new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
                     path_to_clear += box_clear_path
                     continue
                 #print("bcp:", box_clear_path, file=sys.stderr)
-                print(block_info, file=sys.stderr)
-                print(agent_to_clear, box_clear_path, file=sys.stderr)
+                #print(block_info, file=sys.stderr)
+                #print(agent_to_clear, box_clear_path, file=sys.stderr)
                 box_clear_path, conflict = self.validate_box_movement(
                         agent_to_clear, box_clear_path, resolving=True)
                 if conflict:
                     move_path = self.find_swapable_position(agent_to_clear, box_obj, agent_obj)
-                    print("mp", move_path, file=sys.stderr)
+                    #print("mp", move_path, file=sys.stderr)
                     break
                 block_cell = self.detect_blocking_objects(box_clear_path,
                         block_info, agent_obj, box_obj)
                 if block_cell is not None:
-                    print("new conflict (while find box to be cleared)",
+                    print("3 new conflict (while find box to be cleared)",
                             block_cell, file=sys.stderr)
                     path_to_clear += box_clear_path
                     continue
@@ -229,12 +214,16 @@ class HighLevelPlan:
         swap_pos = swapables.get()[1]
         # path for box to goal
         # 1. push box to swap_pos (which is a cell with at least two neighbours)
+        print("swap", box.name, box.position, swap_pos, file=sys.stderr)
         box_to_swap, block_info = a_star_search(grid=self.grid,
                 start=box.position, goal=swap_pos, box=box, agent=agent)
         # 2. push box to random neighbour of swap_pos
         swap_cells = self.grid.neighbours(swap_pos, with_box=True,
                 with_agent=True)
         # do not move backwards
+        print(box_to_swap, file=sys.stderr)
+        print(swap_cells, file=sys.stderr)
+
         swap_cells = [n for n in swap_cells if n != box_to_swap[-2]]
         # add cell to pushing action
         box_to_swap.append(swap_cells[0])
@@ -270,23 +259,6 @@ class HighLevelPlan:
         # keep track of info
         if info is not None:
             block_info[cell] = info
-
-    def create_paths(self):
-        """ TODO remove """
-        for box, goal in self.box_goal_combination.items():
-            box_to_goal = self.shortest_path_to_goal(box, goal)
-            agent_to_box = None
-            for agent, box_letters in self.grid.agent_info.items():
-                if box.name not in box_letters: continue
-                if agent in self.agent_movement: continue
-                agent_to_box = self.shortest_path_to_box(agent, box)
-
-                if agent_to_box is not None:
-                    agent_to_box = self.validate_agent_movement(agent_to_box,
-                            box_to_goal)
-                    box_to_goal = self.validate_box_movement(agent_to_box,
-                            box_to_goal)
-                    self.agent_movement[agent] = agent_to_box + box_to_goal
 
     def validate_box_movement(self, agent_to_box, box_to_goal, resolving=None):
         """ Make sure agent movement and box movement can be combined properly.
@@ -352,192 +324,6 @@ class HighLevelPlan:
             box_to_goal = movement_with_box(box_to_goal)
 
         return box_to_goal, find_swapable_combination
-
-    def validate_agent_movement(self, agent_to_box, box_to_goal):
-        """ Make sure that final step in agent's movement is finalized.
-        TODO remove
-        """
-        final_step = agent_to_box[-1]
-        # unfinalized box_movement
-        if isinstance(final_step, list) and len(final_step) == 1:
-            for drop_cell in self.grid.neighbours(final_step[0]):
-                # cannot drop if same path we are moving/came from
-                is_next_step = (drop_cell == box_to_goal[0])
-                is_prev_step = (drop_cell == agent_to_box[-2])
-                if (is_next_step or is_prev_step): continue
-                # update box list
-                final_step.append(drop_cell)
-                # update agent movement
-                agent_to_box.append(final_step[0])
-        return agent_to_box
-    """
-    def move_foreign_box(self,box,path):
-        #find agent to move box
-        #find place to move box to
-        #update agent plan
-        for step in path:
-            if self.grid.boxes[step]:
-                box_color = self.grid.color[self.grid.boxes[step]]
-                if not box_color == color:
-                    #find agent to move box
-                    #make a_star search to move box away from path
-                    #update other agent and grid
-        return agent_to_box, box_to_goal
-    """
-    def fix_conflict(self,wall_1,a_cell,g_cell,inner_list):
-        """ Runs a_star_search to get a new path in case of conflict
-        """
-        blocked_grid = copy.deepcopy(self.grid)
-        blocked_grid.walls.add(wall_1)
-        blocked_grid.free.remove(wall_1)
-        return a_star_search(blocked_grid, a_cell, g_cell,backwards = inner_list)
-
-    def get_next_ele(self,path,idx,inner_idx):
-        """ Receives the next element in the list or list of lists
-        """
-        if isinstance(path[idx],list):
-            if not inner_idx +1 == len(path[idx]):
-                return path[idx][inner_idx+1]
-        if len(path) == idx +1: return None
-        elif isinstance(path[idx+1],list):
-            return path[idx+1][0]
-        else:
-            return path[idx+1]
-
-    def insert_new_path(self,path,new_path,idx,inner_idx):
-        """ Inserts new path into the original at idx
-        """
-        new_path.pop(0)
-        if isinstance(path[idx],list):
-            path[idx].pop(inner_idx)
-            for step in new_path[::-1]:
-                path[idx].insert(inner_idx,step)
-        else:
-            path.pop(idx)
-            for step in new_path[::-1]:
-                path.insert(idx,step)
-        return path
-    """
-    def updated_grid(grid,step):
-        for agent,path in self.agent_movement.items():
-            idx = 0
-            innner_idx = 0
-            total_idx = 0
-            while 1:
-                if total_idx < step:
-                    if isinstance(path[idx],list):
-                        inner_idx = inner_idx + 1
-                        if inner_idx == len(path[idx]):
-                            inner_idx = 0
-                            idx_1 = idx + 1
-
-                    else:
-                        idx = idx + 1
-                    total_idx = total_idx + 1
-                    continue
-                else:
-                    if isinstance(path[idx],list):
-                        if grid.box_position[path[idx][inner_idx]:
-                            #TODO make color check
-                            grid.move(path[idx][inner_idx],get_next_ele(path,idx,inner_idx))
-        return grid
-    """
-    def untangle(self):
-        """ Iterates over all paths and fix all conflicts
-
-        assumes 2 agents doesnt start in the same cell
-        """
-        #Loop until there are no more fixes
-        while 1:
-            fixed = 0
-            updated_grid = copy.deepcopy(self.grid)
-            agents = set()
-            for agent_1,path_1 in self.agent_movement.items():
-                agents.add(agent_1)
-                for agent_2,path_2 in self.agent_movement.items():
-                    if not agent_2 in agents:
-
-                        idx_1 = 0
-                        idx_2 = 0
-
-                        inner_idx_1 = 0
-                        inner_idx_2 = 0
-
-                        old_ele_1 = None
-                        old_ele_2 = None
-
-                        cur_ele_1 = None
-                        cur_ele_2 = None
-
-                        inner_list = False
-                        #step = 0
-
-                        while 1:
-
-                            #TODO update grid
-                            #updated_grid = update_grid(updated_grid,step)
-
-                            # Get next elements
-                            next_ele_1 = self.get_next_ele(path_1,idx_1,inner_idx_1)
-                            next_ele_2 = self.get_next_ele(path_2,idx_2,inner_idx_2)
-
-                            #TODO move this to bottom as cur = next
-                            # Get current elements
-                            if isinstance(path_1[idx_1],list):
-                                cur_ele_1 = path_1[idx_1][inner_idx_1]
-                            else:
-                                cur_ele_1 = path_1[idx_1]
-
-                            if isinstance(path_2[idx_2],list):
-                                cur_ele_2 = path_2[idx_2][inner_idx_2]
-                                inner_list = True
-                            else:
-                                cur_ele_2 = path_2[idx_2]
-
-                            #if grid.box_position[cur_ele_1]:
-                            #    #TODO fix this
-                            #    if not grid.colors[cur_ele_1].color == agent.color:
-                            #        #and update grid
-                            #        move_foreign_box(cur_ele_1,path)
-
-                            # Look for overlap
-                            if cur_ele_1 == cur_ele_2:
-                                fixed = 1
-                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2,inner_list)
-                                path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
-                            elif (not next_ele_1 == None and
-                                    not next_ele_2 == None and
-                                    cur_ele_1 == next_ele_2 and
-                                    cur_ele_2 == next_ele_1):
-                                new_path = self.fix_conflict(cur_ele_2,old_ele_2,next_ele_2,inner_list)
-                                path_2 = self.insert_new_path(path_2,new_path,idx_2,inner_idx_2)
-
-                            # Save current elements as old elements
-                            old_ele_1 = cur_ele_1
-                            old_ele_2 = cur_ele_2
-
-                            #incr idexes
-                            if isinstance(path_1[idx_1],list):
-                                inner_idx_1 = inner_idx_1 + 1
-                                if inner_idx_1 == len(path_1[idx_1]):
-                                    inner_idx_1 = 0
-                                    idx_1 = idx_1 + 1
-                            else:
-                                idx_1 = idx_1 +1
-
-                            if isinstance(path_2[idx_2],list):
-                                inner_idx_2 = inner_idx_2 + 1
-                                if inner_idx_2 == len(path_2[idx_2]):
-                                    inner_idx_2 = 0
-                                    idx_1 = idx_2 + 1
-                            else:
-                                idx_2 = idx_2 + 1
-
-                            # break at end
-                            if next_ele_1 == None or next_ele_2 == None: break
-                            #step = step + 1
-
-            if fixed == 0: return
 
 
 if __name__ == '__main__':
