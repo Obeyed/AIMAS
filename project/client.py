@@ -91,6 +91,8 @@ while True:
         inform(move) # debug
         print(move)  # send to server
         server_response = input()
+        while len(server_response.strip()) == 0:
+            server_response = input()
         if server_response == '\n' or len(server_response) < 1:
             server_response = input()
         inform("server response: " + server_response)
