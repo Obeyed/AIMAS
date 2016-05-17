@@ -179,24 +179,30 @@ class SimpleGrid:
         
         cell_refs = sorted(list(open_goals), key=itemgetter(1))
         #cell_refs.reverse()
-       # cell_refs = sorted(list(cell_refs), key=itemgetter(0))
+        cell_refs = sorted(list(cell_refs), key=itemgetter(0))
         """VERTICAL SORT??"""
         g_rows = [0] * len(open_goals)
         g_matrix = [cell_refs] + [g_rows[:] for _ in range(len(open_goals))]
-        index_of_max = 0
+
         for row in range(len(g_matrix)):
             for column,cell in enumerate(g_matrix[row]):
                 if row == 0:
                     continue;
                 g_cell = g_matrix[0][column]
-                n_cells = self.neighbours(g_cell,diagonals=False)
+                n_cells = self.neighbours(g_cell,diagonals=True)
                 prev_prev_score = None
                 
                 if column>0 :
                     prev_prev_score= g_matrix[row-1][column-1]
                                     
                 if row == 1:
-                    start_score = len(n_cells)
+                    start_score = 0
+                    for n_cell in n_cells:
+                        if n_cell in self.goals:
+                            start_score += 1
+                        elif n_cell in self.free:
+                            start_score += 2
+
                     g_matrix[row][column] = start_score
                     if g_matrix[row][column] == max(g_matrix[row]):
                         index_of_max = column
@@ -233,38 +239,7 @@ class SimpleGrid:
         print("MATRIX: ",print_order, file=sys.stderr)   
         for row in g_matrix:
             print("ROW: ",row, file=sys.stderr)   
-        
-        
-        # n_free = self.neighbours(g_cell)
-# cur_score = g_matrix[row][column]
- #
-        # for i in range(len(open_goals)):
-#             for g_cell in open_goals:
-#                 g_letter = open_goals[g_cell]
-#                 n_cells = self.neighbours(g_cell,diagonals=False)
-#                 if g_cell not in g_scores:
-#                     g_scores[g_cell] = len(n_cells)
-#                 else:
-#                     n_scores = list()
-#                     score = g_scores[g_cell]
-#                     for n_cell in n_cells:
-#                         if n_cell in g_scores:
-#                             n_scores.append(g_scores[n_cell])
-#                     if len(n_scores) > 0:
-#                         n_max = max(n_scores)
-#                         n_min = min(n_scores)
-#                         if n_min < score and score == n_max:
-#                             g_scores[g_cell] = score + 1
-               
-        # sorted_goals = [None] * (len(g_scores)+1)
- #        for cell in g_scores:
- #            sorted_goals[g_scores[cell]] = (cell,open_goals[cell])
- #
- #        goals_without_none = [x for x in sorted_goals if x is not None]
- #
- #        print("G_SCORES: ",goals_without_none, file=sys.stderr)
- #
- #        return goals_without_none
+            
         return sorted_goals
         
         
