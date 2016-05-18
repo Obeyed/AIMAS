@@ -188,12 +188,15 @@ class SimpleGrid:
             for column,cell in enumerate(g_matrix[row]):
                 if row == 0:
                     continue;
+                    
                 g_cell = g_matrix[0][column]
                 n_cells = self.neighbours(g_cell,diagonals=True)
                 prev_prev_score = None
-                
+                                                                
                 if column>0 :
                     prev_prev_score= g_matrix[row-1][column-1]
+                           
+                max_score = max(g_matrix[row-1])       
                                     
                 if row == 1:
                     start_score = 0
@@ -204,29 +207,30 @@ class SimpleGrid:
                             start_score += 2
                         
                     g_matrix[row][column] = start_score
-                    if g_matrix[row][column] == max(g_matrix[row]):
-                        index_of_max = column
                     
                 elif column<len(g_matrix[row])-1:
                     prev_score = g_matrix[row-1][column]
                     prev_next_score = g_matrix[row-1][column+1]
-                    if prev_score == prev_next_score:
+                    if prev_score == prev_next_score and g_matrix[0][column+1] in n_cells:
                         if prev_prev_score and prev_prev_score < prev_score:
                             g_matrix[row][column] = prev_score
                         else:
                             g_matrix[row][column] = prev_score+1
-                    elif prev_prev_score and prev_prev_score == prev_score:
+                    elif prev_prev_score and prev_prev_score == prev_score and g_matrix[0][column-1] in n_cells:
                         if prev_score > prev_next_score:
                             g_matrix[row][column] = prev_score
                         else:
                             g_matrix[row][column] = prev_score+1
-                    elif prev_score == max(g_matrix[row-1]):
+                    elif prev_score == max_score:
                         g_matrix[row][column] = prev_score+1
                     else:
                         g_matrix[row][column] = prev_score
                 else:
                     prev_score = g_matrix[row-1][column]
-                    g_matrix[row][column] = prev_score
+                    if prev_score == max_score:
+                        g_matrix[row][column] = prev_score+1
+                    else:
+                        g_matrix[row][column] = prev_score
                     
         sorted_goals = list()
         for i, cell in enumerate(g_matrix[0]):
