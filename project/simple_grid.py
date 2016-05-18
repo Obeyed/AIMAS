@@ -238,13 +238,13 @@ class SimpleGrid:
 
         sorted_goals = sorted(list(sorted_goals), key=itemgetter(0))
         sorted_goals = [(i[1], i[2]) for i in sorted_goals]
-        print_order = [i[1] for i in sorted_goals]
+        #print_order = [i[1] for i in sorted_goals]
 
-        print("MATRIX: ",print_order, file=sys.stderr)
+        #print("MATRIX: ",print_order, file=sys.stderr)
         #for row in g_matrix:
         #    print("ROW: ",row, file=sys.stderr)
-        
-                
+
+
         return sorted_goals
 
 
