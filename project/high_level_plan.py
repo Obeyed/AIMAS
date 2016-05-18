@@ -274,36 +274,36 @@ class HighLevelPlan:
         # check if agent can end properly after pulling
         if agent_pos == box_next:
             if not resolving:
-                box_end_prev, box_end = box_to_goal[-2:]
-                # check were agent can stand
-                possible_ends = self.grid.neighbours(box_end)
-                possible_ends = [c for c in possible_ends if c != box_end_prev]
-                # if agent can end next to goal
-                if len(possible_ends):
-                    # NOTE smarter way to pick this?
-                    agent_end = possible_ends[0]
-                    box_to_goal = movement_with_box(box_to_goal)
-                    box_to_goal.append(agent_end)
-                else:
-                    complete_movement, pull_movement = [], []
-                    for i, box_pos in enumerate(box_to_goal):
-                        if len(box_to_goal) == i+2: break # NOTE unable to fix
-                        agent_pos = box_to_goal[i+1]
-                        future_step = box_to_goal[i+2]
-                        swap_pos = self.grid.swapable(box_pos, agent_pos,
-                                future_step, agent_origin)
-                        if swap_pos is not None:
-                            agent_next = swap_pos
-                            pull_movement += [box_pos, agent_pos]
-                            complete_movement.append(pull_movement)
-                            complete_movement.append(agent_next)
-                            complete_movement.append(box_to_goal[i+1:])
-                            # update box movement
-                            box_to_goal = complete_movement
-                            break
-                        else:
-                            pull_movement.append(box_pos)
-                    if len(complete_movement) == 0:
+                complete_movement, pull_movement = [], []
+                for i, box_pos in enumerate(box_to_goal):
+                    if len(box_to_goal) == i+2: break # NOTE unable to fix
+                    agent_pos = box_to_goal[i+1]
+                    future_step = box_to_goal[i+2]
+                    swap_pos = self.grid.swapable(box_pos, agent_pos,
+                            future_step, agent_origin)
+                    if swap_pos is not None:
+                        agent_next = swap_pos
+                        pull_movement += [box_pos, agent_pos]
+                        complete_movement.append(pull_movement)
+                        complete_movement.append(agent_next)
+                        complete_movement.append(box_to_goal[i+1:])
+                        # update box movement
+                        box_to_goal = complete_movement
+                        break
+                    else:
+                        pull_movement.append(box_pos)
+                if len(complete_movement) == 0:
+                    box_end_prev, box_end = box_to_goal[-2:]
+                    # check were agent can stand
+                    possible_ends = self.grid.neighbours(box_end)
+                    possible_ends = [c for c in possible_ends if c != box_end_prev]
+                    # if agent can end next to goal
+                    if len(possible_ends):
+                        # NOTE smarter way to pick this?
+                        agent_end = possible_ends[0]
+                        box_to_goal = movement_with_box(box_to_goal)
+                        box_to_goal.append(agent_end)
+                    else:
                         find_swapable_combination = True
             else:
                 box_end, box_pre_end = box_to_goal[-1], box_to_goal[-2]
