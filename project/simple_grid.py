@@ -131,7 +131,7 @@ class SimpleGrid:
         (x,y) = cell
         results = [(x+1,y), (x-1,y), (x,y+1), (x,y-1)]
         if diagonals : results += [(x+1,y+1),(x-1,y+1),(x+1,y-1),(x-1,y-1)]
-        
+
         results = [r for r in results if self.in_bounds(r)]
 
         box_pos = ( [c for c in results if c in self.box_position]
@@ -176,7 +176,7 @@ class SimpleGrid:
 
     def get_goal_priorities(self, open_goals):
         """ Sort open goals to avoid blockage """
-        
+
         cell_refs = sorted(list(open_goals), key=itemgetter(1))
         #cell_refs.reverse()
         cell_refs = sorted(list(cell_refs), key=itemgetter(0))
@@ -188,16 +188,16 @@ class SimpleGrid:
             for column,cell in enumerate(g_matrix[row]):
                 if row == 0:
                     continue;
-                    
+
                 g_cell = g_matrix[0][column]
                 n_cells = self.neighbours(g_cell,diagonals=True)
                 prev_prev_score = None
-                                                                
+
                 if column>0 :
                     prev_prev_score= g_matrix[row-1][column-1]
-                           
-                max_score = max(g_matrix[row-1])       
-                                    
+
+                max_score = max(g_matrix[row-1])
+
                 if row == 1:
                     start_score = 0
                     for n_cell in n_cells:
@@ -205,9 +205,9 @@ class SimpleGrid:
                             start_score += 1
                         elif n_cell in self.free:
                             start_score += 2
-                        
+
                     g_matrix[row][column] = start_score
-                    
+
                 elif column<len(g_matrix[row])-1:
                     prev_score = g_matrix[row-1][column]
                     prev_next_score = g_matrix[row-1][column+1]
@@ -231,22 +231,22 @@ class SimpleGrid:
                         g_matrix[row][column] = prev_score+1
                     else:
                         g_matrix[row][column] = prev_score
-                    
+
         sorted_goals = list()
         for i, cell in enumerate(g_matrix[0]):
             sorted_goals.append((g_matrix[-1][i], cell, open_goals[cell]))
-            
+
         sorted_goals = sorted(list(sorted_goals), key=itemgetter(0))
         sorted_goals = [(i[1], i[2]) for i in sorted_goals]
-        print_order = [i[1] for i in sorted_goals]
+        #print_order = [i[1] for i in sorted_goals]
 
-        print("MATRIX: ",print_order, file=sys.stderr)   
-        for row in g_matrix:
-            print("ROW: ",row, file=sys.stderr)   
-            
+        #print("MATRIX: ",print_order, file=sys.stderr)
+        #for row in g_matrix:
+        #    print("ROW: ",row, file=sys.stderr)
+
         return sorted_goals
-        
-        
+
+
     def get_open_goals(self):
         """ find goals that are unsolved and return dict of cell and letter """
         open_goals = dict()
@@ -258,7 +258,7 @@ class SimpleGrid:
                 b_letter = boxes[g_cell]
                 if b_letter != g_letter.upper():
                     open_goals[g_cell] = g_letter
-        print("op:",open_goals, file=sys.stderr)
+        #print("op:",open_goals, file=sys.stderr)
         return open_goals
 
     def move(self, agent, step):

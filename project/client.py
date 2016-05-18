@@ -21,7 +21,7 @@ def order_agents():
 def inform(string, end=None):
     """ Use this function to for debugging """
     end = end or "\n"
-    print(string, end=end, file=sys.stderr)
+    #print(string, end=end, file=sys.stderr)
 
 def setup():
     (walls, goals, agents, boxes, colors, free) = parselvl()

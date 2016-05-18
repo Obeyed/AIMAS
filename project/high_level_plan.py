@@ -51,7 +51,7 @@ class HighLevelPlan:
         Keyword arguments:
         goal -- tuple of letter and cell
         """
-        print(goal, file=sys.stderr)
+        #print(goal, file=sys.stderr)
         g_letter, g_cell = goal
         # box instance, (goal, cell), distance
         best_combination = (None, None, float('inf'))
@@ -67,7 +67,7 @@ class HighLevelPlan:
             cost = cross_product(b_cell, g_cell) if path is not None else float('inf')
             if cost < best_combination[2]:
                 best_combination = (box, goal, cost)
-        print(best_combination, file=sys.stderr)
+        #print(best_combination, file=sys.stderr)
         return best_combination[0] # box instance
 
     def shortest_path_to_box(self, agent, box):
@@ -115,11 +115,11 @@ class HighLevelPlan:
         return blocking_cell
 
     def find_next_resolving_path(self, block_cell, path_to_clear, block_info):
-        print("find resolving path ({0})".format(block_cell), file=sys.stderr)
+        #print("find resolving path ({0})".format(block_cell), file=sys.stderr)
         while block_cell is not None:
             # which object is at block cell?
             if block_cell in self.grid.agent_position:
-                print("agent to move", file=sys.stderr)
+                #print("agent to move", file=sys.stderr)
                 agent_obj = self.grid.agent_position[block_cell]
                 move_path, b_info = (
                         self.find_path_to_remove_blocking_object(path_to_clear,
@@ -128,10 +128,10 @@ class HighLevelPlan:
                 block_cell = self.detect_blocking_objects(move_path, block_info,
                     agent_obj, None)
             else:
-                print("box to move", file=sys.stderr)
+                #print("box to move", file=sys.stderr)
                 box_obj = self.grid.box_position[block_cell]
                 agent_obj = self.find_closest_agent_for_box(box_obj)
-                print(1, file=sys.stderr)
+                #print(1, file=sys.stderr)
                 # get path from agent to box, and block_info
                 agent_to_clear, b_info = self.shortest_path_to_box(agent_obj,
                         box_obj)
@@ -142,7 +142,7 @@ class HighLevelPlan:
                 # if we have blocked cell, then we have another conflict to
                 # resolve first
                 if block_cell is not None:
-                    print("1 new conflict (while find agent to clear)", block_cell, file=sys.stderr)
+                    #print("1 new conflict (while find agent to clear)", block_cell, file=sys.stderr)
                     path_to_clear += agent_to_clear
                     continue
                 box_clear_path, b_info = (
@@ -153,7 +153,7 @@ class HighLevelPlan:
                         agent_obj, box_obj)
                 # if we have blocked cell, then we have another conflict to resolve first
                 if block_cell is not None:
-                    print("2 new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
+                    #print("2 new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
                     path_to_clear += box_clear_path
                     continue
                 #print("bcp:", box_clear_path, file=sys.stderr)
@@ -168,8 +168,7 @@ class HighLevelPlan:
                 block_cell = self.detect_blocking_objects(box_clear_path,
                         block_info, agent_obj, box_obj)
                 if block_cell is not None:
-                    print("3 new conflict (while find box to be cleared)",
-                            block_cell, file=sys.stderr)
+                    #print("3 new conflict (while find box to be cleared)", block_cell, file=sys.stderr)
                     path_to_clear += box_clear_path
                     continue
                 move_path = agent_to_clear + box_clear_path
@@ -181,7 +180,7 @@ class HighLevelPlan:
         """
         box = self.find_closest_box_for_goal(goal)
         agent = self.find_closest_agent_for_box(box)
-        print(agent.name, box.name, goal, file=sys.stderr)
+        #print(agent.name, box.name, goal, file=sys.stderr)
         # path for agent to box
         agent_to_box, block_info = self.shortest_path_to_box(agent, box)
         # path for box to goal
@@ -214,15 +213,15 @@ class HighLevelPlan:
         swap_pos = swapables.get()[1]
         # path for box to goal
         # 1. push box to swap_pos (which is a cell with at least two neighbours)
-        print("swap", box.name, box.position, swap_pos, file=sys.stderr)
+        #print("swap", box.name, box.position, swap_pos, file=sys.stderr)
         box_to_swap, block_info = a_star_search(grid=self.grid,
                 start=box.position, goal=swap_pos, box=box, agent=agent)
         # 2. push box to random neighbour of swap_pos
         swap_cells = self.grid.neighbours(swap_pos, with_box=True,
                 with_agent=True)
         # do not move backwards
-        print(box_to_swap, file=sys.stderr)
-        print(swap_cells, file=sys.stderr)
+        #print(box_to_swap, file=sys.stderr)
+        #print(swap_cells, file=sys.stderr)
 
         swap_cells = [n for n in swap_cells if n != box_to_swap[-2]]
         # add cell to pushing action
@@ -250,7 +249,7 @@ class HighLevelPlan:
         block_cell = self.detect_blocking_objects(path, block_info,
                 agent, box)
         if block_cell is not None:
-            print("blocking cell", block_cell, file=sys.stderr)
+            #print("blocking cell", block_cell, file=sys.stderr)
             return self.find_next_resolving_path(block_cell, path, block_info)
         return path
 
