@@ -1,5 +1,14 @@
 \section{Introduction}
 \label{sec:introduction}
 
-\emph{What problem are you trying to solve? Why is this important? What are the main results/accomplishments/highlights of the paper. Since the reader is assumed to be familiar with the details and goal of the programming project, this section will probably be fairly short. But you can use it to briefly describe the type of solution you have chosen and why.}
+%\emph{What problem are you trying to solve? Why is this important? What are the main results/accomplishments/highlights of the paper. Since the reader is assumed to be familiar with the details and goal of the programming project, this section will probably be fairly short. But you can use it to briefly describe the type of solution you have chosen and why.}
 
+This paper documents and presents our solution to the programming project.
+Our first attempt to solve the project was based on a partial-order planner for atomic steps.
+Our thoughts were that we could use the planner to re-plan if conflicts arose.
+However, we abandoned this solution because it would simply give us a backwards breadth-first search, and we knew we could develop a better solution.
+
+Our solution is a centralised single agent hierarchical solution, where we attempt to prioritise the order in which goals are fulfilled.
+We present our own goal prioritisation solution and experiment with different types of priorisations.
+Furthermore, we used the A* search algorithm to find movement paths.
+We incorporated the ignore preconditions heuristics to find paths in a relaxed domain.
