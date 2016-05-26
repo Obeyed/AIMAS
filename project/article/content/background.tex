@@ -1,13 +1,22 @@
 \section{Background}
 \label{sec:background}
 
-In this section we will breifly outline the different theories and methods, that act as the basis of our client solution. Some of the techniques outlined in this section rely on either theories taught in the course or found in external literature, while others are of our own invention. A descriptipn of the algorithmic details of these, can be found in Section \ref{sec:methods}
+%\emph{Briefly present the theories that you work relies on. Note that you are allowed to expect the reader to be familiar with everything presented in the course curriculum, but you should at least mention which of these theories you are using and make suitable references. Even for the theories in the course curriculum it might also be necessary to settle the notational conventions, as these sometimes differ between references. If you use theories and ideas outside the course curriculum, you should explain them in a bit more detail, and of course also make suitable references.}
+
+This section briefly outlines the theories that act as the basis of our solution. 
+We assume the reader is familiar with the course curriculum.
+%Some of the techniques outlined in this section rely on either theories taught in the course or found in external literature, while others are of our own invention. A description of the algorithmic details of these, can be found in \cref{sec:methods}
 
 \input{content/relevant-background-techniques}
 
-\subsection{Goal Ordering / Prioritisation}
-Of the different techniques used to increase the performance of our client, on of the most important was goal prioritisation. Without goal prioritisation the agent(s) would attempt to move the boxes to their respective goals, but in a non-specific order, often blocking the future path of other blocks or agents. To counter this we needed to enable the client to order the different goals, according to which needed to be fulfilled first. To achieve the goal odering ability we came up with our own teqhnique of scoring each goals according to their neighboring cells. In Section \ref{methods:goal_ordering}, we go into the algorithmic description our goal ordering.
-
-
-
-\emph{Briefly present the theories that you work relies on. Note that you are allowed to expect the reader to be familiar with everything presented in the course curriculum, but you should at least mention which of these theories you are using and make suitable references. Even for the theories in the course curriculum it might also be necessary to settle the notational conventions, as these sometimes differ between references. If you use theories and ideas outside the course curriculum, you should explain them in a bit more detail, and of course also make suitable references.}
+%\subsection{Goal Ordering / Prioritisation}
+%Furthermore, we will present our original contribution which was used to increase our client's performance.
+%It is a technique we call \emph{goal prioritisation} and it used to define a specific order in which goals should be achieved. 
+%The idea is to give each goal a priority which defines its order, and we thus aim to reach a better solution.
+Furthermore, we will present an important technique used to increase the performance of our client, which we call the \emph{goal prioritisation technique}.
+To the best of our knowledge, this technique is an original contribution.
+Without goal prioritisation an agent would attempt to move a box to its respective goal in an arbitrary order.
+This often lead to blocking future paths which were needed to achieve the other goals.
+To counter this we had to enable the client to order the different goals, according to some sensible ordering.
+To achieve the goal ordering ability we came up with our own technique of scoring/prioritising each goal according to its neighbouring cells.
+In \cref{methods:goal_ordering} we give a thorough description our goal prioritisation technique.
