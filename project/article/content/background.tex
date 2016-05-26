@@ -3,6 +3,8 @@
 
 In this section we will breifly outline the different theories and methods, that act as the basis of our client solution. Some of the techniques outlined in this section rely on either theories taught in the course or found in external literature, while others are of our own invention. A descriptipn of the algorithmic details of these, can be found in Section \ref{sec:methods}
 
+\input{content/relevant-background-techniques}
+
 \subsection{Goal Ordering / Prioritisation}
 Of the different techniques used to increase the performance of our client, on of the most important was goal prioritisation. Without goal prioritisation the agent(s) would attempt to move the boxes to their respective goals, but in a non-specific order, often blocking the future path of other blocks or agents. To counter this we needed to enable the client to order the different goals, according to which needed to be fulfilled first. To achieve the goal odering ability we came up with our own teqhnique of scoring each goals according to their neighboring cells. In Section \ref{methods:goal_ordering}, we go into the algorithmic description our goal ordering.
 
