@@ -1,11 +1,37 @@
-\subsection{Searching with A*}
+\subsection{Constructing Paths and Searching}
 
-We used A* for finding paths.~\cite{pathfinding2016redblobgames}
+Given a goal to achieve we split path finding into two parts; first find a box closest to the goal, second find the closest agent to move that box.
+These two paths are then combined to form a complete path for movement (we explain the path finding in more detail later in this section).
+The overall idea of our client is to iteratively remove obstacles from the combined path to reach the desired goal with the chosen box.
+We customised the A* search algorithm~\cite{pathfinding2016redblobgames} to suite our needs for finding paths.
 
-\subsubsection{Tie-breaking Heuristics}
+\subsubsection{Distance to Goal}
 
-We used a tie-broken cross product as a heuristic.~\cite{pathfinding2016redblobgames}
+We used the cross product as a heuristic to prioritise movement wrt. cells and their distance to the goal cell.~\cite{pathfinding2016redblobgames}
+We search for paths in a relaxed domain, where boxes and agents are not considered as blocking objects, but the cells in which they are have a higher movement penalty.
+This is similar to the ignore preconditions heuristics, because we ignore that the cell must be free before movement is possible.
+The client then handles the fact that some other object must be moved before the initial plan can be carried out.
+
+\subsubsection{Movement Cost}
+
+While searching for a path to a desired end position, four scenarios may occur; (1) the object can move freely in the given direction, (2) the object must move an obstacle to move in the given direction, (3) the object must receive help to move an obstacle, (4) another agent must be moved to move in the given direction.
+
+These scenarios are associated with different costs, and they are as follows; cost of receiving help is 20, cost of moving an obstacle (without help) is 4, cost of asking an agent to move is 3, otherwise object can be moved freely and the cost is 1.
 
 \subsubsection{Ignoring Heuristics}
 
-Furthermore, we used no heuristic to find first free cell to drop boxes or agents.
+In some scenarios an object must be moved from a desired path, because it is blocking the desired path.
+For this we ignore the distance to the goal because we do not have a desired end position, we simply need to find the first free cell where the object can be moved to, which gets it out of the desired path.
+
+\subsubsection{Structuring Paths and Converting to Actions}
+
+Path movement is initially a list of coordinates dictating the movement of an object.
+Thus, consecutive elements of the list comprise a single step in one direction.
+The first element in the list gives the position of the object to be moved.
+The grid can inform what object is at that position.
+The path of cells is converted to a list of actions, which the server can interpret.
+
+The list of coordinates also defines when an agent is to move a box.
+This is defined as a list in the outer list, i.e. in this scenarios an element in the outer list is not a tuple but a nested list, e.g. \texttt{[(0,0),[(0,1),(1,1)],(0,1)]}.
+The example will be interpreted to \texttt{[Push(E,S)]}, where the nested list defines the initial position of the box and the following movement.
+The element after the inner list defines the end position of the agent that was involved in the moving action.
