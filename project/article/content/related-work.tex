@@ -1,4 +1,15 @@
 \section{Related Work}
 \label{sec:related work}
+Our first plan was to make a partial order planner with multiple agents.
+Graig A Knoblock wrote about executing a partial order plan in parallel~\cite{knoblock1994generating}.
+Being able to execute plans in parallel could have improved our multi-agent execution time.
 
-\emph{Has this been done before? What is the closest related research? How does your work differ? Related work is sometimes integrated into the introduction or background, and sometimes it is made a separate section towards the end of the paper.  To make the related work section, you will be required to do some literature search to see if you can find papers that use similar methods (or combinations of methods) on similar types of problems. A piece of related work could for instance be if someone wrote a paper on using similar methods for the Sokoban domain. Sometimes it can be hard to find related work, but you should do your best. Use e.g. Google and Google Scholar (if a certain relevant paper is licensed, try to download it via findit.dtu.dk).}
+Eithan Ephrati and Jeffrey S Rosenschein had a similar approach to ours in 1994~\cite{ephrati1994divide} where they suggested multi-agent planning with heuristics.
+They divided the goal in subgoals and made subplans that were merged to a global plan.
+Their result showed that dividing into subgoals and making the agents work in parallel can reduce the total elapsed time for planning.
+We used a high level planner to create subgoals and the solved the subgoals before merging.
+
+\input{content/related-prioritization-planning}
+
+%\emph{Has this been done before? What is the closest related research? How does your work differ? Related work is sometimes integrated into the introduction or background, and sometimes it is made a separate section towards the end of the paper.  To make the related work section, you will be required to do some literature search to see if you can find papers that use similar methods (or combinations of methods) on similar types of problems. A piece of related work could for instance be if someone wrote a paper on using similar methods for the Sokoban domain. Sometimes it can be hard to find related work, but you should do your best. Use e.g. Google and Google Scholar (if a certain relevant paper is licensed, try to download it via findit.dtu.dk).}
+
