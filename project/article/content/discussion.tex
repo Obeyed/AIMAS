@@ -1,7 +1,19 @@
 \section{Discussion}
 \label{sec:discussion}
+%Strengths: Goal-prio (yay),
+%weakness: Only 1 agent at a time
+%TODO: Mention possible impovement on Multi Agent tracks, gained from sending all commands at once. Include remarks on possible issues with this approach as well. I.e. in a level with 2 angents and 100 steps, the acutal steps could be 50, provided that no new issues arises.
+Our current solution only send commands to one agent at a time.
+There are potential improvements on the number of steps in some levels if we move all agents simultaneously.
+But by moving all agents simultaneously we risk getting conflicts between agents movements if two or more agents want the same cell.
+Some agent movement also rely on other agents moving a box first which would have to be done first.
+To solve these conflicts we could either do offline planning and make a complete plan before execution.
+This could give us longer solving times on multi-agent levels but possibly reduce number of steps since we may move more agents at once. %er solving time og execution time rigtige ord i sammenhængen?
+Ww could also try to solve the conflicts as they come in our online planning.
+This way of solving the conflicts could potentially decrease solving time compared to offline planning since we do not have to compare all our paths,
+but our steps may not be as good since we might discover conflicts that require that we parked an agent earlier.
+We could also try to implement it into our current online solution by making dependent paths move simultaneously if their paths do not cross.
+Else the path without dependencies should move first.
 
-%TODO: Mention possible impovement on Multi Agent tracks, gained from sending all commands at once. Include remarks on possible issues with this approach as well. I.e. in a level with 2 angents and 100 steps, the acutal steps could be 50, provided that no new issues arises. 
-
-\emph{What are the strengths and weaknesses of your solution? Why did you choose your particular solution method, and did it work out as expected? If it didn’t work as expected, what should have been different? Here you can also include a deeper comparative analysis if you have implemented different methods/clients. Which worked best? Can you get better than that? How?} 
+%\emph{What are the strengths and weaknesses of your solution? Why did you choose your particular solution method, and did it work out as expected? If it didn’t work as expected, what should have been different? Here you can also include a deeper comparative analysis if you have implemented different methods/clients. Which worked best? Can you get better than that? How?}
 
