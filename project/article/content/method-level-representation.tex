@@ -1,6 +1,5 @@
 \subsection{Representing a Level}
-
-This section describes how we represent a level and its objects.
+\label{sec:representing a level}
 
 \subsubsection{Cell of a Level}
 
@@ -43,3 +42,7 @@ We define agents and boxes as movable objects.
 They have a position (a cell), some color, and an identifier that uniquely defines them in the level.
 Such an object can thus also be moved, which changes the position at which it is for that time step.
 
+\subsubsection{Updating the Representation}
+
+For every action sent to the server, we make sure to update the client's perception of the current environment.
+Positions of agents and boxes are thus kept up-to-date while actions are performed.

@@ -1,4 +1,5 @@
 \subsection{Constructing Paths and Searching}
+\label{sec:constructing paths and searching}
 
 Given a goal to achieve we split path finding into two parts; first find a box closest to the goal, second find the closest agent to move that box.
 These two paths are then combined to form a complete path for movement (we explain the path finding in more detail later in this section).
@@ -17,6 +18,8 @@ The client then handles the fact that some other object must be moved before the
 While searching for a path to a desired end position, four scenarios may occur; (1) the object can move freely in the given direction, (2) the object must move an obstacle to move in the given direction, (3) the object must receive help to move an obstacle, (4) another agent must be moved to move in the given direction.
 
 These scenarios are associated with different costs, and they are as follows; cost of receiving help is 20, cost of moving an obstacle (without help) is 4, cost of asking an agent to move is 3, otherwise object can be moved freely and the cost is 1.
+We wanted the movement of one agent to be as independent as possible from other agents.
+For that reason we associated higher costs for receiving help from other agents, and if an agent can move around an obstacle it will prefer that over moving the object itself.
 
 \subsubsection{Ignoring Heuristics}
 
