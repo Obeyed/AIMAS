@@ -5,7 +5,7 @@
 
 We represent levels as grids of cells, where each cell can hold a wall, goal, agent, or a box.
 Otherwise it is a free cell.
-Each cell is uniquely referenced with coordinates, that define the x and y coordinates wrt. the top left corner.
+Each cell is uniquely referenced with coordinates, that define the x and y coordinates w.r.t. the top left corner.
 Thus, the first cell is referenced as $(0,0)$ and is in the top left corner of the level.
 
 \subsubsection{The Grid}
@@ -23,7 +23,7 @@ Furthermore, the grid representation must have the following functionality
   \item for every server response (with every action we send), update the grid so it is up-to-date
 \end{itemize}
 %
-The neighbours of a cell may be defined to filter results wrt. some criterion.
+The neighbours of a cell may be defined to filter results w.r.t. some criterion.
 Such a criterion could for instance be that we only want free cell (no agent or box at that cell).
 This method is used for finding possible movement from a given cell.
 Moreover, a cells neighbours are the cells below, above, right of, and left of it (not diagonal cells).
