@@ -6,22 +6,22 @@
 Our current solution only sends commands to one agent at a time.
 This increases the length of results in multi-agent levels but it also give us better performance.
 By performance we mean the time spent to find a solution (from starting the client to the server responds with \texttt{success}).
-By only moving one agent at a time we do not have to look for conflicts between the agents paths but simply move obstacles.
-This strategy was very efficient to get the fastest times.
-When compared to the other clients the was clear our solution was the fastest by far in multi-agent levels.
+By only moving one agent at a time we do not have to look for conflicts between the agents' paths but simply move obstacles.
+The simplicity of our client was advantageous while competing against the other group's more complicated solutions.
+It was clear that we could out-perform them w.r.t. time spent on finding a solution.
 
-There were potential improvement on the result lengths in many multi-agent levels if we moved all agents simultaneously.
-E.g. if all agents moved at the same time in \cref{fig:intuition example} all the blocking boxes would be moved out of the way simultaneously.
-But by moving all agents simultaneously we would risk getting conflicts if two or more agents paths crossed.
+Of course, if the client could move multiple agents simultanouesly, this would have been a great improvement w.r.t. number of actions performed.
+For example consider \cref{fig:intuition example} again, if all agents moved at the same time then all the blocking boxes would be moved out of the way simultaneously.
+But by moving all agents simultaneously we would risk getting conflicts if two or more agents' paths crossed.
 To solve these conflicts we could either do offline planning and make a complete plan before execution.
 This would hurt our solving times on multi-agent levels since we would have to cross check all paths.
 
 We could also try to solve the conflicts as they come in our online planning.
-This way we would solve conflicts as we go but we could risk deadlocks or even longer paths if two agents got stuck in eachothers paths.
-We could make functions that could solve these problems but they would most likely decrease our performance.
+This way we would solve conflicts as we go but we risk live-locks if two agents get stuck in each others paths.
+We would be forced to handle these challenges, which would most likely decrease our client's performance.
 Another way is to implement it into our current online solution by making dependent paths move simultaneously if their paths do not cross.
-Else the path without dependencies should move first.
-This way would most likely only hurt our performance a little but the result lengths would not be improved a lot and only on some levels.
+Otherwise, the path without dependencies should move first.
+This way it would most likely only hurt our performance a little, but the number of actions would not be improved a lot and only on some levels.
 
 %\emph{What are the strengths and weaknesses of your solution? Why did you choose your particular solution method, and did it work out as expected? If it didn’t work as expected, what should have been different? Here you can also include a deeper comparative analysis if you have implemented different methods/clients. Which worked best? Can you get better than that? How?}
 \input{content/discussion-goal-prio-vs-agent-prio}
