@@ -4,7 +4,7 @@
 %\emph{How does your client work? Describe its overall algorithmic functionality as clearly and precisely as possible, without going into any implementation details.  Describe it in terms of the theories you rely on (as presented in background). Include small, illustrative examples of how the client works. Aim to describe your client suffi- ciently precisely that a reader being an expert in the field would be able to implement a similar solution based on your description (note that this is not an encouragement to describe implementation details, but rather make sure that the overall structure and ideas of your implementation are sufficiently precise).}
 
 This section describes our client's overall algorithmic functionality.
-The client is comprised of our goal prioritization technique (\cref{methods:goal_ordering}), the level representation (\cref{sec:representing a level}), the path finding algorithm (\cref{sec:constructing paths and searching}), and the overall planner (\cref{sec:planning on the fly}).
+The client is comprised of our goal prioritisation technique (\cref{methods:goal_ordering}), the level representation (\cref{sec:representing a level}), the path finding algorithm (\cref{sec:constructing paths and searching}), and the overall planner (\cref{sec:planning on the fly}).
 The client receives an incomplete plan from the planner, where the client makes sure to update the plan with the necessary \texttt{NoOp} operations for waiting agents.
 
 Before we begin describing the client's overall functionality, we will give an intuition of how the planner works.
@@ -27,7 +27,7 @@ Then the red agent \textbf{0} will move the red box \textbf{A} to the goal.
 \subsection{Goal Prioritisation Technique}
 \label{methods:goal_ordering}
 
-In order to explain how the functionality of our priorotisation works, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
+In order to explain how the functionality of our prioritisation works, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
 
 % Example of cells 
 \begin{figure}[h!]
