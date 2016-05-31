@@ -7,7 +7,7 @@ To showcase how efficient our goal prioritisation technique is and how we have i
 In the following we will refer to our main goal prioritisation technique (\cref{methods:goal_ordering}) as the ``complex'' prioritisation, and use the term ``simple'' to mean a priotitisation that does not perform the final matrix computation as presented in \cref{methods:goal_ordering}.
 The intuition is that goals placed in dead-ends or corners must be achieved before any goals that would otherwise block the path to the inner most goals.
 
-First we illustrate two different runs; one with simple goal prioritisation (\cref{fig:simple priority}) and one without goal prioritisation (\cref{fig:no priority}).
+We illustrate three runs on the same level; one with complex goal prioritisation (\cref{fig:complex_priority}, one with simple goal prioritisation (\cref{fig:simple priority}) and one without goal prioritisation whatsoever(\cref{fig:no priority}). 
 
 % Example of cells
 \begin{figure}[h!]
@@ -27,15 +27,15 @@ First we illustrate two different runs; one with simple goal prioritisation (\cr
   \begin{minipage}{.30\columnwidth}
     \centering
     \includegraphics[height=3cm]{graphics/complex_priority.png}
-    \caption{\label{fig:no priority}Comp\-lex prioritisation.}
+    \caption{\label{fig:complex_priority}Comp\-lex prioritisation.}
   \end{minipage}
 \end{figure}
-\todo[inline]{update text!}
 
-The main difference between the complex and simple prioritisation is that the complex forces and order on grouped goals.
-The lack of strict order in apparent in the example of the simple prioritisation as illustrated in \cref{fig:simple priority}.
-The agent chooses to place \textbf{R} before \textbf{S} and thus blocking the path to that goal.
-Both goals have the same priority, but the complex goal prioritisation manages to solve this level with 31 fewer moves than the simple prioritisation as presented in \cref{tab:SAOptimal_results}.
+The main difference between the complex and simple prioritisation is that the complex forces a specific order on goals which are grouped, as mentioned in \cref{methods:goal_ordering}.
+As seen in figure \cref{fig:complex_priority}, the complex ordering results in the goals next to the level bounds, being fulfilled first. 
+The lack of strict order in apparent in the example of the simple prioritisation as illustrated in \cref{fig:simple priority}. Here the agent chooses to place \textbf{R} before \textbf{S} and thus blocking the path of a goal.
+With arbitrary prioritisation, as seen in \cref{fig:no priority}, even more goals are blocked by the fulfilment of others.
+Our final client utilized the complex prioritisation method, and with this we managed to solve this level (\texttt{SAOptimal}) with 31 fewer moves than the simple prioritisation as presented in \cref{tab:SAOptimal_results}.
 
 \begin{table}[h!]
   \centering
@@ -51,9 +51,8 @@ Both goals have the same priority, but the complex goal prioritisation manages t
   \caption{\label{tab:SAOptimal_results}No. actions performed on \texttt{SAOptimal} level with different prioritisation techniques.}
 \end{table}
 
-Furthermore, we also ran the level without any particular prioritisation technique to choose which goal to achieve first.
-For this reason the goals are fulfilled in an arbitrary order, which yields a solution that require almost 50 \% more actions than with some prioritisation.
-Many unnecessary moves are wasted because the inner most goals are left open, and thus when the client wants to achieve them, all the previous boxes must be moved.
+We found that a client with only arbitrary goal prioritisation, requires almost 50 \% more actions on this level than with some kind prioritisation technique.
+This is due to the fact that many actions are wasted because the inner most goals are left open, and thus as the client wants to achieve them, all the previous boxes must be moved.
 
 \subsection{Performance vs. Optimality}
 \label{sec:performance vs. optimality}
@@ -108,6 +107,5 @@ Note that we performed our tests on a laptop with Intel® Core™ i5 4210U Proce
 
 
 
-\subsection{Multiagent vs. Singleagent levels}
-
+\subsection{Multi-agent vs. Single-agent levels}
 
