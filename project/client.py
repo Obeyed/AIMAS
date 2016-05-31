@@ -10,6 +10,7 @@ from simple_grid import SimpleGrid
 TRUE, FALSE = 'true', 'false'
 
 def order_agents():
+    """ order agents w.r.t. their ID. """
     # create list with correct length
     l = [0] * len(grid.agents)
     # add agents in correct order
@@ -21,15 +22,17 @@ def order_agents():
 def inform(string, end=None):
     """ Use this function to for debugging """
     end = end or "\n"
-    #print(string, end=end, file=sys.stderr)
+    print(string, end=end, file=sys.stderr)
 
 def setup():
+    """ setup grid and planner """
     (walls, goals, agents, boxes, colors, free) = parselvl()
     grid = SimpleGrid(set(walls), goals, boxes, agents, colors, set(free))
     hlp = HighLevelPlan(grid)
     return grid, hlp
 
 def align_movements():
+    """ make sure no. actions is equal to no. agents """
     longest_sequence = max(MOVES.values(), key=len)
     for i, moves in MOVES.items():
         if len(moves) == len(longest_sequence): continue
@@ -66,12 +69,9 @@ grid, hlp = setup()
 # setup agents
 NUM_AGENTS, AGENTS = order_agents()
 
-# testing debugging prints
-inform("write to stderr, without server doing anything")
-for a in AGENTS:
-    inform("{0} ({1}) at {2}".format(a.name, a.color, a.position))
-
+# simple goal prioritisation
 def prioritized_goals(goals):
+    """ prioritise goals w.r.t. their neighbours. """
     priorities = queue.PriorityQueue()
     for cell, letter in goals.items():
         goal = (letter, cell)
@@ -87,6 +87,7 @@ def prioritized_goals(goals):
         priorities.put((priority, goal))
     return priorities
 
+# default to use complex priority
 complex_priority = True
 for arg in sys.argv:
     if arg == "--simple-priority":
@@ -111,20 +112,20 @@ while True:
     MOVES = {i: [] for i in range(NUM_AGENTS)}
 
     next_path = hlp.find_next_path(goal)
-    inform(next_path)
+    #inform(next_path)
     # find agent's index
     agent_idx = AGENTS.index(grid.agent_position[next_path[0]])
     MOVES[agent_idx] = calculate_movements_new(next_path, grid)
     align_movements()
     while len(MOVES[agent_idx]):
         move = next_move()
-        inform(move) # debug
+        #inform(move) # debug
         print(move)  # send to server
         server_response = input()
         while len(server_response.strip()) == 0:
             server_response = input()
         if server_response == '\n' or len(server_response) < 1:
             server_response = input()
-        inform("server response: " + server_response)
+        #inform("server response: " + server_response)
         update_grid(server_response, move)
 

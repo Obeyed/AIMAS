@@ -1,4 +1,3 @@
-import sys
 import queue
 
 def cross_product_heuristic(a, b):
@@ -85,11 +84,7 @@ def a_star_search(grid, start, goal=None, heuristic=None, backwards=False,
     agent -- (optional) agent instance
     clearing_path -- find a cell not in this path
     """
-    #print("A*:", start, goal, backwards, file=sys.stderr)
     # will be used as kwargs in call to grid.neighbours
-    kwargs = {}
-    #if agent is not None: kwargs['with_box'] = True
-    #if box is not None:   kwargs['with_agent'] = True
     kwargs = {'with_box': True, 'with_agent': True}
 
     h = heuristic or tie_breaking_cross_product_heuristic # heuristic function
@@ -174,7 +169,6 @@ def fix_box_movement(grid, path, move_info):
         if len(box_movement) > 0:
             for drop_cell in grid.neighbours(cell):
                 # cannot drop if same path we are moving/came from
-                #print("drop:", drop_cell, "curr:", cell, "prev:", path[i-1])
                 is_next_step = (drop_cell == path[i+1] if len(path) > i+1 else False)
                 is_prev_step = (drop_cell == path[i-1])
                 if (is_next_step or is_prev_step): continue

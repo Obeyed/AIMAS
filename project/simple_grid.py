@@ -1,5 +1,3 @@
-import sys
-
 from movable import Agent, Box
 from a_star_search_simple import cross_product_heuristic as cross_product
 from operator import itemgetter
@@ -178,7 +176,6 @@ class SimpleGrid:
         """ Sort open goals to avoid blockage """
 
         cell_refs = sorted(list(open_goals), key=itemgetter(1))
-        #cell_refs.reverse()
         cell_refs = sorted(list(cell_refs), key=itemgetter(0))
         """VERTICAL SORT??"""
         g_rows = [0] * len(open_goals)
@@ -238,15 +235,8 @@ class SimpleGrid:
 
         sorted_goals = sorted(list(sorted_goals), key=itemgetter(0))
         sorted_goals = [(i[1], i[2]) for i in sorted_goals]
-        #print_order = [i[1] for i in sorted_goals]
-
-        #print("MATRIX: ",print_order, file=sys.stderr)
-        #for row in g_matrix:
-        #    print("ROW: ",row, file=sys.stderr)
-
 
         return sorted_goals
-
 
     def get_open_goals(self):
         """ find goals that are unsolved and return dict of cell and letter """
@@ -259,7 +249,6 @@ class SimpleGrid:
                 b_letter = boxes[g_cell]
                 if b_letter != g_letter.upper():
                     open_goals[g_cell] = g_letter
-        #print("op:",open_goals, file=sys.stderr)
         return open_goals
 
     def move(self, agent, step):
