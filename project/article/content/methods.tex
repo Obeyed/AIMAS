@@ -3,7 +3,26 @@
 
 %\emph{How does your client work? Describe its overall algorithmic functionality as clearly and precisely as possible, without going into any implementation details.  Describe it in terms of the theories you rely on (as presented in background). Include small, illustrative examples of how the client works. Aim to describe your client suffi- ciently precisely that a reader being an expert in the field would be able to implement a similar solution based on your description (note that this is not an encouragement to describe implementation details, but rather make sure that the overall structure and ideas of your implementation are sufficiently precise).}
 
-This section describes our client's overall algorithmic functionality and we present our goal prioritization technique in \cref{methods:goal_ordering}.
+This section describes our client's overall algorithmic functionality.
+The client is comprised of our goal prioritization technique (\cref{methods:goal_ordering}), the level representation (\cref{sec:representing a level}), the path finding algorithm (\cref{sec:constructing paths and searching}), and the overall planner (\cref{sec:planning on the fly}).
+The client receives an incomplete plan from the planner, where the client makes sure to update the plan with the necessary \texttt{NoOp} operations for waiting agents.
+
+Before we begin describing the client's overall functionality, we will give an intuition of how the planner works.
+Consider the scenario presented in \cref{fig:intuition example}.
+The red agent \textbf{0} must move the red box \textbf{A} to the goal.
+Multiple boxes are in the way of the desired plan.
+The state of the level in the figure is that the cyan agent \textbf{1} has moved its box out of the way, and so has the yellow agent \textbf{2}.
+
+\begin{figure}[ht!]
+  \centering
+  \includegraphics[width=.95\columnwidth]{graphics/planner_intuition.png}
+  \caption{\label{fig:intuition example}The red agent \textbf{0} must move box \textbf{A} to the goal \textbf{a}.}
+\end{figure}
+
+However, the yellow agent \textbf{2} is now itself in the way of the path.
+The planner thus informs that agent to move out of the desired path.
+This moving of boxes/agents out of the way of the desired plan will continue until no more obstacles are in the way.
+Then the red agent \textbf{0} will move the red box \textbf{A} to the goal.
 
 \subsection{Goal Prioritisation Technique}
 \label{methods:goal_ordering}

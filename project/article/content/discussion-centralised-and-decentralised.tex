@@ -1,0 +1,11 @@
+\subsection{Centralised and Decentralised Planning}
+
+Our client incorporates a single agent multibody planner, which plans to achieve goals in a prioritised order.
+Compared to a multi-agent planner, our client will never encounter conflicts with other agent's plans that need to be resolved.
+On the other hand, if multiple agents could have performed actions simultaneously now they must wait for the other to finish, and thus the number of actions performed will automatically be higher.
+
+If we consider that the planner could handle multiple agents simultaneously, then the client must be able to handle conflicts with other agents.
+This would for instance be in the form of social laws, where agent consider each others identifier to decide which agent must make room for the other.
+Agent's could also communicate their intentions to each other, and thereby coordinate conflict free paths.
+
+Furthermore, if multiple agents move simultaneously then it could happen that their movement would be caught in a live lock, i.e. they move in an endless circle.

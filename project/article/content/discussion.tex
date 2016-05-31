@@ -1,7 +1,28 @@
 \section{Discussion}
 \label{sec:discussion}
+%Strengths: Goal-prio (yay),
+%Only 1 agent at a time: Weakness in solution length but strength in performance
+%TODO: Mention possible impovement on Multi Agent tracks, gained from sending all commands at once. Include remarks on possible issues with this approach as well. I.e. in a level with 2 angents and 100 steps, the acutal steps could be 50, provided that no new issues arises.
+Our current solution only sends commands to one agent at a time.
+This increases the length of results in multi-agent levels but it also give us better performance.
+By only moving one agent at a time we do not have to look for conflicts between the agents paths but simply move obstacles.
+This strategy was very efficient to get the fastest times.
+When compared to the other clients the was clear our solution was the fastest by far in multi-agent levels.
 
-%TODO: Mention possible impovement on Multi Agent tracks, gained from sending all commands at once. Include remarks on possible issues with this approach as well. I.e. in a level with 2 angents and 100 steps, the acutal steps could be 50, provided that no new issues arises. 
+There were potential improvement on the result lengths in many multi-agent levels if we moved all agents simultaneously.
+E.g. if all agents moved at the same time in \cref{fig:intuition example} all the blocking boxes would be moved out of the way simultaneously.
+But by moving all agents simultaneously we would risk getting conflicts if two or more agents paths crossed.
+To solve these conflicts we could either do offline planning and make a complete plan before execution.
+This would hurt our solving times on multi-agent levels since we would have to cross check all paths.
 
-\emph{What are the strengths and weaknesses of your solution? Why did you choose your particular solution method, and did it work out as expected? If it didn’t work as expected, what should have been different? Here you can also include a deeper comparative analysis if you have implemented different methods/clients. Which worked best? Can you get better than that? How?} 
+We could also try to solve the conflicts as they come in our online planning.
+This way we would solve conflicts as we go but we could risk deadlocks or even longer paths if two agents got stuck in eachothers paths.
+We could make functions that could solve these problems but they would most likely decrease our performance.
+Another way is to implement it into our current online solution by making dependent paths move simultaneously if their paths do not cross.
+Else the path without dependencies should move first.
+This way would most likely only hurt our performance a little but the result lengths would not be improved a lot and only on some levels.
 
+%\emph{What are the strengths and weaknesses of your solution? Why did you choose your particular solution method, and did it work out as expected? If it didn’t work as expected, what should have been different? Here you can also include a deeper comparative analysis if you have implemented different methods/clients. Which worked best? Can you get better than that? How?}
+
+\input{content/discussion-online-and-offline-planning}
+\input{content/discussion-centralised-and-decentralised}
