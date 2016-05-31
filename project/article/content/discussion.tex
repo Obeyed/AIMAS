@@ -5,6 +5,7 @@
 %TODO: Mention possible impovement on Multi Agent tracks, gained from sending all commands at once. Include remarks on possible issues with this approach as well. I.e. in a level with 2 angents and 100 steps, the acutal steps could be 50, provided that no new issues arises.
 Our current solution only sends commands to one agent at a time.
 This increases the length of results in multi-agent levels but it also give us better performance.
+By performance we mean the time spent to find a solution (from starting the client to the server responds with \texttt{success}).
 By only moving one agent at a time we do not have to look for conflicts between the agents paths but simply move obstacles.
 This strategy was very efficient to get the fastest times.
 When compared to the other clients the was clear our solution was the fastest by far in multi-agent levels.
