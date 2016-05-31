@@ -1,5 +1,4 @@
 import sys
-import re
 
 # parse the level, supports multicolor
 def parselvl():

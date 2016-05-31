@@ -1,8 +1,10 @@
-\subsection{Planning on the Fly}
+\subsection{Planning on the fly}
 \label{sec:planning on the fly}
 
-We perform online planning, i.e. we do not create an entire complete plan before executing movement.
-Given a constructed plan as described in \cref{sec:constructing paths and searching} the client, that plan may contain positions on which obstacles are in the way.
+Our client is an online planner, i.e. it creates sub-plans an continuously executes them in the aim of solving all plans.
+It only moves one agent at a time.
+Given a constructed plan (as described in \cref{sec:constructing paths and searching}) the client is in charge of handling the agents and sending them instructions.
+A given plan may contain positions on which obstacles are in the way.
 Given that obstacle the client will create a new sub-plan, which must be achieved before the original plan can continue.
 This process may continue for many steps before all obstacles are moved for the original objects to be moved in the desired path.
 Note however, that sub-plans of a sub-plan may also occur.
@@ -11,7 +13,5 @@ As mentioned in the previous section, each movement has an associated cost, and 
 However, independence is sometimes not possible and thus the agents must aid one another.
 The planner thus tries to create a sub-plan, where that plan's goal is to move the obstacle.
 This is done in an iterative manner, where the planner checks if the current plan/sub-plan is conflict/obstacle free and thus returns a list of desired actions to the client, which then sends actions to the server.
-The client monitors the execution of the agents in a similar fashion to action monitoring, but where we use the server's response to validate that our action was successful and from that update the representation of the level's state.
-
+The client monitors the execution of the agents in a similar fashion to action monitoring~\cite{russell2009modern}, but where we use the server's response to validate that our action was successful and from that update the representation of the level's state.
 The planner is continuously called with new goals to be achieved until all goals are occupied by a corresponding box.
-Note, that a plan is created and executed for a single-agent at a time.

@@ -4,7 +4,7 @@
 %\emph{How does your client work? Describe its overall algorithmic functionality as clearly and precisely as possible, without going into any implementation details.  Describe it in terms of the theories you rely on (as presented in background). Include small, illustrative examples of how the client works. Aim to describe your client suffi- ciently precisely that a reader being an expert in the field would be able to implement a similar solution based on your description (note that this is not an encouragement to describe implementation details, but rather make sure that the overall structure and ideas of your implementation are sufficiently precise).}
 
 This section describes our client's overall algorithmic functionality.
-The client is comprised of our goal prioritization technique (\cref{methods:goal_ordering}), the level representation (\cref{sec:representing a level}), the path finding algorithm (\cref{sec:constructing paths and searching}), and the overall planner (\cref{sec:planning on the fly}).
+The client is comprised of our goal prioritisation technique (\cref{methods:goal_ordering}), the level representation (\cref{sec:representing a level}), the path finding algorithm (\cref{sec:constructing paths and searching}), and the overall planner (\cref{sec:planning on the fly}).
 The client receives an incomplete plan from the planner, where the client makes sure to update the plan with the necessary \texttt{NoOp} operations for waiting agents.
 
 Before we begin describing the client's overall functionality, we will give an intuition of how the planner works.
@@ -27,7 +27,7 @@ Then the red agent \textbf{0} will move the red box \textbf{A} to the goal.
 \subsection{Goal Prioritisation Technique}
 \label{methods:goal_ordering}
 
-In order to explain how the functionality of our priorotisation works, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
+In order to explain how the functionality of our prioritisation works, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
 
 % Example of cells 
 \begin{figure}[h!]
@@ -36,11 +36,13 @@ In order to explain how the functionality of our priorotisation works, we will b
   \caption{\label{fig:sample}Goal set with single entrance.}
 \end{figure}
 
-For the example in \cref{fig:sample} the optimal ordering would be to fulfil the goals in the following order: \textbf{a, c, b, e, f} from first to last. 
+For the example in \cref{fig:sample} the optimal ordering would be to fulfil the goals in the following order: \textbf{a, c, b, e, f}, respectively.
 To accomplish this, our algorithm provides an ordering score to each goal. 
 
-\subsubsection{Step one}has the purpose of searching through each goal, evaluating its eight neighbouring cells, including the diagonal neighbours. 
-For every neighbouring goal-cell, the score of the cell (that is being prioritised) is incremented by 1.
+\subsubsection{Evaluating Each Goals Neighbouring Cells}
+
+Firstly, the algorithm evaluates each goal's eight neighbouring cells (including the diagonal neighbours). 
+For every neighbouring goal-cell, the score of the goal that is being prioritised is incremented by 1.
 For every free neighbour cell, the score is incremented by 2. 
 The checking of neighbouring cells is illustrated with a grid in \cref{fig:grid1}. 
 The middle cell is the one currently being checked, while the green represents a neighbour goal. 
@@ -63,11 +65,11 @@ The remaining goals not shown in the figures are all given a score of 2.
   \centering
   \includegraphics[width=.5\columnwidth]{graphics/goal_pri_3.png}
   \includegraphics[width=.5\columnwidth]{graphics/goal_pri_2.png}
-  \caption{\label{fig:grid2}Neighbour checking of goals \textbf{f} \& \textbf{b}.}
+  \caption{\label{fig:grid2}Neighbour checking of goals \textbf{f} and \textbf{b}.}
 \end{figure}
 
-\subsubsection{Step two}is reached after scoring the goals according to their neighbours. 
-In this step we create a matrix of size $n \times n$, where $n$ is the number of goals. 
+\subsubsection{Forcing an Order }
+Secondly, after scoring the goals according to their neighbours, the algorithm creates an $n \times n$ size matrix, where $n$ is the number of goals. 
 Each column of the matrix will represent a goal cell and the first row holds the ordering scores that were computed in the first step. 
 
 \begin{table}[h!]
@@ -98,22 +100,30 @@ Each column of the matrix will represent a goal cell and the first row holds the
   \end{minipage} 
 \end{table}
 
-The resulting matrix can be seen in \cref{tab:example_matrix} (left). From this matrix we see the first ordering scores, beeing filled out, while the rest remains to be computed. The computation of the remaining rows, is caried out by incrementing the scores iteratively. A goal's score is incrementef if:
+The resulting matrix can be seen in \cref{tab:example_matrix} (left). 
+From this matrix we see the first ordering scores being filled out while the rest remains to be computed. 
+The computation of the remaining rows, is carried out by incrementing the scores iteratively. 
+A goal's score is incremented if:
 
 \begin{itemize} 
 \item{The score is the maximum score of all score}
 \item{The score is smaller than the previous and next score }
 \item{The score is smaller than previous and equal to then next score}
 \end{itemize} 
-	
-\subsubsection{Step three}occurs when all rows have been iterate through and the matrix is filled out, as seen in \cref{tab:example_matrix} (right). Ideally, this will leave the last row with unique scores, that can be used to order which goals to fulfill first. The third step is simply to order the goals from the least to the heighest scoring goal, such that in our example case, the goals will be filled from \textbf{a} to \textbf{f} respectively.
-The performance benifits and pitfalls of this prioritisation algorithm, will be discussed in detail in \cref{subsec:disc_goal_ordering}.
+
+The idea is that we force an order on grouped goals so that we never have ambiguous priorities for neighbouring goals.
+Thus, the client should never be in doubt of which goal to choose.
+
+\subsubsection{Sorting the Goals}
+Lastly, after the matrix has been filled as presented in \cref{tab:example_matrix} (right), the last row should contain the ordering of the goals.
+These can then be used to order the goals in ascending order (from lowest to highest).
+This steps responsibility is simply to order the goals, such that in our example case, the goals will be filled from \textbf{a} to \textbf{f}, respectively.
+The performance benefits and pitfalls of this prioritisation algorithm, will be discussed in detail in \cref{subsec:disc_goal_ordering}.
+\todo[inline]{remember to add this discussion section}
 %
 % In levels where goals are grouped independently of other goal groups, the algorithm will allow for some scores to be the same.
 % This signals that some goals can be achieved in an arbitrary order without one having to be filled before the other.
 % The last row of the matrix in \cref{tab:example_matrix} (right), is now used to order the goals.
-
-
 
 \input{content/method-level-representation}
 \input{content/method-using-a-star}

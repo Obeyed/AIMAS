@@ -41,7 +41,6 @@ def get_box_movement(agent_pos, agent_end_pos, path, grid):
             agent_pos = box_cur
             box_cur = box_next
 
-    #print("agent final:", agent_pos, "agent end:", agent_end_pos)
     return moves
 
 def get_agent_movement(agent_position, step):

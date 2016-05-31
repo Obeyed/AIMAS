@@ -5,7 +5,9 @@ Compared to a multi-agent planner, our client will never encounter conflicts wit
 On the other hand, if multiple agents could have performed actions simultaneously now they must wait for the other to finish, and thus the number of actions performed will automatically be higher.
 
 If we consider that the planner could handle multiple agents simultaneously, then the client must be able to handle conflicts with other agents.
-This would for instance be in the form of social laws, where agent consider each others identifier to decide which agent must make room for the other.
+This would for instance be in the form of social laws, where agents consider each others identifier to decide which agent must make room for the other.
 Agent's could also communicate their intentions to each other, and thereby coordinate conflict free paths.
+Moreover, it could also be possible to perform some kind of agent prioritisation based on the agent's identifier or the path which the respective agent is currently moving along.
+As we presented in \cref{sec:related work}, some of these ideas have been proposed in related work.
 
-Furthermore, if multiple agents move simultaneously then it could happen that their movement would be caught in a live lock, i.e. they move in an endless circle.
+Furthermore, if multiple agents move simultaneously then it could happen that their movement would be caught in a live lock, i.e. they move in an endless loop trying to move past each other.

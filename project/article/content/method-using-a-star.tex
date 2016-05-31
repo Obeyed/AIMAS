@@ -9,9 +9,12 @@ We used the weighted A* search algorithm to find shortest paths~\cite{pathfindin
 \subsubsection{Distance to Goal}
 
 We used the cross product as a heuristic to prioritise movement w.r.t. cells and their distance to the goal cell.
-This heuristic is admissible because they actual Manhattan distance will be longer than the Euclidean distance~\cite{russell2009modern}.
-We know that the A* algorithm considers both the heuristic value (distance to goal) and the distance already travelled (distance from start) as a measure of which nodes to expand in which order.
-Many of these values may be the same, but we would like a direct path to the goal.
+This heuristic is admissible because the actual Manhattan distance will be longer than the Euclidean distance~\cite{russell2009modern}.
+We know that the A* algorithm considers both the heuristic value (distance to goal) and the distance already travelled (distance from start) as a measure of which nodes to expand in which order, i.e. as 
+\[
+  f(x) = h(x) + g(x).
+\]
+Many of the $f$ values may thus be the same, but we would like a direct path to the goal.
 For this reason we add a tie-breaker to the heuristic value so the algorithm will prefer nodes that get it closer to the goal, and thus gives a more direct path and less explored nodes.
 We used a tie-breaking value of $1.0001$.~\cite{pathfinding2016redblobgames}
 
@@ -21,7 +24,7 @@ The client then handles the fact that some other object must be moved before the
 
 \subsubsection{Movement Cost}
 
-While searching for a path to a desired end position, four scenarios may occur; (1) the object can move freely in the given direction, (2) the object must move an obstacle to move in the given direction, (3) the object must receive help to move an obstacle, (4) another agent must be moved to move in the given direction.
+While searching for a path to a desired end position four scenarios may occur; (1) the object can move freely in the given direction, (2) the object must move an obstacle to move in the given direction, (3) the object must receive help to move an obstacle, (4) another agent must be moved to move in the given direction.
 
 These scenarios are associated with different costs, and they are as follows; cost of receiving help is 20, cost of moving an obstacle (without help) is 4, cost of asking an agent to move is 3, otherwise object can be moved freely and the cost is 1.
 We wanted the movement of one agent to be as independent as possible from other agents.
@@ -29,7 +32,7 @@ For that reason we associated higher costs for receiving help from other agents,
 
 \subsubsection{Ignoring Heuristics}
 
-In some scenarios an object must be moved from a desired path, because it is blocking the desired path.
+In some scenarios an object must be moved from a desired path, because it is blocking it.
 For this we ignore the distance to the goal because we do not have a desired end position, we simply need to find the first free cell where the object can be moved to, which gets it out of the desired path.
 
 \subsubsection{Structuring Paths and Converting to Actions}
@@ -41,6 +44,6 @@ The grid can inform what object is at that position.
 The path of cells is converted to a list of actions, which the server can interpret.
 
 The list of coordinates also defines when an agent is to move a box.
-This is defined as a list in the outer list, i.e. in this scenarios an element in the outer list is not a tuple but a nested list, e.g. \texttt{[(0,0),[(0,1),(1,1)],(0,1)]}.
+This is defined as a list in the outer list, i.e. in this scenarios an element in the outer list is not a cell but a nested list of cells, e.g. \texttt{[(0,0),[(0,1),(1,1)],(0,1)]}.
 The example will be interpreted to \texttt{[Push(E,S)]}, where the nested list defines the initial position of the box and the following movement.
 The element after the inner list defines the end position of the agent that was involved in the moving action.
