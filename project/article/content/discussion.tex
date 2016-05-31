@@ -3,6 +3,11 @@
 %Strengths: Goal-prio (yay),
 %Only 1 agent at a time: Weakness in solution length but strength in performance
 %TODO: Mention possible impovement on Multi Agent tracks, gained from sending all commands at once. Include remarks on possible issues with this approach as well. I.e. in a level with 2 angents and 100 steps, the acutal steps could be 50, provided that no new issues arises.
+
+This section presents some of the pros and cons of our client.
+For instance we will discuss the con of only moving one agent at a time and the difference between online and offline planning.
+
+\subsection{On Multi-agent Movement}
 Our current solution only sends commands to one agent at a time.
 This increases the length of results in multi-agent levels but it also give us better performance.
 By performance we mean the time spent to find a solution (from starting the client to the server responds with \texttt{success}).
