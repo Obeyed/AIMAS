@@ -21,7 +21,7 @@ With this technique, we are able to solve both problems like \texttt{MAteamhal},
 While working great in cases such as the one seen in \cref{fig:mateamhal}, problems arise if the entrance to a group of goals is not actually the goal with the heighest number of neighbouring free cells. 
 An example of this can be found in \cref{fig:examplelev}.
 Here we see that goal \textbf{c} has the heighest number of neighboring free cells, and as such, our ordering algorithm will find it to be blocking the other goals, even though it is not. 
-
+In the class competition, we did not encounter a problem like this, however the problem is indeed a known weakness of our prioritisation algorithm.
 
 \begin{figure}[h!]
   \centering
@@ -29,6 +29,3 @@ Here we see that goal \textbf{c} has the heighest number of neighboring free cel
   \caption{\label{fig:examplelev}Example level}
 \end{figure}
  
-
-% When it doesn't work (openings, groupings)
-When it doesnt work
