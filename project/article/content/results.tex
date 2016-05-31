@@ -24,7 +24,7 @@ Moreover, our client was the only client to solve two of the levels (\texttt{MAt
 
 To showcase how efficient our goal prioritisation technique is and how we have improved upon it throughout the project, we present some test runs using the \texttt{SAOptimal} level. 
 We have chosen this level, as it requires a good goal prioritisation in order to solve efficiently.
-In the following we will refer to our main goal prioritisation technique (\cref{methods:goal_ordering}) as the ``complex'' prioritisation, and use the term ``simple'' to mean a prioritisation that does not perform the final matrix computation as presented in \cref{methods:goal_ordering}.
+In the following we will refer to our main goal prioritisation technique (\cref{methods:goal_ordering}) as the ``complex'' prioritisation, and use the term ``simple'' to mean a prioritisation that does not perform the matrix computation as presented in \cref{methods:goal_ordering} (the second step).
 The intuition is that goals placed in dead-ends or corners must be achieved before any goals that would otherwise block the path to the inner most goals.
 
 We illustrate three runs on the same level; 
