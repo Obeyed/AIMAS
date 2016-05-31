@@ -4,26 +4,33 @@
 %\emph{Benchmarks (test results) and possibly competition results.  Include explanations and analyses of your results. As mentioned under “Benchmarks and comparisons” below, it is usually a clear strength if you have some results to com- pare, e.g. two different versions of your client with different methods/features/parameters.  You could also compare the behaviour of your client on different individual levels that illustrate a certain point, e.g. similar levels resulting in large differences in the client’s behaviour.}
 
 To showcase how efficient our goal prioritisation technique is and how we have improved upon it throughout the project, we present some test runs using the \texttt{SAOptimal} level.
-In the following we will refer to our main goal prioritisation technique (\cref{methods:goal_ordering}) as the ``complex'' prioritisation, and the ``simple'' differs in that it does not perform the final matrix computation as presented in \cref{methods:goal_ordering}.
+In the following we will refer to our main goal prioritisation technique (\cref{methods:goal_ordering}) as the ``complex'' prioritisation, and use the term ``simple'' to mean a priotitisation that does not perform the final matrix computation as presented in \cref{methods:goal_ordering}.
 The intuition is that goals placed in dead-ends or corners must be achieved before any goals that would otherwise block the path to the inner most goals.
 
-We illustrate two different runs; one with simple goal prioritisation (\cref{fig:simple priority}) and one without goal prioritisation (\cref{fig:no priority}).
+First we illustrate two different runs; one with simple goal prioritisation (\cref{fig:simple priority}) and one without goal prioritisation (\cref{fig:no priority}).
 
 % Example of cells
 \begin{figure}[h!]
   \centering
-  \begin{minipage}{.45\columnwidth}
+  \begin{minipage}{.30\columnwidth}
     \centering
-    \includegraphics[height=5cm]{graphics/simple_priority_block.PNG}
+    \includegraphics[height=3cm]{graphics/simple_priority_block.PNG}
     \caption{\label{fig:simple priority}Simple goal prioritisation.}
   \end{minipage}%
   \hspace{20pt}%
-  \begin{minipage}{.45\columnwidth}
+  \begin{minipage}{.30\columnwidth}
     \centering
-    \includegraphics[height=5cm]{graphics/no_priority_block.png}
+    \includegraphics[height=3cm]{graphics/no_priority_block.png}
+    \caption{\label{fig:no priority}No goal prioritisation.}
+  \end{minipage}%
+  \hspace{20pt}%
+  \begin{minipage}{.30\columnwidth}
+    \centering
+    \includegraphics[height=3cm]{graphics/complex_priority.png}
     \caption{\label{fig:no priority}No goal prioritisation.}
   \end{minipage}
 \end{figure}
+
 
 The main difference between the complex and simple prioritisation is that the complex forces and order on grouped goals.
 The lack of strict order in apparent in the example of the simple prioritisation as illustrated in \cref{fig:simple priority}.
@@ -57,3 +64,7 @@ From the course's competition presentation we found that, as an example, our cli
 However, our client solved the level approximately 700 times faster than the opponent.\footnote{\textbf{opponent}: $143,297$ ms with $680$ actions \& \textbf{our}: $209$ ms with actions $730$. (source: competition results)}
 
 Note that we performed our tests on a laptop with Intel® Core™ i5 4210U Processor 2.7 GHz, 4GB DDR3L 1600 MHz SDRAM, with a Solid State Disk.
+
+\subsection{Multiagent vs. Singleagent levels}
+
+
