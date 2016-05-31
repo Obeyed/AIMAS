@@ -8,8 +8,7 @@ This section describes our client's overall algorithmic functionality and we pre
 \subsection{Goal Prioritisation Technique}
 \label{methods:goal_ordering}
 
-In order to explain how the functionality of our technique, we will break it down into three separate steps.
-For the \textbf{first} step, consider an example set of goal cells, which are all only accessible form a single entrance. 
+In order to explain how the functionality of our priorotisation, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
 
 % Example of cells 
 \begin{figure}[h!]
@@ -20,12 +19,13 @@ For the \textbf{first} step, consider an example set of goal cells, which are al
 
 For the example in \cref{fig:sample} the optimal ordering would be to fulfil the goals in the following order: \textbf{a, c, b, e, f} from first to last. 
 To accomplish this, our algorithm provides an ordering score to each goal. 
-First it searches through each goal, evaluating its eight neighbouring cells, including the diagonal neighbours. 
-For every neighbour cell that is a goal, the score of the cell (that is being prioritised) is incremented by 1.
-For every free neighbour cell, it is incremented by a score of 2. 
+
+In the \textbf{first} step, it searches through each goal, evaluating its eight neighbouring cells, including the diagonal neighbours. 
+For every neighbouring goal-cell, the score of the cell (that is being prioritised) is incremented by 1.
+For every free neighbour cell, the score is incremented by 2. 
 The checking of neighbouring cells is illustrated with a grid in \cref{fig:grid1}. 
 The middle cell is the one currently being checked, while the green represents a neighbour goal. 
-A red cell represents some unreachable position (either a wall or out of bounds).
+A red cell represents an unreachable position (either a wall or out of bounds).
 
 % Example of scoring 
 \begin{figure}[ht!]
@@ -36,7 +36,7 @@ A red cell represents some unreachable position (either a wall or out of bounds)
 
 The goal \textbf{a} is given a start score of 1. 
 Goal \textbf{f} and \textbf{b} are given scores of respectively 3 and 2 as can be seen in \cref{fig:grid2}. 
-A blue cell in the grid represents a free neighbour and a free neighbour gives an increment of 2 (the lower score, the higher the goals priority).
+A blue cell in the grid represents a free neighbour, while a green cell represents a neighbouring goal.
 The remaining goals not shown in the figures are all given a score of 2. 
 
 % Example of scoring 
@@ -44,7 +44,7 @@ The remaining goals not shown in the figures are all given a score of 2.
   \centering
   \includegraphics[width=.5\columnwidth]{graphics/goal_pri_3.png}
   \includegraphics[width=.5\columnwidth]{graphics/goal_pri_2.png}
-  \caption{\label{fig:grid2}Neighbour checking of goal \textbf{f} and \textbf{b}.}
+  \caption{\label{fig:grid2}Neighbour checking of goals \textbf{f} \& \textbf{b}.}
 \end{figure}
 
 After scoring the goals according to their neighbours, we reach the \textbf{second} step of the ordering algorithm. 
@@ -79,17 +79,22 @@ Each column of the matrix will represent a goal cell and the first row holds the
   \end{minipage} 
 \end{table}
 
+The resulting matrix can be seen in \cref{tab:example_matrix} (left). From this matrix we see the first ordering scores, beeing filled out, while the rest remains to be computed. The computation of the remaining rows, is caried out by incrementing the scores iteratively. A goal's score is incrementef if:
 
-\todo[inline]{this needs to be explained better}
-When the matrix has been created as seen in \cref{tab:example_matrix} (left), the algorithm increments the scores such that no scores are the same after all iterations. 
-This is done by comparing the previous scores to each other. 
+\begin{itemize} 
+\item{The score is the maximum score of all score}
+\item{The score is smaller than the previous and next score }
+\item{The score is smaller than previous and equal to then next score}
+\end{itemize} 
+	
+\subsubsection{Step three} occurs when all rows have been iterate through and the matrix is filled out, as seen in \cref{tab:example_matrix} (right). Ideally, this will leave the last row with unique scores, that can be used to order which goals to fulfill first. The third step is simply to order the goals from the least to the heighest scoring, such that in our example case, the goals will be filled from \textbf{a} to \textbf{f}.
+
 It increments from the direction of the highest beginning score, which can cause issues in some level structures, but has been found to work for most cases.
 \todo{what issues?} 
-The last row of the matrix will then contain the final ordering scores of the goals. 
 In levels where goals are grouped independently of other goal groups, the algorithm will allow for some scores to be the same.
 This signals that some goals can be achieved in an arbitrary order without one having to be filled before the other. 
 The last row of the matrix in \cref{tab:example_matrix} (right), is now used to order the goals. 
-The goal with the lowest score will be prioritised first, because they are assumed to be non-blocking of others. 
+
 
 The \textbf{third} and last step of the algorithm is the actual sorting of the goals based on the ordering scores. 
 For every time a box has been placed on a goal, this algorithm is repeated to take new boxes and agents into account. 
