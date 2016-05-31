@@ -1,0 +1,28 @@
+
+\begin{table}
+  \centering
+  \begin{tabular}{lrrrr}
+    \toprule
+    \multirow{2}{*}{level creator} & \multicolumn{2}{c}{\underline{single-agent}} & \multicolumn{2}{c}{\underline{multi-agent}} \\
+                                   & time & actions & time & actions \\ \midrule
+    \texttt{Lazarus}              & 91  & 243 & 62   & 291 \\
+    \texttt{Sojourner}            & 144 & 417 & 116  & 255 \\
+    \texttt{Optimal}              & 209 & 730 & 161  & 552 \\
+    \texttt{DangerBot}            & 402 & 741 & 170  & 716 \\
+    \texttt{TheAgency}            & \multicolumn{2}{c}{crash}      & 55   & 39 \\ 
+    \texttt{botbot}               & \multicolumn{2}{c}{crash}      & 69   & 87 \\
+    \texttt{ButterBot}            & \multicolumn{2}{c}{crash}      & 72   & 175 \\
+    \texttt{TheRedDot}            & \multicolumn{2}{c}{crash}      & 123  & 489 \\ 
+    \texttt{extra}                & \multicolumn{2}{c}{crash}      & 402  & 1409 \\
+    \texttt{teamhal \hfill(!)}    & \multicolumn{2}{c}{crash}      & 334  & 1186 \\ 
+    \texttt{AIMuffins \hfill(!)}  & \multicolumn{2}{c}{live-lock}  & 3695 & 1417 \\ 
+    \texttt{WallE}                & \multicolumn{2}{c}{unsolvable} & 157  & 506 \\
+    \texttt{FortyTwo}             & \multicolumn{2}{c}{crash}      & \multicolumn{2}{c}{unsolvable} \\
+    \texttt{NoOp}                 & \multicolumn{2}{c}{crash}      & \multicolumn{2}{c}{unsolvable} \\
+    \texttt{TAIM}                 & \multicolumn{2}{c}{crash}      & \multicolumn{2}{c}{unsolvable} \\
+    \texttt{Solo}                 & \multicolumn{2}{c}{live-lock}  & \multicolumn{2}{c}{crash}      \\
+    \texttt{BoXBoXBoX}            & \multicolumn{2}{c}{live-lock}  & \multicolumn{2}{c}{crash}      \\
+    \bottomrule
+  \end{tabular}
+  \caption{\label{tab:competition results}The stats of our client's solutions for the different levels. The exclamation mark \texttt{(!)} defines levels that only our client solved. Time is in ms, and actions is the number of actions performed.}
+\end{table}
