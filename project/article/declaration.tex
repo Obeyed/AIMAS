@@ -49,17 +49,17 @@
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\title{TheRedDot\\02285 AI \& MAS\\Group Declaration}
+\title{TheRedDot (02285 AI \& MAS)\\Group Declaration}
 \author{
+  Elias K. Obeid (s142952) \hspace{10pt}
 Jens-Christian Finnerup (s143120)\\
-Sune Bartels  (s155994)\\
-Mathias C. Lyngman (s127719)\\
-Elias K. Obeid (s142952)}
+Sune Bartels  (s155994) \hspace{10pt}
+Mathias C. Lyngman (s127719)}
 
-\newcommand{\jens}{s143120}
-\newcommand{\sune}{s155994}
-\newcommand{\superdude}{s127719}
-\newcommand{\elias}{s142952}
+\newcommand{\jens}{Finnerup}
+\newcommand{\sune}{Bartels}
+\newcommand{\superdude}{Lyngman}
+\newcommand{\elias}{Obeid}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Slut preamble -- herunder følger selve dokumentet!
@@ -68,57 +68,95 @@ Elias K. Obeid (s142952)}
 \maketitle
 
 In this document we declare who did what in our project. It is separated into
-ideas, programming, litterature search and the final report.\\
+ideas, programming, literature search and the final article.
 
 \section{Ideas}
+Everyone in the group contributed equally to the following ideas, and all other ideas that were used and discussed throughout the group work.
 \begin{itemize}
-  \item Partial order planning
-  \item hieraki
-  \item Goal Prioritisation (\jens)
-  \item Multibody
+  \item Partial-order Planning
+  \item Hierarchical Planning
+  \item Goal Prioritisation
+  \item Centralised Multibody Planner (high level planner)
 \end{itemize}
 
 \section{Programming}
-We did our programming in pairs. The first person is the one responsible and the second contributed to the programming. The pairs did the debugging themselves.
+We did our programming mostly in pairs. 
+The first person is the one responsible and the second also contributed to the programming. 
+The pairs did the debugging themselves.
+First we declare the files and the people responsible followed by some bullet points declaring the relevant tasks and their authors.
+
 \begin{itemize}
-  \item Parse server messages (\sune\ \& \superdude)
-  \item A* search (\elias\ \& \sune)
-  \item Convert path to commands (\superdude\ \& \jens)
-  \item Assigning agents (\elias\ \& \jens)
-  \item Goal Prioritisation (\jens\ \& \elias)
-  \item Agent communication (\sune\ \& \superdude)
-  \item Level representation (\jens\ \& \sune)
-  \item High level plan (\superdude\ \& \elias)
+  \item \texttt{client.py} --- all
+  \item \texttt{a\_star\_simple.py} --- \elias{} and \sune
+  \item \texttt{convert\_path\_to\_moves.py} --- \jens{} and \superdude
+  \item \texttt{parse\_lvl.py} --- \sune{} and \superdude
+  \item \texttt{simple\_grid.py} --- \elias{} and \jens
+  \item \texttt{high\_level\_plan.py} --- \elias{} and \sune
+  \item \texttt{movable.py} --- \superdude{} and \jens
+\end{itemize}
+
+Now, we present the more specific tasks that were performed.    
+
+\begin{itemize}
+  \item Parse server messages (\sune{} and \superdude)
+  \item Weighted A* search algorithm for shortest paths (\elias{} and \sune)
+  \item Search algorithm for finding first free cell (not on desired path) (\elias{} and \sune)
+  \item Convert path of cells to actions (parsable by server) (\jens{} and \superdude)
+  \item Goal Prioritisation Technique (complex) (\jens)
+  \item Goal Prioritisation Technique (simple) (\elias)
+  \item Find closest box to given goal (\superdude)
+  \item Find closest agent to box (\elias)
+  \item Path resolving loop which was used to find the sub-path/original path on which the next set of movements should be carried out (\sune{} and \superdude)
+  \item Represent level as a grid (\elias)
+  \item Give boxes and agents default colors (\elias)
+  \item Multibody planner (the high level planner) (\elias{} and \superdude)
+  \item Partial-order Planner (discarded and unfinished) (\elias)
 \end{itemize}
 
 \section{Litterature Search}
 \begin{itemize}
-  \item POP articles
-  \item Heuristic and subgoal articles
-  \item Goal Prioritisation articles
-  \item A* heuristic
+  \item Articles on Partial-order planning (\sune)
+  \item Heuristic (\elias)
+  \item Goal Prioritisation articles (\jens)
+  \item A*, weighted A*, Dijkstra's Algorithm, Floyd-Warshall algorithm (\elias)
+  \item All Pairs Shortest Paths (\elias)
+  \item Articles discussing how to work with sub-goals (\superdude)
 \end{itemize}
 
-\section{Report}
-Even though we each wrote different articles, all section were read
-and approved by the rest of the group.
+\section{Article}
+The entire article has been created and proof read by all group members.
+For sections that have subsections we also declare the name of the author responsible for integrity of the entire section.
 \begin{itemize}
+  \item Abstract (\elias)
   \item Introduction (\elias)
-  \item Background (\jens)
-  \item Related work (\sune)
-  \item Methods intro (\superdude)
-  \item Methods goal prioritisation (\jens)
-  \item Methods representing levels (\elias)
-  \item Methods constructing paths and searching (\elias)
-  \item Methods planning on the fly (\sune)
-  \item Results intro (\jens)
-  \item Results performance vs optimally (\elias)
-  \item Results multi-agent vs single-agent levels (\superdude)
-  \item Discussion intro (\sune)
-  \item Discussion online and offline planning (\superdude)
-  \item Discussion centralized and decentralized planning (\jens)
-  \item Conlusion (\superdude)
-  \item Future work (\elias)
+    \begin{itemize}
+      \item Background (\elias)
+      \item Related work (\sune)
+    \end{itemize}
+  \item Methods (\elias{} and \sune)
+    \begin{itemize}
+      \item intro (\superdude)
+      \item goal prioritisation (\jens)
+      \item representing levels (\elias)
+      \item constructing paths and searching (\elias)
+      \item planning on the fly (\elias)
+    \end{itemize}
+  \item Results (\superdude)
+    \begin{itemize}
+      \item intro (\superdude)
+      \item performance vs optimality (\elias)
+      \item multi-agent vs single-agent levels (\jens)
+    \end{itemize}
+  \item Discussion (\jens)
+    \begin{itemize}
+      \item intro (\sune)
+      \item online and offline planning (\elias)
+      \item centralized and decentralized planning (\elias)
+    \end{itemize}
+  \item Conlusion (\sune)
+    \begin{itemize}
+      \item Future work (\elias{} and \jens)
+    \end{itemize}
 \end{itemize}
 
 \end{document}
