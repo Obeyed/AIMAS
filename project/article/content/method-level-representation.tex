@@ -26,11 +26,11 @@ Furthermore, the grid representation must have the following functionality
 The neighbours of a cell may be defined to filter results w.r.t. some criterion.
 Such a criterion could for instance be that we only want free cell (no agent or box at that cell).
 This method is used for finding possible movement from a given cell.
-Moreover, a cells neighbours are the cells below, above, right of, and left of it (not diagonal cells).
+Moreover, a cell's neighbours are the cells below, above, right of, and left of it (not diagonal cells).
 
 We define a swapping move as swapping the position of an agent and a box it is moving.
 This could either be a pull-push combination or vice versa.
-The idea is to check if a given cells has enough neighbours for a swap to be performed, i.e. the cell must have at least two neighbours (because then we at least have a \texttt{T}-cell-combination, where a swap is possible).
+The idea is to check if a given cells has enough neighbours for a swap to be performed, i.e. the cell must have at least three neighbours (because then we at least have a \texttt{T}-cell-combination, where a swap is possible).
 
 The client performs online planning, i.e. an entire complete plan is not computed before performing actions.
 Because of this the client must keep track of all actions and if they succeed.
