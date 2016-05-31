@@ -27,7 +27,7 @@ Then the red agent \textbf{0} will move the red box \textbf{A} to the goal.
 \subsection{Goal Prioritisation Technique}
 \label{methods:goal_ordering}
 
-In order to explain how the functionality of our priorotisation, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
+In order to explain how the functionality of our priorotisation works, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
 
 % Example of cells 
 \begin{figure}[h!]
@@ -39,7 +39,7 @@ In order to explain how the functionality of our priorotisation, we will break i
 For the example in \cref{fig:sample} the optimal ordering would be to fulfil the goals in the following order: \textbf{a, c, b, e, f} from first to last. 
 To accomplish this, our algorithm provides an ordering score to each goal. 
 
-In the \textbf{first} step, it searches through each goal, evaluating its eight neighbouring cells, including the diagonal neighbours. 
+\subsubsection{Step one}has the purpose of searching through each goal, evaluating its eight neighbouring cells, including the diagonal neighbours. 
 For every neighbouring goal-cell, the score of the cell (that is being prioritised) is incremented by 1.
 For every free neighbour cell, the score is incremented by 2. 
 The checking of neighbouring cells is illustrated with a grid in \cref{fig:grid1}. 
@@ -66,7 +66,7 @@ The remaining goals not shown in the figures are all given a score of 2.
   \caption{\label{fig:grid2}Neighbour checking of goals \textbf{f} \& \textbf{b}.}
 \end{figure}
 
-After scoring the goals according to their neighbours, we reach the \textbf{second} step of the ordering algorithm. 
+\subsubsection{Step two}is reached after scoring the goals according to their neighbours. 
 In this step we create a matrix of size $n \times n$, where $n$ is the number of goals. 
 Each column of the matrix will represent a goal cell and the first row holds the ordering scores that were computed in the first step. 
 
@@ -106,18 +106,14 @@ The resulting matrix can be seen in \cref{tab:example_matrix} (left). From this 
 \item{The score is smaller than previous and equal to then next score}
 \end{itemize} 
 	
-\subsubsection{Step three} occurs when all rows have been iterate through and the matrix is filled out, as seen in \cref{tab:example_matrix} (right). Ideally, this will leave the last row with unique scores, that can be used to order which goals to fulfill first. The third step is simply to order the goals from the least to the heighest scoring, such that in our example case, the goals will be filled from \textbf{a} to \textbf{f}.
+\subsubsection{Step three}occurs when all rows have been iterate through and the matrix is filled out, as seen in \cref{tab:example_matrix} (right). Ideally, this will leave the last row with unique scores, that can be used to order which goals to fulfill first. The third step is simply to order the goals from the least to the heighest scoring goal, such that in our example case, the goals will be filled from \textbf{a} to \textbf{f} respectively.
+The performance benifits and pitfalls of this prioritisation algorithm, will be discussed in detail in \cref{subsec:disc_goal_ordering}.
+%
+% In levels where goals are grouped independently of other goal groups, the algorithm will allow for some scores to be the same.
+% This signals that some goals can be achieved in an arbitrary order without one having to be filled before the other.
+% The last row of the matrix in \cref{tab:example_matrix} (right), is now used to order the goals.
 
-It increments from the direction of the highest beginning score, which can cause issues in some level structures, but has been found to work for most cases.
-\todo{what issues?} 
-In levels where goals are grouped independently of other goal groups, the algorithm will allow for some scores to be the same.
-This signals that some goals can be achieved in an arbitrary order without one having to be filled before the other. 
-The last row of the matrix in \cref{tab:example_matrix} (right), is now used to order the goals. 
 
-
-The \textbf{third} and last step of the algorithm is the actual sorting of the goals based on the ordering scores. 
-For every time a box has been placed on a goal, this algorithm is repeated to take new boxes and agents into account. 
-\todo[inline]{are boxes and agents taken into account? This was not mentioned?}
 
 \input{content/method-level-representation}
 \input{content/method-using-a-star}

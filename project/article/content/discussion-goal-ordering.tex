@@ -1,0 +1,24 @@
+\subsection{Goal Ordering}
+\label{subsec:disc_goal_ordering}
+
+In this section the aim is to discuss the differences between online and offline planning, where we worked with online planning.
+
+Both online and offline planning are applicable in the domain of the project.
+The domain is deterministic, static, and fully observable and we know that there are no unforeseen side-effects such as some event that can change the state of the level.
+The biggest challenge of offline planning is the combinatorial explosion/branching factor for planning for all possible contingencies for an entire plan.
+All possible conflicts must be found and resolved before any action is performed.
+
+We can consider online planning as performing small steps in aim of solving a grand goal.
+We believe this is a more natural approach to solving the programming project.
+Unable to look into the future, the online planning approach will most likely not find an optimal plan.
+On the other hand the online approach gives us the advantage of performing actions early on.
+
+Furthermore, with online planning the client can plan for unseen future effects of past actions.
+Note, we assumed that the domain was deterministic and fully observable for offline planning to be applicable.
+By monitoring the execution of actions the client can keep and updated perception of the world in which the agents are performing actions.
+The fact that, for every step performed, the grand goal is closer to be solved.
+By dividing the grand goal into smaller sub-goals and solving obstacles as they appear for the sub-goals, we do not experience the dramatic branching factor, compared to an offline approach.
+
+We found that online planning was more intuitive and simpler to develop.
+We believe that our solution is simple because of the simple nature of online planning.
+We monitor the server's response and from that we construct and achieve the next goal in the line.
