@@ -29,5 +29,6 @@ dist
 **/*.tdo
 
 **/article.pdf
+**/declaration.pdf
 
 **/.~lock.*
