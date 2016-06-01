@@ -8,7 +8,8 @@ A given plan may contain positions on which obstacles are in the way.
 If an obstacles is in the way, the client will create a new sub-plan, which must be achieved before the original plan can continue.
 %Given that obstacle the client will create a new sub-plan, which must be achieved before the original plan can continue.
 This process may continue for many steps before all obstacles are moved for the original objects to be moved in the desired path.
-The client will make sub-plans for the first obstacle in the path first and sub-plans of a sub-plan may also occur.
+The client will iteratively create and solve the sub-plans for every blocking obstacle (one at a time).
+Note, that sub-plans of a sub-plan may also occur.
 
 As mentioned in the previous section, each movement has an associated cost, and the agents are to be as independent as possible.
 However, independence is sometimes not possible and thus the agents must aid one another.

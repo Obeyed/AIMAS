@@ -44,6 +44,6 @@ The grid can inform what object is at that position.
 The path of cells is converted to a list of actions, which the server can interpret.
 
 The list of coordinates also defines when an agent is to move a box.
-This is defined as a list in the outer list, i.e. in this scenarios an element in the outer list is not a cell but a nested list of cells, e.g. \texttt{[(0,0),[(0,1),(1,1)],(0,1)]}.
+This is defined as a list in the outer list, i.e. in this scenario an element in the outer list is not a cell but a nested list of cells, e.g. \texttt{[(0,0),[(0,1),(1,1)],(0,1)]}.
 The example will be interpreted to \texttt{[Push(E,S)]}, where the nested list defines the initial position of the box and the following movement.
 The element after the inner list defines the end position of the agent that was involved in the moving action.
