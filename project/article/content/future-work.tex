@@ -5,3 +5,7 @@
 
 \input{content/future-work-multiagent}
 \input{content/future-work-live-lock}
+
+A way to establish \textit{safe zones} for the different agents to place boxes, could be to use our goal prioritisation algorithm on free cells instead of goals. 
+This could be accieved by mapping all the cells that are not in direct paths towards the goals, and score them according to the number of neighbouring free cells. 
+With some adjustment to the scoring algorithm, this could prove to be a simple way of detecting safe zones (or buffer areas) for agents and boxes to move freely, without blocking the way of others.
