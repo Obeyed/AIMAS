@@ -21,15 +21,15 @@ The state of the level in the figure is that the cyan agent \textbf{1} has moved
 
 However, the yellow agent \textbf{2} is now itself in the way of the path.
 The planner thus informs that agent to move out of the desired path.
-This moving of boxes/agents out of the way of the desired plan will continue until no more obstacles are in the way.
+The client will continue to detect obstacles in the desired plan and move them until no more obstacles are in the way.
 Then the red agent \textbf{0} will move the red box \textbf{A} to the goal.
 
 \subsection{Goal Prioritisation Technique}
 \label{methods:goal_ordering}
 
-In order to explain how the functionality of our prioritisation works, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance. 
+In order to explain how the functionality of our prioritisation works, we will break it down into three separate steps. For all the three steps we use an example set of goal cells, which are all only accessible form a single entrance.
 
-% Example of cells 
+% Example of cells
 \begin{figure}[h!]
   \centering
   \includegraphics[width=.5\columnwidth]{graphics/ie_level.png}
@@ -37,30 +37,30 @@ In order to explain how the functionality of our prioritisation works, we will b
 \end{figure}
 
 For the example in \cref{fig:sample} the optimal ordering would be to fulfil the goals in the following order: \textbf{a, c, b, e, f}, respectively.
-To accomplish this, our algorithm provides an ordering score to each goal. 
+To accomplish this, our algorithm provides an ordering score to each goal.
 
 \subsubsection{Evaluating Each Goals Neighbouring Cells}
 
-Firstly, the algorithm evaluates each goal's eight neighbouring cells (including the diagonal neighbours). 
-For every neighbouring goal-cell, the score of the goal that is being prioritised is incremented by 1.
-For every free neighbour cell, the score is incremented by 2. 
-The checking of neighbouring cells is illustrated with a grid in \cref{fig:grid1}. 
-The middle cell is the one currently being checked, while the green represents a neighbour goal. 
+First, the algorithm evaluates each goal's eight neighbouring cells (including the diagonal neighbours) by giving them a score each.
+For every neighbouring goal-cell, the score is incremented by 1.
+For every free neighbour cell, the score is incremented by 2.
+The checking of neighbouring cells is illustrated with a grid in \cref{fig:grid1}.
+The middle cell is the one currently being checked, while the green represents a neighbour goal.
 A red cell represents an unreachable position (either a wall or out of bounds).
 
-% Example of scoring 
+% Example of scoring
 \begin{figure}[ht!]
   \centering
   \includegraphics[width=.5\columnwidth]{graphics/goal_pri_1.png}
   \caption{\label{fig:grid1}Neighbour checking of goal \textbf{a}.}
 \end{figure}
 
-The goal \textbf{a} is given a start score of 1. 
-Goal \textbf{f} and \textbf{b} are given scores of respectively 3 and 2 as can be seen in \cref{fig:grid2}. 
+The goal \textbf{a} is given a start score of 1.
+Goal \textbf{f} and \textbf{b} are given scores of respectively 3 and 2 as can be seen in \cref{fig:grid2}.
 A blue cell in the grid represents a free neighbour, while a green cell represents a neighbouring goal.
-The remaining goals not shown in the figures are all given a score of 2. 
+The remaining goals not shown in the figures are all given a score of 2.
 
-% Example of scoring 
+% Example of scoring
 \begin{figure}[h!]
   \centering
   \includegraphics[width=.5\columnwidth]{graphics/goal_pri_3.png}
@@ -69,8 +69,8 @@ The remaining goals not shown in the figures are all given a score of 2.
 \end{figure}
 
 \subsubsection{Forcing an Order }
-Secondly, after scoring the goals according to their neighbours, the algorithm creates an $n \times n$ size matrix, where $n$ is the number of goals. 
-Each column of the matrix will represent a goal cell and the first row holds the ordering scores that were computed in the first step. 
+Secondly, after scoring the goals according to their neighbours, the algorithm creates an $n \times n$ size matrix, where $n$ is the number of goals.
+Each column of the matrix will represent a goal cell and the first row holds the ordering scores that were computed in the first step.
 
 \begin{table}[h!]
   \caption{\label{tab:example_matrix}\centering Example level - Ordering matrix \break Incomplete (left) \& Complete (right)}
@@ -79,10 +79,10 @@ Each column of the matrix will represent a goal cell and the first row holds the
     \begin{tabular}{@{}lllll@{}}
 		\toprule
 		\textbf{f} & \textbf{e} & \textbf{b} & \textbf{c} & \textbf{a} \\ \midrule
-		3          & 2          & 2          & 2          & 1          \\ 
-		-          & -          & -          & -          & -          \\ 
-		-          & -          & -          & -          & -          \\ 
-		-          & -          & -          & -          & -          \\ 
+		3          & 2          & 2          & 2          & 1          \\
+		-          & -          & -          & -          & -          \\
+		-          & -          & -          & -          & -          \\
+		-          & -          & -          & -          & -          \\
 		-          & -          & -          & -          & -          \\ \bottomrule
 		\end{tabular}
   \end{minipage}%
@@ -91,31 +91,31 @@ Each column of the matrix will represent a goal cell and the first row holds the
     \begin{tabular}{@{}lllll@{}}
 		\toprule
 		\textbf{f} & \textbf{e} & \textbf{b} & \textbf{c} & \textbf{a} \\ \midrule
-		3          & 2          & 2          & 2          & 1          \\ 
-		4          & 3          & 3          & 2          & 1          \\ 
-		5          & 3          & 3          & 2          & 1          \\ 
+		3          & 2          & 2          & 2          & 1          \\
+		4          & 3          & 3          & 2          & 1          \\
+		5          & 3          & 3          & 2          & 1          \\
 		6          & 4          & 3          & 2          & 1          \\ \midrule
 		\textbf{7} & \textbf{4} & \textbf{3} & \textbf{2} & \textbf{1} \\ \bottomrule
 		\end{tabular}
-  \end{minipage} 
+  \end{minipage}
 \end{table}
 
-The resulting matrix can be seen in \cref{tab:example_matrix} (left). 
-From this matrix we see the first ordering scores being filled out while the rest remains to be computed. 
-The computation of the remaining rows, is carried out by incrementing the scores iteratively. 
+The resulting matrix can be seen in \cref{tab:example_matrix} (left).
+From this matrix we see the first ordering scores being filled out while the rest remains to be computed.
+The computation of the remaining rows, is carried out by incrementing the scores iteratively.
 A goal's score is incremented if:
 
-\begin{itemize} 
+\begin{itemize}
 \item{The score is the maximum score of all score}
 \item{The score is smaller than the previous and next score }
 \item{The score is smaller than the previous and equal to then next score}
 \item{The score is equal to the previous and equal to then next score}
-\end{itemize} 
+\end{itemize}
 
 The reason for the incrementation of the heighest score, throughout all iteratons, is to account for multiple groups of goals, for which we want to score their openings similarly.
 The idea is that we force an order on grouped goals so that we never have ambiguous priorities for neighbouring goals.
 Thus, the client should never be in doubt of which goal to choose.
-If two goals end up with the same score, they will either be a part of independently grouped goals, or equally accessible. 
+If two goals end up with the same score, they will either be a part of independently grouped goals, or equally accessible.
 
 
 \subsubsection{Sorting the Goals}

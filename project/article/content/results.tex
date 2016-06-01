@@ -5,7 +5,7 @@
 
 This sections presents some results and experiments for our client.
 First we present the results of running the competition levels, and then we present an example to illustrate why our goal prioritisation was useful.
-Note that we performed our tests on a laptop with Intel® Core™ i5 4210U Processor 2.7 GHz, 4GB DDR3L 1600 MHz SDRAM, with a Solid State Disk.
+We performed our tests on a laptop with Intel® Core™ i5 4210U Processor 2.7 GHz, 4GB DDR3L 1600 MHz SDRAM, with a Solid State Disk.
 
 \Cref{tab:competition results} presents the results of our client on the different levels developed by different groups.
 The time is defined in milliseconds, and actions are number of moves performed to solve the level.
@@ -16,21 +16,21 @@ Our client entered an endless loop for three of the levels (\texttt{SAAIMuffins,
 It is clear from the results presented in the table, that the client needs improvement because the client crashed for 11 levels (two of which were multi-agent levels).
 Our solution did not handle a specific scenario well.
 We were not able to locate where the specific problem was.
-Moreover, our client was the only client to solve two of the levels (\texttt{MAteamhal, MAAIMuffins}).
+Our client was the only client in the competition to solve the two levels \texttt{MAteamhal} and \texttt{MAAIMuffins}.
 
 \input{content/competition-results}
 
 \subsection{Different Goal Prioritisations}
 
-To showcase how efficient our goal prioritisation technique was and how we have improved upon it throughout the project, we present some test runs using the \texttt{SAOptimal} level. 
+To showcase how efficient our goal prioritisation technique was and how we have improved upon it throughout the project, we present some test runs using the \texttt{SAOptimal} level.
 We have chosen this level, as it requires a good goal prioritisation in order to solve efficiently.
 In the following we will refer to our main goal prioritisation technique (\cref{methods:goal_ordering}) as the ``complex'' prioritisation, and use the term ``simple'' to mean a prioritisation that does not require a strict ordering of grouped goals, as presented in \cref{methods:goal_ordering} (the second step).
 The intuition is that goals placed in dead-ends or corners must be achieved before any goals that would otherwise block the path to the inner most goals.
 
-We illustrate three runs on the same level; 
+We illustrate three runs on the same level;
 one with no goal prioritisation whatsoever (\cref{fig:no priority}),
-one with simple goal prioritisation (\cref{fig:simple priority}), and 
-one with complex goal prioritisation (\cref{fig:complex_priority}). 
+one with simple goal prioritisation (\cref{fig:simple priority}), and
+one with complex goal prioritisation (\cref{fig:complex_priority}).
 
 % Example of cells
 \begin{figure}[h!]
@@ -55,7 +55,7 @@ one with complex goal prioritisation (\cref{fig:complex_priority}).
 \end{figure}
 
 The main difference between the complex and simple prioritisation is that the complex forces a specific order on goals which are grouped, as mentioned in \cref{methods:goal_ordering}.
-As \cref{fig:complex_priority} illustrates the complex prioritisation results in the goals next to the level's bounds to be fulfilled first. 
+As \cref{fig:complex_priority} illustrates the complex prioritisation results in the goals next to the level's bounds to be fulfilled first.
 The lack of strict order for the simple prioritisation (as illustrated in \cref{fig:simple priority}) results in the agent choosing to place \textbf{R} before \textbf{S} and thus blocking the path of a goal (the priority of these two boxes is the same in the example, because they have the same number of walls, goals, and free neighbour cells).
 With arbitrary prioritisation (as presented in \cref{fig:no priority}) even more goals are blocked by the fulfilment of others.
 
@@ -89,6 +89,6 @@ We presented our client's statistics in \cref{tab:competition results}, and the 
 
 \subsection{Multi-agent and Single-agent Levels}
 
-Though the level \texttt{SAOptimal} showcases the importance of some goal prioritisation, it is important to note that out of the 16 levels we managed to solve, most of them were multi-agent levels. For the multi-agent levels, we only move one agent at a time and therefore lose a lot of performance w.r.t. the number of actions performed. 
-On the time performance however, again here we perform very well as with the single-agent levels. 
+Though the level \texttt{SAOptimal} showcases the importance of some goal prioritisation, it is important to note that out of the 16 levels we managed to solve, most of them were multi-agent levels. For the multi-agent levels, we only move one agent at a time and therefore lose a lot of performance w.r.t. the number of actions performed.
+On the time performance however, again here we perform very well as with the single-agent levels.
 As presented in \cref{tab:competition results} our client was able to solve most of the multi-agent levels.

@@ -13,9 +13,9 @@ This increases the length of results in multi-agent levels but it also give us b
 By performance we mean the time spent to find a solution (from starting the client to the server responds with \texttt{success}).
 By only moving one agent at a time we do not have to look for conflicts between the agents' paths but simply move obstacles.
 The simplicity of our client was advantageous while competing against the other group's more complicated solutions.
-It was clear that we could out-perform them w.r.t. time spent on finding a solution.
+It was clear that we could out-perform them in time spent on finding a solution.
 
-Of course, if the client could move multiple agents simultanouesly, this would have been a great improvement w.r.t. number of actions performed.
+Of course, if the client could move multiple agents simultanouesly, this would have been a great improvement on number of actions performed.
 For example consider \cref{fig:intuition example} again, if all agents moved at the same time then all the blocking boxes would be moved out of the way simultaneously.
 But by moving all agents simultaneously we would risk getting conflicts if two or more agents' paths crossed.
 To solve these conflicts we could either do offline planning and make a complete plan before execution.

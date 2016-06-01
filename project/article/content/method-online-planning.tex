@@ -5,9 +5,10 @@ Our client is an online planner, i.e. it creates sub-plans an continuously execu
 It only moves one agent at a time.
 Given a constructed plan (as described in \cref{sec:constructing paths and searching}) the client is in charge of handling the agents and sending them instructions.
 A given plan may contain positions on which obstacles are in the way.
-Given that obstacle the client will create a new sub-plan, which must be achieved before the original plan can continue.
+If an obstacles is in the way, the client will create a new sub-plan, which must be achieved before the original plan can continue.
+%Given that obstacle the client will create a new sub-plan, which must be achieved before the original plan can continue.
 This process may continue for many steps before all obstacles are moved for the original objects to be moved in the desired path.
-Note however, that sub-plans of a sub-plan may also occur.
+The client will make sub-plans for the first obstacle in the path first and sub-plans of a sub-plan may also occur.
 
 As mentioned in the previous section, each movement has an associated cost, and the agents are to be as independent as possible.
 However, independence is sometimes not possible and thus the agents must aid one another.

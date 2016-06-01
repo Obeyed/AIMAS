@@ -10,7 +10,7 @@ Thus, the first cell is referenced as $(0,0)$ and is in the top left corner of t
 
 \subsubsection{The Grid}
 
-The level is parsed from the server, and a new grid object is instantiated with that info.
+A new grid object is instantiated with the level parsed from the server.
 The grid instantiation process takes care of assigning default colors to uncolored objects.
 The grid keeps track of the following; all object's positions (their cells) and colors, goals and their identifiers, the boxes and the agents.
 It knows which color boxes an agent can move.
@@ -26,7 +26,8 @@ Furthermore, the grid representation must have the following functionality
 The neighbours of a cell may be defined to filter results w.r.t. some criterion.
 Such a criterion could for instance be that we only want free cell (no agent or box at that cell).
 This method is used for finding possible movement from a given cell.
-Moreover, a cell's neighbours are the cells below, above, right of, and left of it (not diagonal cells).
+Unlike in our goal prioritisation, where a cell has 8 neighbours, the diagonal cells are not considered neighbour cells here and thus a cell only has 4 neighbours.
+%Moreover, a cell's neighbours are the cells below, above, right of, and left of it (not diagonal cells).
 
 We define a swapping move as swapping the position of an agent and a box it is moving.
 This could either be a pull-push combination or vice versa.
