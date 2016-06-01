@@ -100,23 +100,40 @@ Each column of the matrix will represent a goal cell and the first row holds the
   \end{minipage}
 \end{table}
 
-The resulting matrix can be seen in \cref{tab:example_matrix} (left).
-From this matrix we see the first ordering scores being filled out while the rest remains to be computed.
-The computation of the remaining rows, is carried out by incrementing the scores iteratively.
-A goal's score is incremented if:
+The initial state of the matrix is presented in \cref{tab:example_matrix} (left).
+From this matrix we see the first ordering scores being filled out while the rest remain to be computed.
+The remaining rows are inspected and for every element in each row, the corresponding goal's score is incremented if one of the following criteria are satisfied:
+%
+\begin{enumerate}
+  \item the score is equal the max value in the row
+  \item the score is less than the previous and next
+  \item the score is less than the previous and equal to then next
+  \item the score is equal to the previous and next
+\end{enumerate}
+%
+For each iteration for each row, the value of the goal being inspected is taken from the previous row.
+When we refer to ``the previous score'' it is the score of the goal to the left of the current goal being inspected (in the current row).
+Moreover, ``the next score'' refers to the score of the goal to the right of the goal being inspected (in the previous row).
+For instance, consider goal \textbf{e} at the first iteration (after the initial scoring) where the goal \textbf{f} already has been incremented because it was the max value in the previous row.
+The previous goal's score is the score of \textbf{f} which is 4 (the current row).
+The next goal's score is the score of \textbf{b} which is 2 (the previous row).
+The score of \textbf{e} is incremented because it satisfies the third criteria.
+The algorithm of course makes sure to only compare goals that are grouped together.
+%
+%If we define this in a more mathematical fashion, we can define a score as $s_{c}^{r}$, where $c$ defines the column, and $r$ defines the row of the given score.
+%Moreover, let us define $e_r$ to be the scores in row $r$.
+%Now, the criteria are as follows:
+%\begin{enumerate}
+%  \item $s_c^r = \max(e_r)$
+%  \item $s_c^r < s_{c-1}^{r+1}$ and $s_{c}^{r} < s_{c+1}^r$  
+%  \item $s_c^r < s_{c-1}^{r+1}$ and $s_c^r = s_{c+1}^r$
+%  \item $s_c^r = s_{c-1}^{r+1}$ and $s_c^r = s_{c+1}^r$
+%\end{enumerate}
 
-\begin{itemize}
-\item{The score is the maximum score of all score}
-\item{The score is smaller than the previous and next score }
-\item{The score is smaller than the previous and equal to then next score}
-\item{The score is equal to the previous and equal to then next score}
-\end{itemize}
-
-The reason for the incrementation of the heighest score, throughout all iteratons, is to account for multiple groups of goals, for which we want to score their openings similarly.
+The reason for incrementing the max score, throughout all iterations, is to account for multiple groups of goals, for which we want to score the openings similarly.
 The idea is that we force an order on grouped goals so that we never have ambiguous priorities for neighbouring goals.
 Thus, the client should never be in doubt of which goal to choose.
 If two goals end up with the same score, they will either be a part of independently grouped goals, or equally accessible.
-
 
 \subsubsection{Sorting the Goals}
 Lastly, after the matrix has been computed as presented in \cref{tab:example_matrix} (right), the last row will contain the ordering of the goals.
