@@ -92,7 +92,7 @@ Each column of the matrix will represent a goal cell and the first row holds the
 		\toprule
 		\textbf{f} & \textbf{e} & \textbf{b} & \textbf{c} & \textbf{a} \\ \midrule
 		3          & 2          & 2          & 2          & 1          \\ 
-		4          & 2          & 3          & 2          & 1          \\ 
+		4          & 3          & 3          & 2          & 1          \\ 
 		5          & 3          & 3          & 2          & 1          \\ 
 		6          & 4          & 3          & 2          & 1          \\ \midrule
 		\textbf{7} & \textbf{4} & \textbf{3} & \textbf{2} & \textbf{1} \\ \bottomrule
@@ -108,16 +108,20 @@ A goal's score is incremented if:
 \begin{itemize} 
 \item{The score is the maximum score of all score}
 \item{The score is smaller than the previous and next score }
-\item{The score is smaller than previous and equal to then next score}
+\item{The score is smaller than the previous and equal to then next score}
+\item{The score is equal to the previous and equal to then next score}
 \end{itemize} 
 
+The reason for the incrementation of the heighest score, throughout all iteratons, is to account for multiple groups of goals, for which we want to score their openings similarly.
 The idea is that we force an order on grouped goals so that we never have ambiguous priorities for neighbouring goals.
 Thus, the client should never be in doubt of which goal to choose.
+If two goals end up with the same score, they will either be a part of independently grouped goals, or equally accessible. 
+
 
 \subsubsection{Sorting the Goals}
-Lastly, after the matrix has been filled as presented in \cref{tab:example_matrix} (right), the last row should contain the ordering of the goals.
+Lastly, after the matrix has been computed as presented in \cref{tab:example_matrix} (right), the last row will contain the ordering of the goals.
 These can then be used to order the goals in ascending order (from lowest to highest).
-This steps responsibility is simply to order the goals, such that in our example case, the goals will be filled from \textbf{a} to \textbf{f}, respectively.
+In our example case, the goals will be filled from \textbf{a} to \textbf{f}, respectively.
 The performance benefits and pitfalls of this prioritisation algorithm, will be discussed in detail in \cref{subsec:disc_goal_ordering}.
 %
 % In levels where goals are grouped independently of other goal groups, the algorithm will allow for some scores to be the same.
