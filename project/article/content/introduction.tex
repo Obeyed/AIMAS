@@ -6,11 +6,13 @@
 This paper documents and presents our solution to the programming project.
 Our first attempt to solve the project was based on a partial-order planner for atomic plans.
 Our thoughts were that we could use the planner to re-plan if conflicts arose.
-However, we abandoned this solution because it would simply give us a backwards breadth-first search, and we knew we could develop a better solution.
-We used the Python language to develop our source code.
+However, we abandoned this solution as it would simply give us a backwards breadth-first search. 
+As such we aimed for developing a better solution.
+For the programming language used to develop our client, we have chosen Python.
 
-Our solution is a single-agent online centralised multibody solution, where we attempt to prioritise the order in which goals are fulfilled.
+Our solution is a single-agent online centralised multibody planner, where we attempt to prioritise the order in which goals are fulfilled.
 Paths were constructed in a hierarchical fashion using the weighted A* search algorithm in a relaxed domain.
+In this paper we showcase the resulting performance of our client and discuss its strengths, weaknesses, and potential ways for improvement.
 %We present our own goal prioritisation solution and experiment with different types of prioritisations.
 %Furthermore, we used the A* search algorithm to find movement paths, for which we incorporated the ignore preconditions heuristics to find paths in a relaxed domain.
 
@@ -21,7 +23,7 @@ Challenges such as coordinating agent movement, resolving conflicting movement, 
 If they are left unresolved the client may never be able to find a solution.
 
 Similar automated clients could be useful in many scenarios where repetitive work is needed.
-This could for instance be in a hospital where automated agents would be responsible for moving empty hospital beds to a destination where they are needed.
+This could for instance be in a hospital where automated agents would be responsible for porting empty hospital beds to a destination where they are needed.
 
 
 \input{content/background}
